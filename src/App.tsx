@@ -8,6 +8,7 @@ import Suppliers from './pages/Suppliers'
 import Inventory from './pages/Inventory'
 import Users from './pages/Users'
 import Settings from './pages/Settings'
+import Profile from './pages/Profile'
 import Layout from './components/layout/Layout'
 
 function PrivateRoute({ children }: { children: React.ReactNode }) {
@@ -34,6 +35,7 @@ function App() {
                 <Route path="inventory" element={<Inventory />} />
                 <Route path="users" element={<Users />} />
                 <Route path="settings" element={<Settings />} />
+                <Route path="profile" element={<Profile />} />
             </Route>
         </Routes>
     )

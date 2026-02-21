@@ -5,7 +5,9 @@ export interface Product {
     sku: string
     description?: string
     category_id?: number
+    category?: Category
     supplier_id?: number
+    supplier?: Supplier
     price: number
     cost?: number
     stock: number
@@ -88,6 +90,10 @@ export interface Tenant {
 export interface User {
     id: number
     email: string
+    first_name?: string
+    last_name?: string
+    phone?: string
+    avatar_url?: string
     is_admin: boolean
     is_active: boolean
     tenant_id: number

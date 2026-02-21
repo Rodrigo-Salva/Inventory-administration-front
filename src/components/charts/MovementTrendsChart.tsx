@@ -20,20 +20,21 @@ export default function MovementTrendsChart({ data }: Props) {
                 >
                     <defs>
                         <linearGradient id="colorEntries" x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="5%" stopColor="#22c55e" stopOpacity={0.1}/>
-                            <stop offset="95%" stopColor="#22c55e" stopOpacity={0}/>
+                            <stop offset="5%" stopColor="#10b981" stopOpacity={0.3}/>
+                            <stop offset="95%" stopColor="#10b981" stopOpacity={0}/>
                         </linearGradient>
                         <linearGradient id="colorExits" x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="5%" stopColor="#ef4444" stopOpacity={0.1}/>
-                            <stop offset="95%" stopColor="#ef4444" stopOpacity={0}/>
+                            <stop offset="5%" stopColor="#f43f5e" stopOpacity={0.3}/>
+                            <stop offset="95%" stopColor="#f43f5e" stopOpacity={0}/>
                         </linearGradient>
                     </defs>
-                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f3f4f6" />
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
                     <XAxis 
                         dataKey="date" 
                         axisLine={false}
                         tickLine={false}
-                        tick={{ fontSize: 10, fill: '#6b7280' }}
+                        tick={{ fontSize: 11, fill: '#94a3b8', fontWeight: 600 }}
+                        dy={10}
                         tickFormatter={(str) => {
                             const date = new Date(str)
                             return date.toLocaleDateString(undefined, { day: 'numeric', month: 'short' })
@@ -42,29 +43,40 @@ export default function MovementTrendsChart({ data }: Props) {
                     <YAxis 
                         axisLine={false}
                         tickLine={false}
-                        tick={{ fontSize: 10, fill: '#6b7280' }}
+                        tick={{ fontSize: 11, fill: '#94a3b8', fontWeight: 600 }}
+                        dx={-10}
                     />
                     <Tooltip 
-                        contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
-                        labelStyle={{ fontWeight: 'bold', marginBottom: '4px' }}
+                        contentStyle={{ 
+                            borderRadius: '16px', 
+                            border: '1px solid #f1f5f9', 
+                            boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)',
+                            padding: '12px'
+                        }}
+                        itemStyle={{ fontWeight: 'bold', fontSize: '12px' }}
+                        labelStyle={{ fontWeight: '900', color: '#1e293b', marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '0.05em', fontSize: '10px' }}
                     />
                     <Area 
                         type="monotone" 
                         dataKey="entries" 
                         name="Entradas"
-                        stroke="#22c55e" 
+                        stroke="#10b981" 
                         fillOpacity={1} 
                         fill="url(#colorEntries)" 
-                        strokeWidth={2}
+                        strokeWidth={3}
+                        dot={{ r: 4, fill: '#10b981', strokeWidth: 2, stroke: '#fff' }}
+                        activeDot={{ r: 6, strokeWidth: 0 }}
                     />
                     <Area 
                         type="monotone" 
                         dataKey="exits" 
                         name="Salidas"
-                        stroke="#ef4444" 
+                        stroke="#f43f5e" 
                         fillOpacity={1} 
                         fill="url(#colorExits)" 
-                        strokeWidth={2}
+                        strokeWidth={3}
+                        dot={{ r: 4, fill: '#f43f5e', strokeWidth: 2, stroke: '#fff' }}
+                        activeDot={{ r: 6, strokeWidth: 0 }}
                     />
                 </AreaChart>
             </ResponsiveContainer>
