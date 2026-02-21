@@ -2,10 +2,20 @@ import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import api from '@/api/client'
 import toast from 'react-hot-toast'
-import { Plus, Edit, Trash2, Shield, User as UserIcon, X } from 'lucide-react'
-import type { User } from '@/types'
+import { Plus, Edit, Trash2, Shield, User as UserIcon, X, FileDown, Filter, Search } from 'lucide-react'
+import type { User, PaginatedResponse } from '@/types'
+import Pagination from '@/components/common/Pagination'
+import DateRangePicker from '@/components/common/DateRangePicker'
+import clsx from 'clsx'
+import { useEffect } from 'react'
 
 export default function Users() {
+    const [search, setSearch] = useState('')
+    const [filterStatus, setFilterStatus] = useState<'all' | 'active' | 'inactive'>('all')
+    const [startDate, setStartDate] = useState('')
+    const [endDate, setEndDate] = useState('')
+    const [isFiltersVisible, setIsFiltersVisible] = useState(false)
+    const [page, setPage] = useState(1)
     const [isModalOpen, setIsModalOpen] = useState(false)
     const [editingUser, setEditingUser] = useState<User | null>(null)
     const [formData, setFormData] = useState({
@@ -17,13 +27,26 @@ export default function Users() {
 
     const queryClient = useQueryClient()
 
-    const { data: users, isLoading } = useQuery<User[]>({
-        queryKey: ['users'],
+    const { data: usersData, isLoading } = useQuery<PaginatedResponse<User>>({
+        queryKey: ['users', page, search, filterStatus, startDate, endDate],
         queryFn: async () => {
-            const response = await api.get('/api/v1/users')
+            const params = new URLSearchParams({
+                page: page.toString(),
+                size: '10',
+                ...(search && { search }),
+                ...(filterStatus !== 'all' && { is_active: (filterStatus === 'active' ? 'true' : 'false') }),
+                ...(startDate && { start_date: startDate }),
+                ...(endDate && { end_date: endDate }),
+            })
+            const response = await api.get(`/api/v1/users/?${params.toString()}`)
             return response.data
         },
     })
+
+    // Resetear a la página 1 cuando cambian los filtros
+    useEffect(() => {
+        setPage(1)
+    }, [search, filterStatus, startDate, endDate])
 
     const createMutation = useMutation({
         mutationFn: (data: any) => api.post('/api/v1/users', data),
@@ -86,6 +109,33 @@ export default function Users() {
         setEditingUser(null)
     }
 
+    const handleExportExcel = async () => {
+        try {
+            const params = new URLSearchParams({
+                ...(search && { search }),
+                ...(filterStatus !== 'all' && { is_active: (filterStatus === 'active' ? 'true' : 'false') }),
+                ...(startDate && { start_date: startDate }),
+                ...(endDate && { end_date: endDate }),
+            })
+            
+            toast.loading('Generando Excel...', { id: 'export-excel' })
+            const response = await api.get(`/api/v1/reports/users-excel?${params}`, {
+                responseType: 'blob'
+            })
+            
+            const url = window.URL.createObjectURL(new Blob([response.data]))
+            const link = document.createElement('a')
+            link.href = url
+            link.setAttribute('download', `Usuarios_${new Date().toISOString().split('T')[0]}.xlsx`)
+            document.body.appendChild(link)
+            link.click()
+            link.remove()
+            toast.success('Excel generado correctamente', { id: 'export-excel' })
+        } catch (error) {
+            toast.error('Error al generar Excel', { id: 'export-excel' })
+        }
+    }
+
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault()
         if (editingUser) {
@@ -110,16 +160,44 @@ export default function Users() {
                     <h1 className="text-2xl font-bold text-gray-900">Usuarios</h1>
                     <p className="mt-1 text-sm text-gray-600">Gestión de acceso de tu equipo</p>
                 </div>
-                <button 
-                    onClick={() => openModal()}
-                    className="btn btn-primary flex items-center gap-2"
-                >
-                    <Plus className="h-5 w-5" />
-                    Nuevo Usuario
-                </button>
+                <div className="flex items-center gap-3">
+                    <button 
+                        onClick={() => setIsFiltersVisible(true)}
+                        className={clsx(
+                            "btn flex items-center gap-2 h-10 px-4 transition-all border shadow-sm rounded-xl text-xs uppercase tracking-widest font-bold",
+                            (startDate || endDate || filterStatus !== 'all')
+                                ? "bg-primary-50 border-primary-200 text-primary-700 font-bold" 
+                                : "bg-white border-gray-200 text-gray-600 hover:bg-gray-50"
+                        )}
+                    >
+                        <Filter className="h-4 w-4" />
+                        Filtrar
+                        {(startDate || endDate || filterStatus !== 'all') && (
+                            <span className="flex h-2 w-2 rounded-full bg-primary-600 animate-pulse" />
+                        )}
+                    </button>
+                    <button 
+                        onClick={() => openModal()}
+                        className="btn btn-primary flex items-center gap-2 h-10 rounded-xl"
+                    >
+                        <Plus className="h-5 w-5" />
+                        <span className="hidden sm:inline">Nuevo Usuario</span>
+                    </button>
+                </div>
             </div>
 
-            <div className="card">
+            <div className="relative">
+                <Search className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400" />
+                <input
+                    type="text"
+                    placeholder="Buscar por email..."
+                    className="input pl-12 h-12 text-base bg-white border-gray-100 shadow-xl shadow-gray-200/50 rounded-2xl focus:ring-primary-500"
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                />
+            </div>
+
+            <div className="card overflow-hidden border-none shadow-xl shadow-gray-200/50">
                 {isLoading ? (
                     <div className="text-center py-12">
                         <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-primary-600 border-r-transparent"></div>
@@ -127,7 +205,8 @@ export default function Users() {
                     </div>
                 ) : (
                     <div className="overflow-x-auto">
-                        <table className="min-w-full divide-y divide-gray-200">
+                        {/* Tabla (Desktop) */}
+                        <table className="min-w-full divide-y divide-gray-200 hidden lg:table">
                             <thead className="bg-gray-50">
                                 <tr>
                                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Usuario</th>
@@ -138,55 +217,115 @@ export default function Users() {
                                 </tr>
                             </thead>
                             <tbody className="bg-white divide-y divide-gray-200">
-                                {users?.map((user) => (
-                                    <tr key={user.id} className="hover:bg-gray-50">
+                                {usersData?.items.map((user) => (
+                                    <tr key={user.id} className="hover:bg-gray-50 transition-colors">
                                         <td className="px-6 py-4 whitespace-nowrap">
                                             <div className="flex items-center">
                                                 <div className="h-10 w-10 flex-shrink-0">
-                                                    <div className="h-10 w-10 rounded-full bg-primary-100 flex items-center justify-center">
-                                                        <UserIcon className="h-6 w-6 text-primary-600" />
+                                                    <div className="h-10 w-10 rounded-xl bg-primary-50 flex items-center justify-center border border-primary-100">
+                                                        <UserIcon className="h-5 w-5 text-primary-600" />
                                                     </div>
                                                 </div>
                                                 <div className="ml-4">
-                                                    <div className="text-sm font-medium text-gray-900">{user.email}</div>
+                                                    <div className="text-sm font-bold text-gray-900">{user.email}</div>
                                                 </div>
                                             </div>
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap">
-                                            <div className="flex items-center gap-1.5">
+                                            <div className="flex items-center gap-1.5 font-medium">
                                                 {user.is_admin ? (
-                                                    <><Shield className="h-4 w-4 text-primary-600" /><span className="text-sm text-gray-900 font-medium">Admin</span></>
+                                                    <><Shield className="h-4 w-4 text-primary-600" /><span className="text-sm text-gray-900">Admin</span></>
                                                 ) : (
                                                     <span className="text-sm text-gray-600">Operador</span>
                                                 )}
                                             </div>
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap">
-                                            <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${user.is_active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+                                            <span className={clsx(
+                                                "px-2.5 py-1 text-[10px] uppercase font-black tracking-widest rounded-md",
+                                                user.is_active ? 'bg-emerald-50 text-emerald-700' : 'bg-red-50 text-red-700'
+                                            )}>
                                                 {user.is_active ? 'Activo' : 'Inactivo'}
                                             </span>
                                         </td>
-                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 font-medium">
                                             {new Date(user.created_at).toLocaleDateString()}
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                            <button 
-                                                onClick={() => openModal(user)}
-                                                className="text-primary-600 hover:text-primary-900 mr-3"
-                                            >
-                                                <Edit className="h-5 w-5" />
-                                            </button>
-                                            <button
-                                                onClick={() => handleDelete(user.id, user.email)}
-                                                className="text-red-600 hover:text-red-900"
-                                            >
-                                                <Trash2 className="h-5 w-5" />
-                                            </button>
+                                            <div className="flex justify-end gap-1">
+                                                <button 
+                                                    onClick={() => openModal(user)}
+                                                    className="p-2 text-primary-600 hover:bg-primary-50 rounded-lg transition-colors"
+                                                >
+                                                    <Edit className="h-5 w-5" />
+                                                </button>
+                                                <button
+                                                    onClick={() => handleDelete(user.id, user.email)}
+                                                    className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                                                >
+                                                    <Trash2 className="h-5 w-5" />
+                                                </button>
+                                            </div>
                                         </td>
                                     </tr>
                                 ))}
                             </tbody>
                         </table>
+
+                        {/* Tarjetas (Móvil) */}
+                        <div className="lg:hidden space-y-4 p-1">
+                            {usersData?.items.map((user) => (
+                                <div key={user.id} className="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm">
+                                    <div className="flex items-center justify-between mb-4">
+                                        <div className="flex items-center gap-3">
+                                            <div className="h-10 w-10 rounded-xl bg-primary-50 flex items-center justify-center border border-primary-100">
+                                                <UserIcon className="h-5 w-5 text-primary-600" />
+                                            </div>
+                                            <div>
+                                                <div className="text-sm font-bold text-gray-900">{user.email}</div>
+                                                <div className="flex items-center gap-1 mt-0.5">
+                                                    {user.is_admin ? (
+                                                        <><Shield className="h-3 w-3 text-primary-600" /><span className="text-[10px] text-primary-700 font-bold uppercase tracking-wider">Admin</span></>
+                                                    ) : (
+                                                        <span className="text-[10px] text-gray-500 font-bold uppercase tracking-wider">Operador</span>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div className="text-right">
+                                            <span className={clsx(
+                                                "px-2 py-0.5 text-[10px] uppercase font-black tracking-widest rounded-md",
+                                                user.is_active ? 'bg-emerald-50 text-emerald-700' : 'bg-red-50 text-red-700'
+                                            )}>
+                                                {user.is_active ? 'Activo' : 'Inactivo'}
+                                            </span>
+                                            <p className="text-[10px] text-gray-400 mt-1 font-bold">{new Date(user.created_at).toLocaleDateString()}</p>
+                                        </div>
+                                    </div>
+                                    <div className="flex gap-2 pt-3 border-t border-gray-50 justify-end">
+                                        <button 
+                                            onClick={() => openModal(user)}
+                                            className="px-4 py-2 text-sm font-bold text-primary-600 bg-primary-50 rounded-xl flex-1 max-w-[120px] text-center"
+                                        >
+                                            Editar
+                                        </button>
+                                        <button 
+                                            onClick={() => handleDelete(user.id, user.email)}
+                                            className="px-4 py-2 text-sm font-bold text-red-600 bg-red-50 rounded-xl flex-1 max-w-[120px] text-center"
+                                        >
+                                            Eliminar
+                                        </button>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+
+                        <Pagination 
+                            currentPage={page}
+                            totalPages={usersData?.metadata.pages || 0}
+                            onPageChange={setPage}
+                            totalItems={usersData?.metadata.total}
+                        />
                     </div>
                 )}
             </div>
@@ -205,7 +344,7 @@ export default function Users() {
                             </div>
                             <div>
                                 <h3 className="text-lg font-medium leading-6 text-gray-900">
-                                    {editingUser ? 'Editar Usuario' : 'Nuevo Usuario'}
+                                    {editingUser ? 'Editar Usuario' : 'Agregar nuevo Usuario'}
                                 </h3>
                                 <form onSubmit={handleSubmit} className="mt-6 space-y-4">
                                     <div>
@@ -267,6 +406,83 @@ export default function Users() {
                                         </button>
                                     </div>
                                 </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+            {/* Modal de Filtros (Ventana Flotante) */}
+            {isFiltersVisible && (
+                <div className="fixed inset-0 z-50 overflow-y-auto">
+                    <div className="flex min-h-screen items-center justify-center p-4 text-center sm:p-0">
+                        <div className="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" onClick={() => setIsFiltersVisible(false)} />
+                        
+                        <div className="relative transform overflow-hidden rounded-2xl bg-white text-left shadow-2xl transition-all sm:my-8 sm:w-full sm:max-w-lg">
+                            <div className="bg-white px-6 py-6 border-b border-gray-50 flex items-center justify-between">
+                                <div className="flex items-center gap-3">
+                                    <div className="p-2 bg-primary-50 text-primary-600 rounded-xl">
+                                        <Filter className="h-5 w-5" />
+                                    </div>
+                                    <h3 className="text-xl font-bold text-gray-900 line-clamp-1">Filtros de Búsqueda</h3>
+                                </div>
+                                <button onClick={() => setIsFiltersVisible(false)} className="text-gray-400 hover:text-gray-500 p-1 hover:bg-gray-50 rounded-lg">
+                                    <X className="h-6 w-6" />
+                                </button>
+                            </div>
+
+                            <div className="px-6 py-8 space-y-6">
+                                <div>
+                                    <label className="block text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-2">Estado de Usuario</label>
+                                    <select 
+                                        className="input h-12 bg-gray-50 border-gray-100 rounded-xl text-sm font-medium focus:bg-white transition-all"
+                                        value={filterStatus}
+                                        onChange={(e) => setFilterStatus(e.target.value as any)}
+                                    >
+                                        <option value="all">Todos los estados</option>
+                                        <option value="active">Solo Activos</option>
+                                        <option value="inactive">Solo Inactivos</option>
+                                    </select>
+                                </div>
+
+                                <DateRangePicker 
+                                    startDate={startDate} 
+                                    endDate={endDate} 
+                                    onChange={({start, end}) => {
+                                        setStartDate(start)
+                                        setEndDate(end)
+                                    }} 
+                                />
+
+                                <div className="pt-6 border-t border-gray-50 flex flex-col gap-3">
+                                    <button 
+                                        onClick={handleExportExcel}
+                                        className="btn bg-emerald-600 hover:bg-emerald-700 text-white flex items-center justify-center gap-2 h-12 rounded-xl font-bold uppercase tracking-widest text-xs shadow-lg shadow-emerald-200"
+                                    >
+                                        <FileDown className="h-5 w-5" />
+                                        Exportar a Excel
+                                    </button>
+                                    
+                                    <div className="grid grid-cols-2 gap-3">
+                                        <button 
+                                            onClick={() => {
+                                                setSearch('')
+                                                setFilterStatus('all')
+                                                setStartDate('')
+                                                setEndDate('')
+                                                setIsFiltersVisible(false)
+                                            }}
+                                            className="btn border border-gray-200 text-gray-500 h-11 rounded-xl text-xs font-bold uppercase tracking-widest hover:bg-gray-50"
+                                        >
+                                            Limpiar
+                                        </button>
+                                        <button 
+                                            onClick={() => setIsFiltersVisible(false)}
+                                            className="btn btn-primary h-11 rounded-xl text-xs font-bold uppercase tracking-widest shadow-lg shadow-primary-200"
+                                        >
+                                            Aplicar Filtros
+                                        </button>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>

@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import api from '@/api/client'
 import toast from 'react-hot-toast'
-import { Building, Save, ShieldCheck, Mail, Phone, Globe, MapPin, Hash } from 'lucide-react'
+import { Building, Save, Mail, Phone, Globe, MapPin, Hash, ShieldCheck } from 'lucide-react'
 import type { Tenant } from '@/types'
 
 export default function Settings() {
@@ -86,7 +86,7 @@ export default function Settings() {
     return (
         <div className="space-y-6 max-w-4xl mx-auto pb-12">
             <div>
-                <h1 className="text-2xl font-bold text-gray-900">Configuración Avanzada</h1>
+                <h1 className="text-2xl font-bold text-gray-900">Configuración Empresa</h1>
                 <p className="mt-1 text-sm text-gray-600">Completa el perfil de tu empresa para mayor personalización en reportes y facturación</p>
             </div>
 
