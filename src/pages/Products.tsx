@@ -1,10 +1,17 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import api from '@/api/client'
 import toast from 'react-hot-toast'
-import { Plus, Edit, Trash2, Search, X, Package, Tag, Building2, Barcode, DollarSign, Layers, History, ArrowUpRight, ArrowDownRight, PlusCircle, MinusCircle, UploadCloud, FileDown } from 'lucide-react'
+import { 
+    Plus, Edit, Trash2, Search, X, Package, DollarSign, Layers, History, 
+    PlusCircle, MinusCircle, Filter, 
+    Barcode, Building2, ArrowUpRight, ArrowDownRight, UploadCloud, FileDown
+} from 'lucide-react'
 import clsx from 'clsx'
 import type { Product, PaginatedResponse, Category, Supplier } from '@/types'
+import ConfirmationModal from '@/components/common/ConfirmationModal'
+import Pagination from '@/components/common/Pagination'
+import DateRangePicker from '@/components/common/DateRangePicker'
 
 export default function Products() {
     const [page, setPage] = useState(1)
@@ -16,6 +23,12 @@ export default function Products() {
     const [isImportModalOpen, setIsImportModalOpen] = useState(false)
     const [quickMoveType, setQuickMoveType] = useState<'entry' | 'exit'>('entry')
     const [selectedProduct, setSelectedProduct] = useState<Product | null>(null)
+    const [filterCategory, setFilterCategory] = useState('')
+    const [filterSupplier, setFilterSupplier] = useState('')
+    const [filterStatus, setFilterStatus] = useState<'all' | 'active' | 'inactive'>('all')
+    const [startDate, setStartDate] = useState('')
+    const [endDate, setEndDate] = useState('')
+    const [isFiltersVisible, setIsFiltersVisible] = useState(false)
     const [formData, setFormData] = useState({
         name: '',
         sku: '',
@@ -36,27 +49,41 @@ export default function Products() {
         notes: ''
     })
 
+    // Modal de confirmación de eliminación
+    const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)
+    const [productToDelete, setProductToDelete] = useState<{ id: number, name: string } | null>(null)
+
     const queryClient = useQueryClient()
 
-    // 1. Cargar Productos
+    // 1. Cargar Productos con Filtros
     const { data: productData, isLoading } = useQuery<PaginatedResponse<Product>>({
-        queryKey: ['products', page, search],
+        queryKey: ['products', page, search, filterCategory, filterSupplier, filterStatus, startDate, endDate],
         queryFn: async () => {
             const params = new URLSearchParams({
                 page: page.toString(),
                 size: '10',
                 ...(search && { search }),
+                ...(filterCategory && { category_id: filterCategory }),
+                ...(filterSupplier && { supplier_id: filterSupplier }),
+                ...(filterStatus !== 'all' && { is_active: (filterStatus === 'active' ? 'true' : 'false') }),
+                ...(startDate && { start_date: startDate }),
+                ...(endDate && { end_date: endDate }),
             })
             const response = await api.get(`/api/v1/products/?${params}`)
             return response.data
         },
     })
 
+    // Resetear a la página 1 cuando cambian los filtros
+    useEffect(() => {
+        setPage(1)
+    }, [search, filterCategory, filterSupplier, filterStatus, startDate, endDate])
+
     // 2. Cargar Categorías para el selector
     const { data: categories } = useQuery<Category[]>({
         queryKey: ['categories-flat-all'],
         queryFn: async () => {
-            const response = await api.get('/api/v1/categories/')
+            const response = await api.get('/api/v1/categories/?size=200')
             return response.data.items || []
         }
     })
@@ -181,11 +208,6 @@ export default function Products() {
         setEditingProduct(null)
     }
 
-    const openQuickMove = (product: Product, type: 'entry' | 'exit') => {
-        setSelectedProduct(product)
-        setQuickMoveType(type)
-        setIsQuickMoveModalOpen(true)
-    }
 
     const handleQuickMoveSubmit = (e: React.FormEvent) => {
         e.preventDefault()
@@ -198,45 +220,42 @@ export default function Products() {
         })
     }
 
-    const handleImportCSV = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const handleImportCSV = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0]
-        if (!file) return
-
-        const reader = new FileReader()
-        reader.onload = async (event) => {
-            const text = event.target?.result as string
-            const lines = text.split('\n').filter(l => l.trim().length > 0)
-            const headers = lines[0].split(',').map(h => h.trim().toLowerCase())
-            
-            const products = lines.slice(1).map(line => {
-                const values = line.split(',').map(v => v.trim())
-                const p: any = {}
-                headers.forEach((header, i) => {
-                    p[header] = values[i]
-                })
-                return {
-                    name: p.nombre || p.name,
-                    sku: p.sku,
-                    barcode: p.barcode || p.codigo || '',
-                    description: p.descripcion || p.description || '',
-                    price: parseFloat(p.precio || p.price || '0'),
-                    cost: parseFloat(p.costo || p.cost || '0'),
-                    stock: parseInt(p.stock || '0'),
-                    min_stock: parseInt(p.min_stock || p.minimo || '10'),
-                    category_id: p.category_id ? parseInt(p.category_id) : null,
-                    supplier_id: p.supplier_id ? parseInt(p.supplier_id) : null,
-                    is_active: true
-                }
-            }).filter(p => p.sku && p.name)
-
-            if (products.length === 0) {
-                toast.error('No se encontraron productos válidos en el CSV')
-                return
-            }
-
-            bulkImportMutation.mutate({ products })
+        if (file) {
+            const formData = new FormData()
+            formData.append('file', file)
+            bulkImportMutation.mutate(formData)
         }
-        reader.readAsText(file)
+    }
+
+    const handleExportExcel = async () => {
+        try {
+            const params = new URLSearchParams({
+                ...(search && { search }),
+                ...(filterCategory && { category_id: filterCategory }),
+                ...(filterSupplier && { supplier_id: filterSupplier }),
+                ...(filterStatus !== 'all' && { is_active: (filterStatus === 'active' ? 'true' : 'false') }),
+                ...(startDate && { start_date: startDate }),
+                ...(endDate && { end_date: endDate }),
+            })
+            
+            toast.loading('Generando Excel...', { id: 'export-excel' })
+            const response = await api.get(`/api/v1/reports/inventory-excel?${params}`, {
+                responseType: 'blob'
+            })
+            
+            const url = window.URL.createObjectURL(new Blob([response.data]))
+            const link = document.createElement('a')
+            link.href = url
+            link.setAttribute('download', `Productos_${new Date().toISOString().split('T')[0]}.xlsx`)
+            document.body.appendChild(link)
+            link.click()
+            link.remove()
+            toast.success('Excel generado correctamente', { id: 'export-excel' })
+        } catch (error) {
+            toast.error('Error al generar Excel', { id: 'export-excel' })
+        }
     }
 
     const handleSubmit = (e: React.FormEvent) => {
@@ -259,9 +278,10 @@ export default function Products() {
         }
     }
 
-    const handleDelete = (id: number, name: string) => {
-        if (confirm(`¿Eliminar producto "${name}"?`)) {
-            deleteMutation.mutate(id)
+    const confirmDelete = () => {
+        if (productToDelete) {
+            deleteMutation.mutate(productToDelete.id)
+            setIsDeleteModalOpen(false)
         }
     }
 
@@ -272,37 +292,51 @@ export default function Products() {
                     <h1 className="text-2xl font-bold text-gray-900">Productos</h1>
                     <p className="mt-1 text-sm text-gray-600">Gestión de productos del inventario</p>
                 </div>
-                <div className="flex gap-3">
+                <div className="flex flex-wrap gap-2 lg:gap-3">
+                    <button 
+                        onClick={() => setIsFiltersVisible(true)}
+                        className={clsx(
+                            "btn flex items-center gap-2 h-10 px-4 transition-all border shadow-sm rounded-xl text-xs uppercase tracking-widest font-bold",
+                            (filterCategory || filterSupplier || filterStatus !== 'all' || startDate || endDate)
+                                ? "bg-primary-50 border-primary-200 text-primary-700 font-bold" 
+                                : "bg-white border-gray-200 text-gray-600 hover:bg-gray-50"
+                        )}
+                    >
+                        <Filter className="h-4 w-4" />
+                        Filtrar
+                        {(filterCategory || filterSupplier || filterStatus !== 'all' || startDate || endDate) && (
+                            <span className="flex h-2 w-2 rounded-full bg-primary-600 animate-pulse" />
+                        )}
+                    </button>
                     <button 
                         onClick={() => setIsImportModalOpen(true)}
-                        className="btn btn-secondary flex items-center gap-2"
+                        className="btn btn-secondary flex items-center gap-2 h-10 rounded-xl px-4 text-xs font-bold uppercase tracking-widest"
                     >
-                        <UploadCloud className="h-5 w-5" />
-                        Importar (CSV)
+                        <UploadCloud className="h-5 w-5 text-gray-400" />
+                        <span className="hidden sm:inline">Importar</span>
                     </button>
                     <button 
                         onClick={() => openModal()}
-                        className="btn btn-primary flex items-center gap-2 shadow-lg shadow-primary-200"
+                        className="btn btn-primary flex items-center gap-2 h-10 rounded-xl px-4 text-xs font-bold uppercase tracking-widest shadow-lg shadow-primary-200"
                     >
                         <Plus className="h-5 w-5" />
-                        Nuevo Producto
+                        <span className="hidden sm:inline">Nuevo Producto</span>
                     </button>
                 </div>
             </div>
 
+            <div className="relative">
+                <Search className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400" />
+                <input
+                    type="text"
+                    placeholder="Buscar por nombre o SKU..."
+                    className="input pl-12 h-12 text-base bg-white border-gray-100 shadow-xl shadow-gray-200/50 rounded-2xl focus:ring-primary-500"
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                />
+            </div>
+
             <div className="card border-none shadow-sm">
-                <div className="mb-4">
-                    <div className="relative">
-                        <Search className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400" />
-                        <input
-                            type="text"
-                            placeholder="Buscar por nombre o SKU..."
-                            className="input pl-10 h-11 focus:ring-2 focus:ring-primary-500"
-                            value={search}
-                            onChange={(e) => setSearch(e.target.value)}
-                        />
-                    </div>
-                </div>
 
                 {isLoading ? (
                     <div className="text-center py-12">
@@ -311,98 +345,91 @@ export default function Products() {
                     </div>
                 ) : (
                     <>
-                        <div className="overflow-x-auto">
+                        {/* Vista de Tabla (Desktop) */}
+                        <div className="hidden lg:block overflow-x-auto">
                             <table className="min-w-full divide-y divide-gray-200">
                                 <thead className="bg-gray-50/50">
                                     <tr>
                                         <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Producto</th>
                                         <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">SKU / Código</th>
                                         <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Categoría</th>
-                                        <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Precio</th>
-                                        <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Stock</th>
+                                        <th className="px-6 py-4 text-right text-xs font-bold text-gray-500 uppercase tracking-wider">Precio</th>
+                                        <th className="px-6 py-4 text-center text-xs font-bold text-gray-500 uppercase tracking-wider">Stock</th>
                                         <th className="px-6 py-4 text-right text-xs font-bold text-gray-500 uppercase tracking-wider">Acciones</th>
                                     </tr>
                                 </thead>
-                                <tbody className="bg-white divide-y divide-gray-100">
+                                <tbody className="bg-white divide-y divide-gray-50">
                                     {productData?.items.map((product) => (
-                                        <tr key={product.id} className="hover:bg-gray-50/50 transition-colors group">
-                                            <td className="px-6 py-4 whitespace-nowrap">
-                                                <div className="flex items-center gap-3">
-                                                    <div className="h-10 w-10 rounded-lg bg-gray-100 flex items-center justify-center text-gray-400">
-                                                        <Package className="h-6 w-6" />
+                                        <tr key={product.id} className="hover:bg-primary-50/10 transition-colors group">
+                                            <td className="px-6 py-5 whitespace-nowrap">
+                                                <div className="flex items-center">
+                                                    <div className="h-11 w-11 flex-shrink-0 rounded-xl bg-gray-50 flex items-center justify-center text-gray-400 group-hover:bg-white transition-all border border-transparent group-hover:border-gray-100 shadow-sm group-hover:shadow-md">
+                                                        <Package className="h-5 w-5" />
                                                     </div>
-                                                    <div>
-                                                        <div className="text-sm font-bold text-gray-900">{product.name}</div>
-                                                        <div className={clsx(
-                                                            "px-2 py-0.5 text-[10px] inline-block font-bold rounded-full uppercase tracking-wider mt-0.5",
-                                                            product.is_active ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'
-                                                        )}>
-                                                            {product.is_active ? 'Activo' : 'Inactivo'}
-                                                        </div>
+                                                    <div className="ml-4">
+                                                        <div className="text-sm font-bold text-gray-900 group-hover:text-primary-700 transition-colors uppercase">{product.name}</div>
                                                     </div>
                                                 </div>
                                             </td>
-                                            <td className="px-6 py-4 whitespace-nowrap">
-                                                <div className="text-sm font-mono text-gray-600">{product.sku}</div>
-                                                {product.barcode && <div className="text-[10px] text-gray-400 font-mono">{product.barcode}</div>}
+                                            <td className="px-6 py-5 whitespace-nowrap">
+                                                <div className="text-[10px] font-mono font-bold text-gray-400 uppercase tracking-widest">{product.sku}</div>
                                             </td>
-                                            <td className="px-6 py-4 whitespace-nowrap">
-                                                <div className="flex items-center gap-1.5 text-sm text-gray-700">
-                                                    <Tag className="h-3.5 w-3.5 text-gray-400" />
-                                                    {categories?.find(c => c.id === product.category_id)?.name || <span className="text-gray-400 italic">Sin categoría</span>}
+                                            <td className="px-6 py-5 whitespace-nowrap">
+                                                <div className="flex flex-col gap-1">
+                                                    <span className="text-xs font-bold text-gray-700">{product.category?.name || '---'}</span>
+                                                    <span className="text-[10px] font-medium text-gray-400 italic">ID: {product.category_id || '---'}</span>
                                                 </div>
                                             </td>
-                                            <td className="px-6 py-4 whitespace-nowrap">
-                                                <div className="text-sm font-bold text-gray-900">${Number(product.price).toLocaleString(undefined, { minimumFractionDigits: 2 })}</div>
-                                                {product.cost && <div className="text-[10px] text-gray-400">Costo: ${Number(product.cost).toFixed(2)}</div>}
+                                            <td className="px-6 py-5 whitespace-nowrap text-sm text-right font-black text-gray-900">
+                                                ${Number(product.price).toLocaleString(undefined, { minimumFractionDigits: 2 })}
                                             </td>
-                                            <td className="px-6 py-4 whitespace-nowrap">
-                                                <div className="flex flex-col">
+                                            <td className="px-6 py-5 whitespace-nowrap text-center">
+                                                <div className="flex flex-col items-center gap-1">
                                                     <span className={clsx(
                                                         "text-sm font-bold",
-                                                        product.stock <= product.min_stock ? 'text-red-600' : 'text-green-600'
+                                                        product.stock <= product.min_stock ? "text-red-600" : "text-emerald-600"
                                                     )}>
-                                                        {product.stock} unidades
+                                                        {product.stock}
                                                     </span>
-                                                    <span className="text-[10px] text-gray-400">Min: {product.min_stock}</span>
+                                                    <span className="text-[10px] font-bold text-gray-400 uppercase tracking-tighter">unidades</span>
                                                 </div>
                                             </td>
-                                            <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                                <div className="flex justify-end gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                                            <td className="px-6 py-5 whitespace-nowrap text-right text-sm font-medium">
+                                                <div className="flex justify-end gap-2">
                                                     <button 
-                                                        onClick={() => openQuickMove(product, 'entry')}
-                                                        className="p-1.5 text-green-600 hover:bg-green-50 rounded-md"
-                                                        title="Entrada Rápida"
+                                                        onClick={() => {
+                                                            setSelectedProduct(product)
+                                                            setQuickMoveType('entry')
+                                                            setIsQuickMoveModalOpen(true)
+                                                        }}
+                                                        className="p-2 text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors"
+                                                        title="Entrada"
                                                     >
                                                         <PlusCircle className="h-5 w-5" />
                                                     </button>
                                                     <button 
-                                                        onClick={() => openQuickMove(product, 'exit')}
-                                                        className="p-1.5 text-red-600 hover:bg-red-50 rounded-md"
-                                                        title="Salida Rápida"
+                                                        onClick={() => {
+                                                            setSelectedProduct(product)
+                                                            setQuickMoveType('exit')
+                                                            setIsQuickMoveModalOpen(true)
+                                                        }}
+                                                        className="p-2 text-amber-600 hover:bg-amber-50 rounded-lg transition-colors"
+                                                        title="Salida"
                                                     >
                                                         <MinusCircle className="h-5 w-5" />
                                                     </button>
-                                                    <div className="mx-1 h-8 w-px bg-gray-200 self-center"></div>
-                                                    <button 
-                                                        onClick={() => {
-                                                            setSelectedProduct(product)
-                                                            setIsHistoryModalOpen(true)
-                                                        }}
-                                                        className="p-1.5 text-orange-600 hover:bg-orange-50 rounded-md"
-                                                        title="Ver historial de movimientos"
-                                                    >
-                                                        <History className="h-5 w-5" />
-                                                    </button>
                                                     <button 
                                                         onClick={() => openModal(product)}
-                                                        className="p-1.5 text-blue-600 hover:bg-blue-50 rounded-md"
+                                                        className="p-2 text-primary-600 hover:bg-primary-50 rounded-lg transition-colors"
                                                     >
                                                         <Edit className="h-5 w-5" />
                                                     </button>
-                                                    <button
-                                                        onClick={() => handleDelete(product.id, product.name)}
-                                                        className="p-1.5 text-red-600 hover:bg-red-50 rounded-md"
+                                                    <button 
+                                                        onClick={() => {
+                                                            setProductToDelete({ id: product.id, name: product.name })
+                                                            setIsDeleteModalOpen(true)
+                                                        }}
+                                                        className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
                                                     >
                                                         <Trash2 className="h-5 w-5" />
                                                     </button>
@@ -414,52 +441,99 @@ export default function Products() {
                             </table>
                         </div>
 
-                        {productData && productData.metadata.pages > 1 && (
-                            <div className="flex items-center justify-between border-t border-gray-100 bg-white px-4 py-4 mt-2">
-                                <div className="flex flex-1 justify-between sm:hidden">
-                                    <button
-                                        onClick={() => setPage((p) => Math.max(1, p - 1))}
-                                        disabled={page === 1}
-                                        className="btn btn-secondary text-xs"
-                                    >
-                                        Anterior
-                                    </button>
-                                    <button
-                                        onClick={() => setPage((p) => Math.min(productData.metadata.pages, p + 1))}
-                                        disabled={page === productData.metadata.pages}
-                                        className="btn btn-secondary text-xs"
-                                    >
-                                        Siguiente
-                                    </button>
-                                </div>
-                                <div className="hidden sm:flex sm:flex-1 sm:items-center sm:justify-between">
-                                    <p className="text-xs text-gray-500">
-                                        Página <span className="font-bold">{page}</span> de <span className="font-bold">{productData.metadata.pages}</span> ({productData.metadata.total} productos)
-                                    </p>
-                                    <div className="flex gap-2">
-                                        <button
-                                            onClick={() => setPage((p) => Math.max(1, p - 1))}
-                                            disabled={page === 1}
-                                            className="btn btn-secondary h-9 px-4 text-xs"
-                                        >
-                                            Anterior
-                                        </button>
-                                        <button
-                                            onClick={() => setPage((p) => Math.min(productData.metadata.pages, p + 1))}
-                                            disabled={page === productData.metadata.pages}
-                                            className="btn btn-secondary h-9 px-4 text-xs"
-                                        >
-                                            Siguiente
-                                        </button>
+                        {/* Vista de Tarjetas (Móvil) */}
+                        <div className="lg:hidden space-y-4">
+                            {productData?.items.map((product) => (
+                                <div key={product.id} className="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm active:scale-[0.98] transition-all">
+                                    <div className="flex items-start justify-between mb-4">
+                                        <div className="flex items-center gap-3">
+                                            <div className="h-10 w-10 shrink-0 rounded-xl bg-gray-50 flex items-center justify-center text-gray-400 border border-gray-100">
+                                                <Package className="h-5 w-5" />
+                                            </div>
+                                            <div>
+                                                <h3 className="text-sm font-bold text-gray-900 uppercase leading-tight">{product.name}</h3>
+                                                <p className="text-[10px] font-mono font-bold text-gray-400 mt-0.5 tracking-wider">{product.sku}</p>
+                                            </div>
+                                        </div>
+                                        <div className="text-right">
+                                            <span className="text-sm font-black text-gray-900">${Number(product.price).toLocaleString()}</span>
+                                            <div className={clsx(
+                                                "mt-1 text-[10px] font-bold px-2 py-0.5 rounded-full inline-block",
+                                                product.stock <= product.min_stock ? "bg-red-50 text-red-600" : "bg-emerald-50 text-emerald-600"
+                                            )}>
+                                                {product.stock} UNIDADES
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div className="flex items-center justify-between pt-4 border-t border-gray-50">
+                                        <div className="flex flex-col">
+                                            <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-0.5">Categoría</span>
+                                            <span className="text-xs font-bold text-gray-700">{product.category?.name || '---'}</span>
+                                        </div>
+                                        
+                                        <div className="flex gap-1">
+                                            <button 
+                                                onClick={() => {
+                                                    setSelectedProduct(product)
+                                                    setQuickMoveType('entry')
+                                                    setIsQuickMoveModalOpen(true)
+                                                }}
+                                                className="p-2.5 text-emerald-600 bg-emerald-50 rounded-xl"
+                                                title="Entrada"
+                                            >
+                                                <PlusCircle className="h-5 w-5" />
+                                            </button>
+                                            <button 
+                                                onClick={() => {
+                                                    setSelectedProduct(product)
+                                                    setQuickMoveType('exit')
+                                                    setIsQuickMoveModalOpen(true)
+                                                }}
+                                                className="p-2.5 text-amber-600 bg-amber-50 rounded-xl"
+                                                title="Salida"
+                                            >
+                                                <MinusCircle className="h-5 w-5" />
+                                            </button>
+                                            <button 
+                                                onClick={() => openModal(product)}
+                                                className="p-2.5 text-primary-600 bg-primary-50 rounded-xl"
+                                            >
+                                                <Edit className="h-5 w-5" />
+                                            </button>
+                                            <button 
+                                                onClick={() => {
+                                                    setProductToDelete({ id: product.id, name: product.name })
+                                                    setIsDeleteModalOpen(true)
+                                                }}
+                                                className="p-2.5 text-red-600 bg-red-50 rounded-xl"
+                                            >
+                                                <Trash2 className="h-5 w-5" />
+                                            </button>
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
-                        )}
+                            ))}
+                        </div>
+
+                <Pagination 
+                    currentPage={page}
+                    totalPages={productData?.metadata.pages || 0}
+                    onPageChange={setPage}
+                    totalItems={productData?.metadata.total}
+                />
                     </>
                 )}
             </div>
-
-            {/* Modal de Producto */}
+            {/* Modal de Confirmación de Eliminación */}
+            <ConfirmationModal
+                isOpen={isDeleteModalOpen}
+                onClose={() => setIsDeleteModalOpen(false)}
+                onConfirm={confirmDelete}
+                title="¿Eliminar producto?"
+                message={`¿Estás seguro de que deseas eliminar el producto "${productToDelete?.name}"? Esta acción será permanente.`}
+                type="danger"
+            />
             {isModalOpen && (
                 <div className="fixed inset-0 z-50 overflow-y-auto">
                     <div className="flex min-h-screen items-center justify-center p-4">
@@ -474,57 +548,149 @@ export default function Products() {
                             <div className="p-6">
                                 <h3 className="text-xl font-bold text-gray-900 flex items-center gap-2">
                                     <Package className="h-6 w-6 text-primary-600" />
-                                    {editingProduct ? 'Editar Producto' : 'Nuevo Producto'}
+                                    {editingProduct ? 'Editar Producto' : 'Agregar nuevo Producto'}
                                 </h3>
 
-                                <form onSubmit={handleSubmit} className="mt-8 space-y-6">
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                                        <div className="space-y-4">
-                                            <h4 className="text-[10px] font-bold text-gray-400 uppercase tracking-widest border-b pb-1">Identificación</h4>
-                                            <div>
-                                                <label className="block text-sm font-semibold text-gray-700">Nombre del Producto *</label>
+                                <form onSubmit={handleSubmit} className="mt-8 space-y-8">
+                                    {/* SECCIÓN 1: INFORMACIÓN BÁSICA */}
+                                    <div className="space-y-4">
+                                        <div className="flex items-center gap-2 border-b border-gray-100 pb-2">
+                                            <div className="h-6 w-1 bg-primary-600 rounded-full"></div>
+                                            <h4 className="text-xs font-bold text-gray-900 uppercase tracking-widest">1. Información General</h4>
+                                        </div>
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                                            <div className="md:col-span-2">
+                                                <label className="block text-sm font-semibold text-gray-700 mb-1">Nombre del Producto *</label>
                                                 <input
                                                     type="text"
                                                     required
-                                                    className="input mt-1.5 focus:ring-2 focus:ring-primary-500"
+                                                    placeholder="Ej: Laptop Dell XPS 13..."
+                                                    className="input focus:ring-2 focus:ring-primary-500 shadow-sm"
                                                     value={formData.name}
                                                     onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                                                 />
                                             </div>
-                                            <div className="grid grid-cols-2 gap-3">
-                                                <div>
-                                                    <label className="block text-sm font-semibold text-gray-700">SKU / Referencia *</label>
+                                            <div>
+                                                <label className="block text-sm font-semibold text-gray-700 mb-1">SKU / Referencia *</label>
+                                                <input
+                                                    type="text"
+                                                    required
+                                                    placeholder="AUTO-GENERADO-001"
+                                                    className="input font-mono text-xs shadow-sm bg-gray-50/50"
+                                                    value={formData.sku}
+                                                    onChange={(e) => setFormData({ ...formData, sku: e.target.value.toUpperCase() })}
+                                                />
+                                            </div>
+                                            <div>
+                                                <label className="block text-sm font-semibold text-gray-700 mb-1">Código de Barras</label>
+                                                <div className="relative">
+                                                    <Barcode className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
                                                     <input
                                                         type="text"
-                                                        required
-                                                        className="input mt-1.5 font-mono text-xs"
-                                                        value={formData.sku}
-                                                        onChange={(e) => setFormData({ ...formData, sku: e.target.value.toUpperCase() })}
+                                                        placeholder="750123456789..."
+                                                        className="input pl-9 font-mono text-xs shadow-sm"
+                                                        value={formData.barcode}
+                                                        onChange={(e) => setFormData({ ...formData, barcode: e.target.value })}
                                                     />
                                                 </div>
-                                                <div>
-                                                    <label className="block text-sm font-semibold text-gray-700">Código de Barras</label>
-                                                    <div className="relative mt-1.5">
-                                                        <Barcode className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-                                                        <input
-                                                            type="text"
-                                                            className="input pl-9 font-mono text-xs"
-                                                            value={formData.barcode}
-                                                            onChange={(e) => setFormData({ ...formData, barcode: e.target.value })}
-                                                        />
-                                                    </div>
+                                            </div>
+                                            <div className="md:col-span-2">
+                                                <label className="block text-sm font-semibold text-gray-700 mb-1">Descripción</label>
+                                                <textarea
+                                                    className="input min-h-[80px] py-3 resize-none text-sm shadow-sm"
+                                                    placeholder="Detalles técnicos, características, etc..."
+                                                    value={formData.description}
+                                                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                                                />
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* SECCIÓN 2: PRECIOS E INVENTARIO */}
+                                    <div className="space-y-4">
+                                        <div className="flex items-center gap-2 border-b border-gray-100 pb-2">
+                                            <div className="h-6 w-1 bg-emerald-500 rounded-full"></div>
+                                            <h4 className="text-xs font-bold text-gray-900 uppercase tracking-widest">2. Precios e Inventario</h4>
+                                        </div>
+                                        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                                            <div className="col-span-2 lg:col-span-2">
+                                                <label className="block text-sm font-semibold text-gray-700 mb-1">Precio de Venta *</label>
+                                                <div className="relative">
+                                                    <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-emerald-600" />
+                                                    <input
+                                                        type="number"
+                                                        step="0.01"
+                                                        required
+                                                        className="input pl-9 font-bold text-gray-900 border-emerald-100 focus:border-emerald-500 transition-colors shadow-sm"
+                                                        value={formData.price}
+                                                        onChange={(e) => setFormData({ ...formData, price: e.target.value })}
+                                                    />
+                                                </div>
+                                            </div>
+                                            <div className="col-span-2 lg:col-span-2">
+                                                <label className="block text-sm font-semibold text-gray-700 mb-1">Costo de Compra</label>
+                                                <div className="relative">
+                                                    <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                                                    <input
+                                                        type="number"
+                                                        step="0.01"
+                                                        className="input pl-9 text-gray-600 bg-gray-50/30 border-gray-200 shadow-sm"
+                                                        value={formData.cost}
+                                                        onChange={(e) => setFormData({ ...formData, cost: e.target.value })}
+                                                    />
                                                 </div>
                                             </div>
                                             <div>
-                                                <label className="block text-sm font-semibold text-gray-700">Categoría</label>
-                                                <div className="relative mt-1.5">
+                                                <label className="block text-[11px] font-bold text-gray-500 uppercase mb-1">Stock Inicial</label>
+                                                <input
+                                                    type="number"
+                                                    required
+                                                    disabled={!!editingProduct}
+                                                    className={clsx("input text-center h-11 font-black", editingProduct ? "bg-gray-100 text-gray-400 border-gray-200" : "bg-primary-50 border-primary-200 text-primary-700")}
+                                                    value={formData.stock}
+                                                    onChange={(e) => setFormData({ ...formData, stock: e.target.value })}
+                                                />
+                                            </div>
+                                            <div>
+                                                <label className="block text-[11px] font-bold text-gray-500 uppercase mb-1">Stock Mín.</label>
+                                                <input
+                                                    type="number"
+                                                    required
+                                                    className="input text-center h-11 border-red-100 text-red-700 font-bold focus:border-red-500"
+                                                    value={formData.min_stock}
+                                                    onChange={(e) => setFormData({ ...formData, min_stock: e.target.value })}
+                                                />
+                                            </div>
+                                            <div className="col-span-2">
+                                                <label className="block text-[11px] font-bold text-gray-500 uppercase mb-1">Stock Máximo</label>
+                                                <input
+                                                    type="number"
+                                                    placeholder="Ilimitado"
+                                                    className="input h-11 text-center"
+                                                    value={formData.max_stock}
+                                                    onChange={(e) => setFormData({ ...formData, max_stock: e.target.value })}
+                                                />
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* SECCIÓN 3: CLASIFICACIÓN */}
+                                    <div className="space-y-4 pt-2">
+                                        <div className="flex items-center gap-2 border-b border-gray-100 pb-2">
+                                            <div className="h-6 w-1 bg-amber-500 rounded-full"></div>
+                                            <h4 className="text-xs font-bold text-gray-900 uppercase tracking-widest">3. Clasificación y Estado</h4>
+                                        </div>
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                                            <div>
+                                                <label className="block text-sm font-semibold text-gray-700 mb-1">Categoría</label>
+                                                <div className="relative">
                                                     <Layers className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
                                                     <select
-                                                        className="input pl-9"
+                                                        className="input pl-9 shadow-sm"
                                                         value={formData.category_id}
                                                         onChange={(e) => setFormData({ ...formData, category_id: e.target.value })}
                                                     >
-                                                        <option value="">Seleccionar Categoría...</option>
+                                                        <option value="">Sin Categoría</option>
                                                         {categories?.map(c => (
                                                             <option key={c.id} value={c.id}>{c.name}</option>
                                                         ))}
@@ -532,15 +698,15 @@ export default function Products() {
                                                 </div>
                                             </div>
                                             <div>
-                                                <label className="block text-sm font-semibold text-gray-700">Proveedor</label>
-                                                <div className="relative mt-1.5">
+                                                <label className="block text-sm font-semibold text-gray-700 mb-1">Proveedor Principal</label>
+                                                <div className="relative">
                                                     <Building2 className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
                                                     <select
-                                                        className="input pl-9"
+                                                        className="input pl-9 shadow-sm"
                                                         value={formData.supplier_id}
                                                         onChange={(e) => setFormData({ ...formData, supplier_id: e.target.value })}
                                                     >
-                                                        <option value="">Seleccionar Proveedor...</option>
+                                                        <option value="">Sin Proveedor</option>
                                                         {suppliers?.items.map(s => (
                                                             <option key={s.id} value={s.id}>{s.name}</option>
                                                         ))}
@@ -549,113 +715,39 @@ export default function Products() {
                                             </div>
                                         </div>
 
-                                        <div className="space-y-4">
-                                            <h4 className="text-[10px] font-bold text-gray-400 uppercase tracking-widest border-b pb-1">Precios y Stock</h4>
-                                            <div className="grid grid-cols-2 gap-3">
-                                                <div>
-                                                    <label className="block text-sm font-semibold text-gray-700">Precio Venta *</label>
-                                                    <div className="relative mt-1.5">
-                                                        <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-                                                        <input
-                                                            type="number"
-                                                            step="0.01"
-                                                            required
-                                                            className="input pl-9 font-bold text-primary-700"
-                                                            value={formData.price}
-                                                            onChange={(e) => setFormData({ ...formData, price: e.target.value })}
-                                                        />
-                                                    </div>
-                                                </div>
-                                                <div>
-                                                    <label className="block text-sm font-semibold text-gray-700">Costo de Compra</label>
-                                                    <div className="relative mt-1.5">
-                                                        <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-                                                        <input
-                                                            type="number"
-                                                            step="0.01"
-                                                            className="input pl-9 text-gray-600 bg-gray-50 border-gray-100"
-                                                            value={formData.cost}
-                                                            onChange={(e) => setFormData({ ...formData, cost: e.target.value })}
-                                                        />
-                                                    </div>
-                                                </div>
+                                        <div className="bg-gray-50/80 p-5 rounded-2xl border border-gray-100 flex items-center justify-between shadow-sm">
+                                            <div className="flex flex-col">
+                                                <span className="text-sm font-bold text-gray-900">Estado del Producto</span>
+                                                <span className="text-[10px] text-gray-500 font-medium">Define si el producto está disponible para transacciones</span>
                                             </div>
-                                            <div className="grid grid-cols-3 gap-3">
-                                                <div>
-                                                    <label className="block text-sm font-semibold text-gray-700">Stock Inicial</label>
-                                                    <input
-                                                        type="number"
-                                                        required
-                                                        disabled={!!editingProduct}
-                                                        className={clsx("input mt-1.5", editingProduct && "bg-gray-100 text-gray-400")}
-                                                        value={formData.stock}
-                                                        onChange={(e) => setFormData({ ...formData, stock: e.target.value })}
-                                                    />
-                                                </div>
-                                                <div>
-                                                    <label className="block text-sm font-semibold text-gray-700">Mínimo</label>
-                                                    <input
-                                                        type="number"
-                                                        required
-                                                        className="input mt-1.5 border-red-100 focus:border-red-400 focus:ring-red-100"
-                                                        value={formData.min_stock}
-                                                        onChange={(e) => setFormData({ ...formData, min_stock: e.target.value })}
-                                                    />
-                                                </div>
-                                                <div>
-                                                    <label className="block text-sm font-semibold text-gray-700">Máximo</label>
-                                                    <input
-                                                        type="number"
-                                                        className="input mt-1.5"
-                                                        value={formData.max_stock}
-                                                        onChange={(e) => setFormData({ ...formData, max_stock: e.target.value })}
-                                                    />
-                                                </div>
-                                            </div>
-                                            <div>
-                                                <label className="block text-sm font-semibold text-gray-700">Descripción Corta</label>
-                                                <textarea
-                                                    className="input mt-1.5 h-[102px] resize-none text-xs"
-                                                    placeholder="Breve descripción del producto..."
-                                                    value={formData.description}
-                                                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                                            <label className="relative inline-flex items-center cursor-pointer">
+                                                <input 
+                                                    type="checkbox" 
+                                                    className="sr-only peer" 
+                                                    checked={formData.is_active}
+                                                    onChange={(e) => setFormData({...formData, is_active: e.target.checked})}
                                                 />
-                                            </div>
+                                                <div className="w-14 h-7 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[4px] after:left-[4px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-emerald-500 shadow-inner"></div>
+                                            </label>
                                         </div>
                                     </div>
 
-                                    <div className="bg-gray-50 p-4 rounded-xl border border-gray-100 flex items-center justify-between">
-                                        <div className="flex flex-col">
-                                            <span className="text-sm font-bold text-gray-900">Estado de Disponibilidad</span>
-                                            <span className="text-[10px] text-gray-500 italic">Determina si el producto puede venderse actualmente</span>
-                                        </div>
-                                        <label className="relative inline-flex items-center cursor-pointer">
-                                            <input 
-                                                type="checkbox" 
-                                                className="sr-only peer" 
-                                                checked={formData.is_active}
-                                                onChange={(e) => setFormData({...formData, is_active: e.target.checked})}
-                                            />
-                                            <div className="w-12 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary-600"></div>
-                                        </label>
-                                    </div>
-
-                                    <div className="pt-2 flex gap-4">
+                                    <div className="flex gap-4 pt-6 border-t border-gray-50">
                                         <button
                                             type="button"
-                                            className="btn btn-secondary flex-1 h-12 font-bold"
+                                            className="btn btn-secondary flex-1 h-12 font-bold text-sm uppercase tracking-wider"
                                             onClick={closeModal}
                                         >
                                             Cancelar
                                         </button>
                                         <button
                                             type="submit"
-                                            className="btn btn-primary flex-1 h-12 font-bold shadow-xl shadow-primary-200"
+                                            className="btn btn-primary flex-1 h-12 font-bold text-sm uppercase tracking-wider shadow-xl shadow-primary-100"
                                             disabled={createMutation.isPending || updateMutation.isPending}
                                         >
                                             {createMutation.isPending || updateMutation.isPending 
-                                                ? 'Guardando...' 
-                                                : (editingProduct ? 'Aplicar Cambios' : 'Crear Producto')}
+                                                ? 'Procesando...' 
+                                                : (editingProduct ? 'Actualizar Producto' : 'Crear Producto')}
                                         </button>
                                     </div>
                                 </form>
@@ -883,6 +975,115 @@ export default function Products() {
                                     >
                                         Cancelar
                                     </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Modal de Filtros (Ventana Flotante) */}
+            {isFiltersVisible && (
+                <div className="fixed inset-0 z-50 overflow-y-auto">
+                    <div className="flex min-h-screen items-center justify-center p-4 text-center sm:p-0">
+                        <div className="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" onClick={() => setIsFiltersVisible(false)} />
+                        
+                        <div className="relative transform overflow-hidden rounded-2xl bg-white text-left shadow-2xl transition-all sm:my-8 sm:w-full sm:max-w-2xl">
+                            <div className="bg-white px-6 py-6 border-b border-gray-50 flex items-center justify-between">
+                                <div className="flex items-center gap-3">
+                                    <div className="p-2 bg-primary-50 text-primary-600 rounded-xl">
+                                        <Filter className="h-5 w-5" />
+                                    </div>
+                                    <h3 className="text-xl font-bold text-gray-900 line-clamp-1">Filtros Avanzados</h3>
+                                </div>
+                                <button onClick={() => setIsFiltersVisible(false)} className="text-gray-400 hover:text-gray-500 p-1 hover:bg-gray-50 rounded-lg">
+                                    <X className="h-6 w-6" />
+                                </button>
+                            </div>
+
+                            <div className="px-6 py-8 space-y-6">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <div>
+                                        <label className="block text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-2">Categoría</label>
+                                        <select 
+                                            className="input h-12 bg-gray-50 border-gray-100 rounded-xl text-sm font-medium focus:bg-white transition-all shadow-sm"
+                                            value={filterCategory}
+                                            onChange={(e) => setFilterCategory(e.target.value)}
+                                        >
+                                            <option value="">Todas las categorías</option>
+                                            {categories?.map((cat: any) => (
+                                                <option key={cat.id} value={cat.id}>{cat.name}</option>
+                                            ))}
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label className="block text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-2">Proveedor</label>
+                                        <select 
+                                            className="input h-12 bg-gray-50 border-gray-100 rounded-xl text-sm font-medium focus:bg-white transition-all shadow-sm"
+                                            value={filterSupplier}
+                                            onChange={(e) => setFilterSupplier(e.target.value)}
+                                        >
+                                            <option value="">Todos los proveedores</option>
+                                            {suppliers?.items.map((sup) => (
+                                                <option key={sup.id} value={sup.id}>{sup.name}</option>
+                                            ))}
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label className="block text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-2">Estado</label>
+                                        <select 
+                                            className="input h-12 bg-gray-50 border-gray-100 rounded-xl text-sm font-medium focus:bg-white transition-all shadow-sm"
+                                            value={filterStatus}
+                                            onChange={(e) => setFilterStatus(e.target.value as any)}
+                                        >
+                                            <option value="all">Todos los productos</option>
+                                            <option value="active">Solo Activos</option>
+                                            <option value="inactive">Solo Inactivos</option>
+                                        </select>
+                                    </div>
+                                    <div className="md:col-span-2">
+                                        <DateRangePicker 
+                                            startDate={startDate} 
+                                            endDate={endDate} 
+                                            onChange={({start, end}) => {
+                                                setStartDate(start)
+                                                setEndDate(end)
+                                            }} 
+                                        />
+                                    </div>
+                                </div>
+
+                                <div className="pt-6 border-t border-gray-50 flex flex-col gap-3">
+                                    <button 
+                                        onClick={handleExportExcel}
+                                        className="btn bg-emerald-600 hover:bg-emerald-700 text-white flex items-center justify-center gap-2 h-12 rounded-xl font-bold uppercase tracking-widest text-xs shadow-lg shadow-emerald-200"
+                                    >
+                                        <FileDown className="h-5 w-5" />
+                                        Exportar Inventario a Excel
+                                    </button>
+                                    
+                                    <div className="grid grid-cols-2 gap-3">
+                                        <button 
+                                            onClick={() => {
+                                                setSearch('')
+                                                setFilterCategory('')
+                                                setFilterSupplier('')
+                                                setFilterStatus('all')
+                                                setStartDate('')
+                                                setEndDate('')
+                                                setIsFiltersVisible(false)
+                                            }}
+                                            className="btn border border-gray-200 text-gray-500 h-11 rounded-xl text-xs font-bold uppercase tracking-widest hover:bg-gray-50 shadow-sm"
+                                        >
+                                            Limpiar Filtros
+                                        </button>
+                                        <button 
+                                            onClick={() => setIsFiltersVisible(false)}
+                                            className="btn btn-primary h-11 rounded-xl text-xs font-bold uppercase tracking-widest shadow-lg shadow-primary-200"
+                                        >
+                                            Aplicar Filtros
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
                         </div>
