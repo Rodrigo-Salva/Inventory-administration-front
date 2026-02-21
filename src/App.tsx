@@ -6,6 +6,8 @@ import Products from './pages/Products'
 import Categories from './pages/Categories'
 import Suppliers from './pages/Suppliers'
 import Inventory from './pages/Inventory'
+import Users from './pages/Users'
+import Settings from './pages/Settings'
 import Layout from './components/layout/Layout'
 
 function PrivateRoute({ children }: { children: React.ReactNode }) {
@@ -30,6 +32,8 @@ function App() {
                 <Route path="categories" element={<Categories />} />
                 <Route path="suppliers" element={<Suppliers />} />
                 <Route path="inventory" element={<Inventory />} />
+                <Route path="users" element={<Users />} />
+                <Route path="settings" element={<Settings />} />
             </Route>
         </Routes>
     )

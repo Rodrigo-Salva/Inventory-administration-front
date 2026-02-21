@@ -47,6 +47,7 @@ export interface Supplier {
     country?: string
     postal_code?: string
     website?: string
+    payment_terms?: string
     notes?: string
     is_active: boolean
     created_at: string
@@ -57,10 +58,39 @@ export interface InventoryMovement {
     id: number
     tenant_id: number
     product_id: number
-    movement_type: 'purchase' | 'sale' | 'adjustment' | 'return'
+    movement_type: 'entry' | 'exit' | 'adjustment' | 'transfer' | 'initial'
     quantity: number
+    stock_before: number
+    stock_after: number
+    unit_cost?: number
     reference?: string
     notes?: string
+    created_at: string
+}
+
+export interface Tenant {
+    id: number
+    name: string
+    subdomain?: string
+    tax_id?: string
+    email?: string
+    phone?: string
+    website?: string
+    address?: string
+    city?: string
+    state?: string
+    country?: string
+    logo_url?: string
+    plan: string
+    created_at: string
+}
+
+export interface User {
+    id: number
+    email: string
+    is_admin: boolean
+    is_active: boolean
+    tenant_id: number
     created_at: string
 }
 
