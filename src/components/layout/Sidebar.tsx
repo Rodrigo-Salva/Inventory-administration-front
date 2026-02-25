@@ -1,5 +1,5 @@
 import { NavLink } from 'react-router-dom'
-import { LayoutDashboard, Package, FolderTree, Building2, TrendingUp, LogOut, Users, Settings } from 'lucide-react'
+import { LayoutDashboard, Package, FolderTree, Building2, TrendingUp, LogOut, Users, Settings, ShoppingCart, History } from 'lucide-react'
 import { useAuthStore } from '@/store/authStore'
 import clsx from 'clsx'
 import { useQuery } from '@tanstack/react-query'
@@ -12,6 +12,8 @@ const navigation = [
     { name: 'Categorías', href: '/categories', icon: FolderTree },
     { name: 'Proveedores', href: '/suppliers', icon: Building2 },
     { name: 'Inventario', href: '/inventory', icon: TrendingUp },
+    { name: 'Ventas (POS)', href: '/sales', icon: ShoppingCart },
+    { name: 'Historial Ventas', href: '/sales-history', icon: History },
     { name: 'Usuarios', href: '/users', icon: Users },
     { name: 'Configuración', href: '/settings', icon: Settings },
 ]

@@ -100,9 +100,36 @@ export interface User {
     created_at: string
 }
 
+export interface SaleItem {
+    id: number
+    sale_id: number
+    product_id: number
+    product?: Product
+    quantity: number
+    unit_price: number
+    subtotal: number
+}
+
+export interface Sale {
+    id: number
+    tenant_id: number
+    user_id?: number
+    user?: User
+    total_amount: number
+    payment_method: string
+    status: 'completed' | 'annulled'
+    notes?: string
+    created_at: string
+    items: SaleItem[]
+}
+
 export interface PaginatedResponse<T> {
     items: T[]
-    metadata: {
+    total: number
+    page: number
+    size: number
+    pages: number
+    metadata?: {
         total: number
         page: number
         size: number
