@@ -295,7 +295,7 @@ export default function SalesList() {
                 </div>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 {/* Gráfico de Tendencia */}
                 <div className="lg:col-span-2 bg-white p-8 rounded-[2.5rem] border border-gray-50 shadow-2xl shadow-gray-200/30 overflow-hidden">
                     <div className="flex items-center justify-between mb-8">
@@ -439,74 +439,6 @@ export default function SalesList() {
                                 )} />
                                 <span className="text-[9px] font-black text-gray-500 uppercase tracking-tighter truncate">
                                     {p.name}: ${p.value.toLocaleString()}
-                                </span>
-                            </div>
-                        ))}
-                    </div>
-                </div>
-
-                {/* Gráfico de Categorías */}
-                <div className="bg-white p-8 rounded-[2.5rem] border border-gray-50 shadow-2xl shadow-gray-200/30 overflow-hidden">
-                    <h3 className="text-lg font-black text-gray-900 tracking-tight">Top Categorías</h3>
-                    <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-6">Ventas por rubro</p>
-                    
-                    <div className="h-[200px] w-full relative">
-                        {isLoadingStats ? (
-                            <div className="h-full w-full bg-gray-50/50 animate-pulse rounded-2xl" />
-                        ) : (
-                            <ResponsiveContainer width="100%" height="100%">
-                                <PieChart>
-                                    <Pie
-                                        data={statsData?.category_distribution || []}
-                                        cx="50%"
-                                        cy="50%"
-                                        innerRadius={60}
-                                        outerRadius={80}
-                                        paddingAngle={5}
-                                        dataKey="value"
-                                    >
-                                        {statsData?.category_distribution?.map((_: any, index: number) => (
-                                            <Cell 
-                                                key={`cell-${index}`} 
-                                                fill={[
-                                                    '#6366f1', '#10b981', '#f59e0b', 
-                                                    '#ef4444', '#8b5cf6', '#06b6d4'
-                                                ][index % 6]} 
-                                            />
-                                        ))}
-                                    </Pie>
-                                    <Tooltip 
-                                         content={({ active, payload }) => {
-                                            if (active && payload && payload.length) {
-                                                return (
-                                                    <div className="bg-white p-3 rounded-xl shadow-xl border border-gray-50">
-                                                        <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">
-                                                            {payload[0].name.toUpperCase()}
-                                                        </p>
-                                                        <p className="text-sm font-black text-gray-900">
-                                                            ${Number(payload[0].value).toLocaleString()}
-                                                        </p>
-                                                    </div>
-                                                );
-                                            }
-                                            return null;
-                                        }}
-                                    />
-                                </PieChart>
-                            </ResponsiveContainer>
-                        )}
-                    </div>
-                    <div className="grid grid-cols-1 gap-2 mt-4 max-h-[100px] overflow-y-auto custom-scrollbar pr-1">
-                        {statsData?.category_distribution?.slice(0, 4).map((c: any, index: number) => (
-                            <div key={c.name} className="flex items-center justify-between p-2 rounded-xl bg-gray-50/50">
-                                <div className="flex items-center gap-2">
-                                    <span className="h-2 w-2 rounded-full" style={{ backgroundColor: ['#6366f1', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4'][index % 6] }} />
-                                    <span className="text-[9px] font-black text-gray-500 uppercase tracking-tighter truncate w-24">
-                                        {c.name}
-                                    </span>
-                                </div>
-                                <span className="text-[9px] font-black text-gray-900">
-                                    ${c.value.toLocaleString()}
                                 </span>
                             </div>
                         ))}
