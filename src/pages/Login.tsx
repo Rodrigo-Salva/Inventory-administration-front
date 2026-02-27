@@ -27,8 +27,17 @@ export default function Login() {
                 },
             })
 
-            setAuth(response.data.access_token, { email })
-            toast.success('¡Bienvenido!')
+            // First set the token so subsequent requests have it
+            useAuthStore.getState().setAuth(response.data.access_token, { email } as any)
+
+            // Fetch full profile
+            const profileResponse = await api.get('/api/v1/users/me')
+            const fullUser = profileResponse.data
+
+            // Update auth state with full user data
+            setAuth(response.data.access_token, fullUser)
+            
+            toast.success(`¡Bienvenido, ${fullUser.first_name || fullUser.email.split('@')[0]}!`)
             navigate('/')
         } catch (error: any) {
             const errorMessage = error.response?.data?.detail

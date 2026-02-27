@@ -3,11 +3,12 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import api from '@/api/client'
 import toast from 'react-hot-toast'
 import { Plus, Edit, Trash2, Shield, User as UserIcon, X, FileDown, Filter, Search } from 'lucide-react'
-import type { User, PaginatedResponse } from '@/types'
+import type { User, PaginatedResponse, UserRole, Role } from '@/types'
 import Pagination from '@/components/common/Pagination'
 import DateRangePicker from '@/components/common/DateRangePicker'
 import clsx from 'clsx'
 import { useEffect } from 'react'
+import { usePermissions } from '@/hooks/usePermissions'
 
 export default function Users() {
     const [search, setSearch] = useState('')
@@ -22,10 +23,21 @@ export default function Users() {
         email: '',
         password: '',
         is_admin: false,
+        role: 'SELLER' as UserRole,
+        role_id: undefined as number | undefined,
         is_active: true
     })
 
     const queryClient = useQueryClient()
+    const { hasPermission } = usePermissions()
+
+    const { data: roles } = useQuery<Role[]>({
+        queryKey: ['roles'],
+        queryFn: async () => {
+            const response = await api.get('/api/v1/roles/')
+            return response.data
+        }
+    })
 
     const { data: usersData, isLoading } = useQuery<PaginatedResponse<User>>({
         queryKey: ['users', page, search, filterStatus, startDate, endDate],
@@ -56,7 +68,11 @@ export default function Users() {
             closeModal()
         },
         onError: (err: any) => {
-            toast.error(err.response?.data?.detail || 'Error al crear usuario')
+            const detail = err.response?.data?.detail
+            const message = typeof detail === 'string' 
+                ? detail 
+                : (Array.isArray(detail) ? detail[0]?.msg : 'Error al crear usuario')
+            toast.error(message)
         },
     })
 
@@ -68,7 +84,11 @@ export default function Users() {
             closeModal()
         },
         onError: (err: any) => {
-            toast.error(err.response?.data?.detail || 'Error al actualizar usuario')
+            const detail = err.response?.data?.detail
+            const message = typeof detail === 'string' 
+                ? detail 
+                : (Array.isArray(detail) ? detail[0]?.msg : 'Error al actualizar usuario')
+            toast.error(message)
         },
     })
 
@@ -79,7 +99,11 @@ export default function Users() {
             toast.success('Usuario eliminado')
         },
         onError: (err: any) => {
-            toast.error(err.response?.data?.detail || 'Error al eliminar usuario')
+            const detail = err.response?.data?.detail
+            const message = typeof detail === 'string' 
+                ? detail 
+                : (Array.isArray(detail) ? detail[0]?.msg : 'Error al eliminar usuario')
+            toast.error(message)
         },
     })
 
@@ -90,6 +114,8 @@ export default function Users() {
                 email: user.email,
                 password: '',
                 is_admin: user.is_admin,
+                role: user.role,
+                role_id: user.role_id,
                 is_active: user.is_active
             })
         } else {
@@ -98,6 +124,8 @@ export default function Users() {
                 email: '',
                 password: '',
                 is_admin: false,
+                role: 'SELLER' as UserRole,
+                role_id: undefined,
                 is_active: true
             })
         }
@@ -153,6 +181,16 @@ export default function Users() {
         }
     }
 
+    if (!hasPermission('users:view')) {
+        return (
+            <div className="flex flex-col items-center justify-center min-h-[400px] text-center p-8 bg-white rounded-3xl border border-gray-100 shadow-sm">
+                <Shield className="h-16 w-16 text-gray-200 mb-4" />
+                <h2 className="text-xl font-bold text-gray-900">Acceso Denegado</h2>
+                <p className="text-gray-500 mt-2">No tienes permisos para ver los usuarios.</p>
+            </div>
+        )
+    }
+
     return (
         <div className="space-y-6">
             <div className="flex items-center justify-between">
@@ -176,13 +214,15 @@ export default function Users() {
                             <span className="flex h-2 w-2 rounded-full bg-primary-600 animate-pulse" />
                         )}
                     </button>
-                    <button 
-                        onClick={() => openModal()}
-                        className="btn btn-primary flex items-center gap-2 h-10 rounded-xl"
-                    >
-                        <Plus className="h-5 w-5" />
-                        <span className="hidden sm:inline">Nuevo Usuario</span>
-                    </button>
+                    {hasPermission('users:create') && (
+                        <button 
+                            onClick={() => openModal()}
+                            className="btn btn-primary flex items-center gap-2 h-10 rounded-xl"
+                        >
+                            <Plus className="h-5 w-5" />
+                            <span className="hidden sm:inline">Nuevo Usuario</span>
+                        </button>
+                    )}
                 </div>
             </div>
 
@@ -232,11 +272,24 @@ export default function Users() {
                                             </div>
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap">
-                                            <div className="flex items-center gap-1.5 font-medium">
-                                                {user.is_admin ? (
-                                                    <><Shield className="h-4 w-4 text-primary-600" /><span className="text-sm text-gray-900">Admin</span></>
-                                                ) : (
-                                                    <span className="text-sm text-gray-600">Operador</span>
+                                            <div className="flex flex-col gap-1">
+                                                <div className="flex items-center gap-1.5 font-medium">
+                                                    {user.role_obj ? (
+                                                        <span className="text-sm text-primary-700 font-bold">{user.role_obj.name}</span>
+                                                    ) : (
+                                                        <>
+                                                            {user.role === 'SUPERADMIN' && <><Shield className="h-4 w-4 text-purple-600" /><span className="text-sm text-purple-700 font-bold">Super Admin</span></>}
+                                                            {user.role === 'ADMIN' && <><Shield className="h-4 w-4 text-primary-600" /><span className="text-sm text-primary-700 font-bold">Admin</span></>}
+                                                            {user.role === 'MANAGER' && <><UserIcon className="h-4 w-4 text-blue-600" /><span className="text-sm text-blue-700 font-bold">Manager</span></>}
+                                                            {user.role === 'SELLER' && <><UserIcon className="h-4 w-4 text-gray-500" /><span className="text-sm text-gray-600">Vendedor</span></>}
+                                                            {!user.role && (user.is_admin ? <span className="text-sm text-primary-700 font-bold">Admin</span> : <span className="text-sm text-gray-600">Operador</span>)}
+                                                        </>
+                                                    )}
+                                                </div>
+                                                {user.is_admin && user.role !== 'ADMIN' && user.role !== 'SUPERADMIN' && (
+                                                    <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium bg-primary-100 text-primary-800 w-fit">
+                                                        Admin Sist.
+                                                    </span>
                                                 )}
                                             </div>
                                         </td>
@@ -253,18 +306,22 @@ export default function Users() {
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                             <div className="flex justify-end gap-1">
-                                                <button 
-                                                    onClick={() => openModal(user)}
-                                                    className="p-2 text-primary-600 hover:bg-primary-50 rounded-lg transition-colors"
-                                                >
-                                                    <Edit className="h-5 w-5" />
-                                                </button>
-                                                <button
-                                                    onClick={() => handleDelete(user.id, user.email)}
-                                                    className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                                                >
-                                                    <Trash2 className="h-5 w-5" />
-                                                </button>
+                                                {hasPermission('users:edit') && (
+                                                    <button 
+                                                        onClick={() => openModal(user)}
+                                                        className="p-2 text-primary-600 hover:bg-primary-50 rounded-lg transition-colors"
+                                                    >
+                                                        <Edit className="h-5 w-5" />
+                                                    </button>
+                                                )}
+                                                {hasPermission('users:delete') && (
+                                                    <button
+                                                        onClick={() => handleDelete(user.id, user.email)}
+                                                        className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                                                    >
+                                                        <Trash2 className="h-5 w-5" />
+                                                    </button>
+                                                )}
                                             </div>
                                         </td>
                                     </tr>
@@ -284,11 +341,11 @@ export default function Users() {
                                             <div>
                                                 <div className="text-sm font-bold text-gray-900">{user.email}</div>
                                                 <div className="flex items-center gap-1 mt-0.5">
-                                                    {user.is_admin ? (
-                                                        <><Shield className="h-3 w-3 text-primary-600" /><span className="text-[10px] text-primary-700 font-bold uppercase tracking-wider">Admin</span></>
-                                                    ) : (
-                                                        <span className="text-[10px] text-gray-500 font-bold uppercase tracking-wider">Operador</span>
-                                                    )}
+                                                    {user.role === 'SUPERADMIN' && <><Shield className="h-3 w-3 text-purple-600" /><span className="text-[10px] text-purple-700 font-bold uppercase tracking-wider">Super Admin</span></>}
+                                                    {user.role === 'ADMIN' && <><Shield className="h-3 w-3 text-primary-600" /><span className="text-[10px] text-primary-700 font-bold uppercase tracking-wider">Admin</span></>}
+                                                    {user.role === 'MANAGER' && <><UserIcon className="h-3 w-3 text-blue-600" /><span className="text-[10px] text-blue-700 font-bold uppercase tracking-wider">Manager</span></>}
+                                                    {user.role === 'SELLER' && <><UserIcon className="h-3 w-3 text-gray-500" /><span className="text-[10px] text-gray-500 font-bold uppercase tracking-wider">Vendedor</span></>}
+                                                    {!user.role && (user.is_admin ? <span className="text-sm text-primary-700 font-bold">Admin</span> : <span className="text-sm text-gray-600">Operador</span>)}
                                                 </div>
                                             </div>
                                         </div>
@@ -303,18 +360,22 @@ export default function Users() {
                                         </div>
                                     </div>
                                     <div className="flex gap-2 pt-3 border-t border-gray-50 justify-end">
-                                        <button 
-                                            onClick={() => openModal(user)}
-                                            className="px-4 py-2 text-sm font-bold text-primary-600 bg-primary-50 rounded-xl flex-1 max-w-[120px] text-center"
-                                        >
-                                            Editar
-                                        </button>
-                                        <button 
-                                            onClick={() => handleDelete(user.id, user.email)}
-                                            className="px-4 py-2 text-sm font-bold text-red-600 bg-red-50 rounded-xl flex-1 max-w-[120px] text-center"
-                                        >
-                                            Eliminar
-                                        </button>
+                                        {hasPermission('users:edit') && (
+                                            <button 
+                                                onClick={() => openModal(user)}
+                                                className="px-4 py-2 text-sm font-bold text-primary-600 bg-primary-50 rounded-xl flex-1 max-w-[120px] text-center"
+                                            >
+                                                Editar
+                                            </button>
+                                        )}
+                                        {hasPermission('users:delete') && (
+                                            <button 
+                                                onClick={() => handleDelete(user.id, user.email)}
+                                                className="px-4 py-2 text-sm font-bold text-red-600 bg-red-50 rounded-xl flex-1 max-w-[120px] text-center"
+                                            >
+                                                Eliminar
+                                            </button>
+                                        )}
                                     </div>
                                 </div>
                             ))}
@@ -322,9 +383,9 @@ export default function Users() {
 
                         <Pagination 
                             currentPage={page}
-                            totalPages={usersData?.metadata.pages || 0}
+                            totalPages={usersData?.metadata?.pages || 0}
                             onPageChange={setPage}
-                            totalItems={usersData?.metadata.total}
+                            totalItems={usersData?.metadata?.total}
                         />
                     </div>
                 )}
@@ -369,25 +430,44 @@ export default function Users() {
                                             onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                                         />
                                     </div>
-                                    <div className="flex items-center gap-4">
-                                        <label className="flex items-center gap-2 cursor-pointer">
-                                            <input
-                                                type="checkbox"
-                                                className="rounded border-gray-300 text-primary-600 focus:ring-primary-500"
-                                                checked={formData.is_admin}
-                                                onChange={(e) => setFormData({ ...formData, is_admin: e.target.checked })}
-                                            />
-                                            <span className="text-sm text-gray-700">Es Administrador</span>
-                                        </label>
-                                        <label className="flex items-center gap-2 cursor-pointer">
-                                            <input
-                                                type="checkbox"
-                                                className="rounded border-gray-300 text-primary-600 focus:ring-primary-500"
-                                                checked={formData.is_active}
-                                                onChange={(e) => setFormData({ ...formData, is_active: e.target.checked })}
-                                            />
-                                            <span className="text-sm text-gray-700">Activo</span>
-                                        </label>
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-700">Tipo de Usuario (Rol)</label>
+                                            <select
+                                                className="input mt-1"
+                                                value={formData.role_id || ''}
+                                                onChange={(e) => {
+                                                    const val = e.target.value
+                                                    if (!val) return;
+                                                    const selectedRole = roles?.find(r => r.id === Number(val))
+                                                    setFormData({ 
+                                                        ...formData, 
+                                                        role_id: Number(val), 
+                                                        is_admin: selectedRole?.name.toUpperCase().includes('ADMIN') || false,
+                                                        role: 'SELLER' // Valor por defecto para compatibilidad backend
+                                                    })
+                                                }}
+                                            >
+                                                <option value="">Seleccionar Tipo de Usuario...</option>
+                                                {roles?.map(role => (
+                                                    <option key={role.id} value={role.id}>{role.name}</option>
+                                                ))}
+                                            </select>
+                                        </div>
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-700">Estado</label>
+                                            <div className="flex items-center mt-3 gap-4">
+                                                <label className="flex items-center gap-2 cursor-pointer">
+                                                    <input
+                                                        type="checkbox"
+                                                        className="rounded border-gray-300 text-primary-600 focus:ring-primary-500"
+                                                        checked={formData.is_active}
+                                                        onChange={(e) => setFormData({ ...formData, is_active: e.target.checked })}
+                                                    />
+                                                    <span className="text-sm text-gray-700">Activo</span>
+                                                </label>
+                                            </div>
+                                        </div>
                                     </div>
                                     <div className="mt-5 sm:mt-6 flex gap-3">
                                         <button
@@ -454,13 +534,15 @@ export default function Users() {
                                 />
 
                                 <div className="pt-6 border-t border-gray-50 flex flex-col gap-3">
-                                    <button 
-                                        onClick={handleExportExcel}
-                                        className="btn bg-emerald-600 hover:bg-emerald-700 text-white flex items-center justify-center gap-2 h-12 rounded-xl font-bold uppercase tracking-widest text-xs shadow-lg shadow-emerald-200"
-                                    >
-                                        <FileDown className="h-5 w-5" />
-                                        Exportar a Excel
-                                    </button>
+                                    {hasPermission('reports:view') && (
+                                        <button 
+                                            onClick={handleExportExcel}
+                                            className="btn bg-emerald-600 hover:bg-emerald-700 text-white flex items-center justify-center gap-2 h-12 rounded-xl font-bold uppercase tracking-widest text-xs shadow-lg shadow-emerald-200"
+                                        >
+                                            <FileDown className="h-5 w-5" />
+                                            Exportar a Excel
+                                        </button>
+                                    )}
                                     
                                     <div className="grid grid-cols-2 gap-3">
                                         <button 

@@ -8,6 +8,8 @@ import type { Category, PaginatedResponse } from '@/types'
 import ConfirmationModal from '@/components/common/ConfirmationModal'
 import Pagination from '@/components/common/Pagination'
 import DateRangePicker from '@/components/common/DateRangePicker'
+import { usePermissions } from '@/hooks/usePermissions'
+import { Shield } from 'lucide-react'
 
 export default function Categories() {
     const [page, setPage] = useState(1)
@@ -36,6 +38,7 @@ export default function Categories() {
     }, [search, filterStatus, startDate, endDate])
 
     const queryClient = useQueryClient()
+    const { hasPermission } = usePermissions()
 
     // 1. Cargar árbol de categorías (con filtro de estado y fecha)
     const { data: tree, isLoading: isLoadingTree } = useQuery<Category[]>({
@@ -191,6 +194,16 @@ export default function Categories() {
         }
     }
 
+    if (!hasPermission('categories:view')) {
+        return (
+            <div className="flex flex-col items-center justify-center min-h-[400px] text-center p-8 bg-white rounded-3xl border border-gray-100 shadow-sm">
+                <Shield className="h-16 w-16 text-gray-200 mb-4" />
+                <h2 className="text-xl font-bold text-gray-900">Acceso Denegado</h2>
+                <p className="text-gray-500 mt-2">No tienes permisos para ver las categorías.</p>
+            </div>
+        )
+    }
+
     const renderCategory = (category: Category, level = 0) => (
         <div key={category.id} className={`${level > 0 ? 'ml-8 mt-3' : 'mt-4'}`}>
             <div className="flex items-center gap-3 p-4 bg-white border border-gray-100 rounded-xl group hover:border-primary-200 hover:shadow-md transition-all">
@@ -208,20 +221,24 @@ export default function Categories() {
                 </div>
                 
                 <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <button 
-                        onClick={() => openModal(category)}
-                        className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-all"
-                        title="Editar"
-                    >
-                        <Edit className="h-4 w-4" />
-                    </button>
-                    <button 
-                        onClick={() => handleDeleteClick(category.id, category.name)}
-                        className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-all"
-                        title="Eliminar"
-                    >
-                        <Trash2 className="h-4 w-4" />
-                    </button>
+                    {hasPermission('categories:edit') && (
+                        <button 
+                            onClick={() => openModal(category)}
+                            className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-all"
+                            title="Editar"
+                        >
+                            <Edit className="h-4 w-4" />
+                        </button>
+                    )}
+                    {hasPermission('categories:delete') && (
+                        <button 
+                            onClick={() => handleDeleteClick(category.id, category.name)}
+                            className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-all"
+                            title="Eliminar"
+                        >
+                            <Trash2 className="h-4 w-4" />
+                        </button>
+                    )}
                 </div>
 
                 <span
@@ -264,13 +281,15 @@ export default function Categories() {
                             <span className="flex h-2 w-2 rounded-full bg-primary-600 animate-pulse" />
                         )}
                     </button>
-                    <button 
-                        onClick={() => openModal()}
-                        className="btn btn-primary flex items-center gap-2 h-10 rounded-xl px-4 text-xs font-black uppercase tracking-widest shadow-lg shadow-primary-200"
-                    >
-                        <Plus className="h-5 w-5" />
-                        <span className="hidden sm:inline">Nueva Categoría</span>
-                    </button>
+                    {hasPermission('categories:create') && (
+                        <button 
+                            onClick={() => openModal()}
+                            className="btn btn-primary flex items-center gap-2 h-10 rounded-xl px-4 text-xs font-black uppercase tracking-widest shadow-lg shadow-primary-200"
+                        >
+                            <Plus className="h-5 w-5" />
+                            <span className="hidden sm:inline">Nueva Categoría</span>
+                        </button>
+                    )}
                 </div>
             </div>
 
@@ -290,7 +309,7 @@ export default function Categories() {
                 <div className="space-y-6">
                     <div className="flex items-center gap-2 text-sm text-gray-500 bg-gray-50 p-3 rounded-xl border border-gray-100">
                         <Info className="h-4 w-4 text-primary-500" />
-                        Mostrando {searchResults?.metadata.total || 0} resultados para "<span className="font-bold text-gray-900">{search}</span>"
+                        Mostrando {searchResults?.metadata?.total || 0} resultados para "<span className="font-bold text-gray-900">{search}</span>"
                     </div>
                     
                     {isLoadingSearch ? (
@@ -304,13 +323,13 @@ export default function Categories() {
                         </div>
                     )}
                     
-                    {searchResults && searchResults.metadata.pages > 1 && (
+                    {searchResults && (searchResults.metadata?.pages || 0) > 1 && (
                         <div className="pt-4">
                             <Pagination 
                                 currentPage={page}
-                                totalPages={searchResults.metadata.pages}
+                                totalPages={searchResults.metadata?.pages || 0}
                                 onPageChange={setPage}
-                                totalItems={searchResults.metadata.total}
+                                totalItems={searchResults.metadata?.total}
                             />
                         </div>
                     )}
@@ -525,13 +544,15 @@ export default function Categories() {
                                 </div>
 
                                 <div className="pt-6 border-t border-gray-50 flex flex-col gap-3">
-                                    <button 
-                                        onClick={handleExportExcel}
-                                        className="btn bg-emerald-600 hover:bg-emerald-700 text-white flex items-center justify-center gap-2 h-12 rounded-xl font-bold uppercase tracking-widest text-xs shadow-lg shadow-emerald-200"
-                                    >
-                                        <FileDown className="h-5 w-5" />
-                                        Exportar a Excel
-                                    </button>
+                                    {hasPermission('products:download') && ( // Usamos products:download ya que el permiso de reporte es general
+                                        <button 
+                                            onClick={handleExportExcel}
+                                            className="btn bg-emerald-600 hover:bg-emerald-700 text-white flex items-center justify-center gap-2 h-12 rounded-xl font-bold uppercase tracking-widest text-xs shadow-lg shadow-emerald-200"
+                                        >
+                                            <FileDown className="h-5 w-5" />
+                                            Exportar a Excel
+                                        </button>
+                                    )}
                                     
                                     <div className="grid grid-cols-2 gap-3">
                                         <button 

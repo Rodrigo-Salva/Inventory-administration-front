@@ -8,6 +8,8 @@ import type { Supplier, PaginatedResponse } from '@/types'
 import ConfirmationModal from '@/components/common/ConfirmationModal'
 import Pagination from '@/components/common/Pagination'
 import DateRangePicker from '@/components/common/DateRangePicker'
+import { usePermissions } from '@/hooks/usePermissions'
+import { Shield } from 'lucide-react'
 
 export default function Suppliers() {
     const [page, setPage] = useState(1)
@@ -42,6 +44,7 @@ export default function Suppliers() {
     const [supplierToDelete, setSupplierToDelete] = useState<{ id: number, name: string } | null>(null)
 
     const queryClient = useQueryClient()
+    const { hasPermission } = usePermissions()
 
     const { data, isLoading } = useQuery<PaginatedResponse<Supplier>>({
         queryKey: ['suppliers', page, search, filterStatus, startDate, endDate],
@@ -197,6 +200,16 @@ export default function Suppliers() {
         }
     }
 
+    if (!hasPermission('suppliers:view')) {
+        return (
+            <div className="flex flex-col items-center justify-center min-h-[400px] text-center p-8 bg-white rounded-3xl border border-gray-100 shadow-sm">
+                <Shield className="h-16 w-16 text-gray-200 mb-4" />
+                <h2 className="text-xl font-bold text-gray-900">Acceso Denegado</h2>
+                <p className="text-gray-500 mt-2">No tienes permisos para ver los proveedores.</p>
+            </div>
+        )
+    }
+
     const renderSuppliers = () => {
         if (!data?.items || data.items.length === 0) {
             return (
@@ -281,20 +294,24 @@ export default function Suppliers() {
                                 )}
                             </div>
                             <div className="flex items-center gap-1">
-                                <button 
-                                    onClick={() => openModal(supplier)}
-                                    className="p-2.5 text-blue-600 hover:bg-blue-50 rounded-xl transition-all"
-                                    title="Editar"
-                                >
-                                    <Edit className="h-4.5 w-4.5" />
-                                </button>
-                                <button 
-                                    onClick={() => handleDeleteClick(supplier.id, supplier.name)}
-                                    className="p-2.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-xl transition-all"
-                                    title="Eliminar"
-                                >
-                                    <Trash2 className="h-4.5 w-4.5" />
-                                </button>
+                                {hasPermission('suppliers:edit') && (
+                                    <button 
+                                        onClick={() => openModal(supplier)}
+                                        className="p-2.5 text-blue-600 hover:bg-blue-50 rounded-xl transition-all"
+                                        title="Editar"
+                                    >
+                                        <Edit className="h-4.5 w-4.5" />
+                                    </button>
+                                )}
+                                {hasPermission('suppliers:delete') && (
+                                    <button 
+                                        onClick={() => handleDeleteClick(supplier.id, supplier.name)}
+                                        className="p-2.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-xl transition-all"
+                                        title="Eliminar"
+                                    >
+                                        <Trash2 className="h-4.5 w-4.5" />
+                                    </button>
+                                )}
                             </div>
                         </div>
                     </div>
@@ -326,13 +343,15 @@ export default function Suppliers() {
                             <span className="flex h-2 w-2 rounded-full bg-primary-600 animate-pulse" />
                         )}
                     </button>
-                    <button 
-                        onClick={() => openModal()}
-                        className="btn btn-primary flex items-center gap-2 h-10 rounded-xl px-4 text-xs font-black uppercase tracking-widest shadow-lg shadow-primary-200"
-                    >
-                        <Plus className="h-5 w-5" />
-                        <span className="hidden sm:inline">Nuevo Proveedor</span>
-                    </button>
+                    {hasPermission('suppliers:create') && (
+                        <button 
+                            onClick={() => openModal()}
+                            className="btn btn-primary flex items-center gap-2 h-10 rounded-xl px-4 text-xs font-black uppercase tracking-widest shadow-lg shadow-primary-200"
+                        >
+                            <Plus className="h-5 w-5" />
+                            <span className="hidden sm:inline">Nuevo Proveedor</span>
+                        </button>
+                    )}
                 </div>
             </div>
 
@@ -360,9 +379,9 @@ export default function Suppliers() {
                 <div className="mt-8">
                     <Pagination 
                         currentPage={page}
-                        totalPages={data?.metadata.pages || 0}
+                        totalPages={data?.metadata?.pages || 0}
                         onPageChange={setPage}
-                        totalItems={data?.metadata.total}
+                        totalItems={data?.metadata?.total}
                     />
                 </div>
 
@@ -619,13 +638,15 @@ export default function Suppliers() {
                                 </div>
 
                                 <div className="pt-6 border-t border-gray-50 flex flex-col gap-3">
-                                    <button 
-                                        onClick={handleExportExcel}
-                                        className="btn bg-emerald-600 hover:bg-emerald-700 text-white flex items-center justify-center gap-2 h-12 rounded-xl font-bold uppercase tracking-widest text-xs shadow-lg shadow-emerald-200"
-                                    >
-                                        <FileDown className="h-5 w-5" />
-                                        Exportar a Excel
-                                    </button>
+                                    {hasPermission('products:download') && ( // Usamos el permiso de reporte general
+                                        <button 
+                                            onClick={handleExportExcel}
+                                            className="btn bg-emerald-600 hover:bg-emerald-700 text-white flex items-center justify-center gap-2 h-12 rounded-xl font-bold uppercase tracking-widest text-xs shadow-lg shadow-emerald-200"
+                                        >
+                                            <FileDown className="h-5 w-5" />
+                                            Exportar a Excel
+                                        </button>
+                                    )}
                                     
                                     <div className="grid grid-cols-2 gap-3">
                                         <button 

@@ -155,7 +155,13 @@ export default function Profile() {
                             <h2 className="text-lg font-bold text-slate-900">
                                 {user?.first_name} {user?.last_name}
                             </h2>
-                            <p className="text-xs font-bold text-primary-600 uppercase tracking-widest mt-1">Administrador</p>
+                            <p className="text-xs font-bold text-primary-600 uppercase tracking-widest mt-1">
+                                {user?.role === 'SUPERADMIN' && 'Super Administrador'}
+                                {user?.role === 'ADMIN' && 'Administrador'}
+                                {user?.role === 'MANAGER' && 'Manager'}
+                                {user?.role === 'SELLER' && 'Vendedor'}
+                                {!user?.role && (user?.is_admin ? 'Administrador' : 'Operador')}
+                            </p>
                         </div>
                         <div className="pt-4 border-t border-slate-50">
                             <div className="flex items-center justify-center gap-2 text-slate-500 text-sm">

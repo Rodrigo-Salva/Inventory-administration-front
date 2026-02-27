@@ -8,6 +8,8 @@ import DateRangePicker from '@/components/common/DateRangePicker'
 import Pagination from '@/components/common/Pagination'
 import clsx from 'clsx'
 import { useEffect } from 'react'
+import { usePermissions } from '@/hooks/usePermissions'
+import { Shield } from 'lucide-react'
 
 export default function Inventory() {
     const [selectedProduct, setSelectedProduct] = useState<number | null>(null)
@@ -20,6 +22,7 @@ export default function Inventory() {
     const [isFiltersVisible, setIsFiltersVisible] = useState(false)
     const [movementSearch, setMovementSearch] = useState('')
     const queryClient = useQueryClient()
+    const { hasPermission } = usePermissions()
 
     const { data: categoriesData } = useQuery<PaginatedResponse<any>>({
         queryKey: ['categories-all'],
@@ -163,6 +166,16 @@ export default function Inventory() {
 
     const selectedProductData = productsData?.items?.find((p: Product) => p.id === selectedProduct)
 
+    if (!hasPermission('inventory:view')) {
+        return (
+            <div className="flex flex-col items-center justify-center min-h-[400px] text-center p-8 bg-white rounded-3xl border border-gray-100 shadow-sm">
+                <Shield className="h-16 w-16 text-gray-200 mb-4" />
+                <h2 className="text-xl font-bold text-gray-900">Acceso Denegado</h2>
+                <p className="text-gray-500 mt-2">No tienes permisos para ver el inventario.</p>
+            </div>
+        )
+    }
+
     return (
         <div className="space-y-6">
             <div className="flex items-center justify-between">
@@ -190,121 +203,123 @@ export default function Inventory() {
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <div className="card">
-                    <h2 className="text-lg font-semibold text-gray-900 mb-4">Movimiento de Stock</h2>
+                {hasPermission('inventory:adjust') && (
+                    <div className="card">
+                        <h2 className="text-lg font-semibold text-gray-900 mb-4">Movimiento de Stock</h2>
 
-                    <div className="space-y-4">
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Filtrar por Categoría</label>
-                                <select
-                                    className="input"
-                                    value={selectedCategory}
-                                    onChange={(e) => {
-                                        setSelectedCategory(e.target.value === 'all' ? 'all' : Number(e.target.value))
-                                        setSelectedProduct(null)
-                                    }}
-                                >
-                                    <option value="all">Todas las categorías</option>
-                                    {categoriesData?.items?.map((cat: any) => (
-                                        <option key={cat.id} value={cat.id}>{cat.name}</option>
-                                    ))}
-                                </select>
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Producto</label>
-                                <select
-                                    className="input"
-                                    value={selectedProduct || ''}
-                                    onChange={(e) => setSelectedProduct(Number(e.target.value))}
-                                >
-                                    <option value="">Seleccionar producto...</option>
-                                    {productsData?.items?.map((product: Product) => (
-                                        <option key={product.id} value={product.id}>
-                                            {product.name} - Stock: {product.stock}
-                                        </option>
-                                    ))}
-                                </select>
-                            </div>
-                        </div>
-
-                        {selectedProductData && (
-                            <div className="p-4 bg-gray-50 rounded-lg">
-                                <div className="grid grid-cols-2 gap-4 text-sm">
-                                    <div>
-                                        <span className="text-gray-600">SKU:</span>
-                                        <span className="ml-2 font-medium">{selectedProductData.sku}</span>
-                                    </div>
-                                    <div>
-                                        <span className="text-gray-600">Stock Actual:</span>
-                                        <span className="ml-2 font-semibold text-primary-600">{selectedProductData.stock}</span>
-                                    </div>
-                                    <div>
-                                        <span className="text-gray-600">Stock Mínimo:</span>
-                                        <span className="ml-2">{selectedProductData.min_stock}</span>
-                                    </div>
-                                    <div>
-                                        <span className="text-gray-600">Precio:</span>
-                                        <span className="ml-2">${Number(selectedProductData.price).toFixed(2)}</span>
-                                    </div>
+                        <div className="space-y-4">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Filtrar por Categoría</label>
+                                    <select
+                                        className="input"
+                                        value={selectedCategory}
+                                        onChange={(e) => {
+                                            setSelectedCategory(e.target.value === 'all' ? 'all' : Number(e.target.value))
+                                            setSelectedProduct(null)
+                                        }}
+                                    >
+                                        <option value="all">Todas las categorías</option>
+                                        {categoriesData?.items?.map((cat: any) => (
+                                            <option key={cat.id} value={cat.id}>{cat.name}</option>
+                                        ))}
+                                    </select>
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Producto</label>
+                                    <select
+                                        className="input"
+                                        value={selectedProduct || ''}
+                                        onChange={(e) => setSelectedProduct(Number(e.target.value))}
+                                    >
+                                        <option value="">Seleccionar producto...</option>
+                                        {productsData?.items?.map((product: Product) => (
+                                            <option key={product.id} value={product.id}>
+                                                {product.name} - Stock: {product.stock}
+                                            </option>
+                                        ))}
+                                    </select>
                                 </div>
                             </div>
-                        )}
 
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">Cantidad</label>
-                            <input
-                                type="number"
-                                className="input"
-                                value={quantity}
-                                onChange={(e) => setQuantity(e.target.value)}
-                                placeholder="0"
-                                min="0"
-                            />
-                        </div>
+                            {selectedProductData && (
+                                <div className="p-4 bg-gray-50 rounded-lg">
+                                    <div className="grid grid-cols-2 gap-4 text-sm">
+                                        <div>
+                                            <span className="text-gray-600">SKU:</span>
+                                            <span className="ml-2 font-medium">{selectedProductData.sku}</span>
+                                        </div>
+                                        <div>
+                                            <span className="text-gray-600">Stock Actual:</span>
+                                            <span className="ml-2 font-semibold text-primary-600">{selectedProductData.stock}</span>
+                                        </div>
+                                        <div>
+                                            <span className="text-gray-600">Stock Mínimo:</span>
+                                            <span className="ml-2">{selectedProductData.min_stock}</span>
+                                        </div>
+                                        <div>
+                                            <span className="text-gray-600">Precio:</span>
+                                            <span className="ml-2">${Number(selectedProductData.price).toFixed(2)}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
 
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">Notas (opcional)</label>
-                            <textarea
-                                className="input"
-                                rows={3}
-                                value={notes}
-                                onChange={(e) => setNotes(e.target.value)}
-                                placeholder="Razón del movimiento..."
-                            />
-                        </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Cantidad</label>
+                                <input
+                                    type="number"
+                                    className="input"
+                                    value={quantity}
+                                    onChange={(e) => setQuantity(e.target.value)}
+                                    placeholder="0"
+                                    min="0"
+                                />
+                            </div>
 
-                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-4">
-                            <button
-                                onClick={handleAddStock}
-                                disabled={!selectedProduct || !quantity}
-                                className="btn btn-primary flex items-center justify-center gap-2 h-11 sm:h-auto"
-                            >
-                                <TrendingUp className="h-4 w-4" />
-                                <span className="sm:hidden md:inline">Agregar</span>
-                                <span className="hidden sm:inline md:hidden">Add</span>
-                            </button>
-                            <button
-                                onClick={handleRemoveStock}
-                                disabled={!selectedProduct || !quantity}
-                                className="btn btn-danger flex items-center justify-center gap-2 h-11 sm:h-auto"
-                            >
-                                <TrendingDown className="h-4 w-4" />
-                                <span className="sm:hidden md:inline">Remover</span>
-                                <span className="hidden sm:inline md:hidden">Out</span>
-                            </button>
-                            <button
-                                onClick={handleAdjustStock}
-                                disabled={!selectedProduct || !quantity}
-                                className="btn btn-secondary flex items-center justify-center gap-2 h-11 sm:h-auto"
-                            >
-                                <RefreshCw className="h-4 w-4" />
-                                <span className="sm:hidden md:inline">Ajustar</span>
-                                <span className="hidden sm:inline md:hidden">Fix</span>
-                            </button>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Notas (opcional)</label>
+                                <textarea
+                                    className="input"
+                                    rows={3}
+                                    value={notes}
+                                    onChange={(e) => setNotes(e.target.value)}
+                                    placeholder="Razón del movimiento..."
+                                />
+                            </div>
+
+                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-4">
+                                <button
+                                    onClick={handleAddStock}
+                                    disabled={!selectedProduct || !quantity}
+                                    className="btn btn-primary flex items-center justify-center gap-2 h-11 sm:h-auto"
+                                >
+                                    <TrendingUp className="h-4 w-4" />
+                                    <span className="sm:hidden md:inline">Agregar</span>
+                                    <span className="hidden sm:inline md:hidden">Add</span>
+                                </button>
+                                <button
+                                    onClick={handleRemoveStock}
+                                    disabled={!selectedProduct || !quantity}
+                                    className="btn btn-danger flex items-center justify-center gap-2 h-11 sm:h-auto"
+                                >
+                                    <TrendingDown className="h-4 w-4" />
+                                    <span className="sm:hidden md:inline">Remover</span>
+                                    <span className="hidden sm:inline md:hidden">Out</span>
+                                </button>
+                                <button
+                                    onClick={handleAdjustStock}
+                                    disabled={!selectedProduct || !quantity}
+                                    className="btn btn-secondary flex items-center justify-center gap-2 h-11 sm:h-auto"
+                                >
+                                    <RefreshCw className="h-4 w-4" />
+                                    <span className="sm:hidden md:inline">Ajustar</span>
+                                    <span className="hidden sm:inline md:hidden">Fix</span>
+                                </button>
+                            </div>
                         </div>
                     </div>
-                </div>
+                )}
 
                 <div className="card">
                     <h2 className="text-lg font-semibold text-gray-900 mb-4">Productos con Stock Bajo</h2>
@@ -410,13 +425,13 @@ export default function Inventory() {
                             </tbody>
                         </table>
                         
-                        {movementsData && movementsData.metadata.pages > 1 && (
+                        {movementsData && (movementsData.metadata?.pages || 0) > 1 && (
                             <div className="mt-6 pt-6 border-t border-gray-50">
                                 <Pagination 
                                     currentPage={page}
-                                    totalPages={movementsData.metadata.pages}
+                                    totalPages={movementsData.metadata?.pages || 0}
                                     onPageChange={setPage}
-                                    totalItems={movementsData.metadata.total}
+                                    totalItems={movementsData.metadata?.total}
                                 />
                             </div>
                         )}
@@ -474,13 +489,15 @@ export default function Inventory() {
                                     />
 
                                 <div className="pt-6 border-t border-gray-50 flex flex-col gap-3">
-                                    <button 
-                                        onClick={handleExportExcel}
-                                        className="btn bg-emerald-600 hover:bg-emerald-700 text-white flex items-center justify-center gap-2 h-12 rounded-xl font-bold uppercase tracking-widest text-xs shadow-lg shadow-emerald-200"
-                                    >
-                                        <FileDown className="h-5 w-5" />
-                                        Exportar a Excel
-                                    </button>
+                                    {hasPermission('reports:view') && (
+                                        <button 
+                                            onClick={handleExportExcel}
+                                            className="btn bg-emerald-600 hover:bg-emerald-700 text-white flex items-center justify-center gap-2 h-12 rounded-xl font-bold uppercase tracking-widest text-xs shadow-lg shadow-emerald-200"
+                                        >
+                                            <FileDown className="h-5 w-5" />
+                                            Exportar a Excel
+                                        </button>
+                                    )}
                                     
                                     <div className="grid grid-cols-2 gap-3">
                                         <button 

@@ -2,11 +2,13 @@ import { useState, useEffect } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import api from '@/api/client'
 import toast from 'react-hot-toast'
-import { Building, Save, Mail, Phone, Globe, MapPin, Hash, ShieldCheck } from 'lucide-react'
+import { Building, Save, Mail, Phone, Globe, MapPin, Hash, ShieldCheck, Shield } from 'lucide-react'
+import { usePermissions } from '@/hooks/usePermissions'
 import type { Tenant } from '@/types'
 
 export default function Settings() {
     const queryClient = useQueryClient()
+    const { hasPermission } = usePermissions()
     const [formData, setFormData] = useState({
         name: '',
         tax_id: '',
@@ -82,6 +84,16 @@ export default function Settings() {
         country: tenant?.country || '',
         logo_url: tenant?.logo_url || '',
     })
+
+    if (!hasPermission('settings:manage')) {
+        return (
+            <div className="flex flex-col items-center justify-center min-h-[400px] text-center p-8 bg-white rounded-3xl border border-gray-100 shadow-sm">
+                <Shield className="h-16 w-16 text-gray-200 mb-4" />
+                <h2 className="text-xl font-bold text-gray-900">Acceso Denegado</h2>
+                <p className="text-gray-500 mt-2">No tienes permisos para gestionar la configuración de la empresa.</p>
+            </div>
+        )
+    }
 
     return (
         <div className="space-y-6 max-w-4xl mx-auto pb-12">

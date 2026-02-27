@@ -17,7 +17,8 @@ import {
     CartesianGrid, Tooltip, ResponsiveContainer,
     PieChart, Pie, Cell
 } from 'recharts';
-import { User as UserIcon } from 'lucide-react';
+import { User as UserIcon, Shield } from 'lucide-react';
+import { usePermissions } from "@/hooks/usePermissions";
 
 export default function SalesList() {
     const [page, setPage] = useState(1);
@@ -32,6 +33,7 @@ export default function SalesList() {
     const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
     const [selectedSale, setSelectedSale] = useState<Sale | null>(null);
     const queryClient = useQueryClient();
+    const { hasPermission } = usePermissions();
 
     const handleExportExcel = async () => {
         const toastId = toast.loading("Generando Excel de ventas...");
@@ -186,6 +188,16 @@ export default function SalesList() {
                 return null;
         }
     };
+
+    if (!hasPermission('sales:view')) {
+        return (
+            <div className="flex flex-col items-center justify-center min-h-[400px] text-center p-8 bg-white rounded-3xl border border-gray-100 shadow-sm">
+                <Shield className="h-16 w-16 text-gray-200 mb-4" />
+                <h2 className="text-xl font-bold text-gray-900">Acceso Denegado</h2>
+                <p className="text-gray-500 mt-2">No tienes permisos para ver el historial de ventas.</p>
+            </div>
+        )
+    }
 
     return (
         <div className="space-y-6 antialiased pb-10">
@@ -689,20 +701,24 @@ export default function SalesList() {
                         {/* Footer Modal */}
                         <div className="px-8 py-8 bg-gray-50/50 border-t border-gray-100 space-y-3">
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                                <button 
-                                    onClick={handleExportExcel}
-                                    className="w-full h-14 bg-[#009d71] text-white rounded-2xl flex items-center justify-center gap-3 font-black uppercase tracking-[0.1em] text-[10px] hover:bg-[#008661] transition-all shadow-lg shadow-emerald-200 active:scale-[0.98]"
-                                >
-                                    <FileDown className="h-5 w-5" />
-                                    Exportar Excel
-                                </button>
-                                <button 
-                                    onClick={handleExportPDF}
-                                    className="w-full h-14 bg-rose-600 text-white rounded-2xl flex items-center justify-center gap-3 font-black uppercase tracking-[0.1em] text-[10px] hover:bg-rose-700 transition-all shadow-lg shadow-rose-200 active:scale-[0.98]"
-                                >
-                                    <FileText className="h-5 w-5" />
-                                    Reporte PDF
-                                </button>
+                                {hasPermission('reports:view') && (
+                                    <>
+                                        <button 
+                                            onClick={handleExportExcel}
+                                            className="w-full h-14 bg-[#009d71] text-white rounded-2xl flex items-center justify-center gap-3 font-black uppercase tracking-[0.1em] text-[10px] hover:bg-[#008661] transition-all shadow-lg shadow-emerald-200 active:scale-[0.98]"
+                                        >
+                                            <FileDown className="h-5 w-5" />
+                                            Exportar Excel
+                                        </button>
+                                        <button 
+                                            onClick={handleExportPDF}
+                                            className="w-full h-14 bg-rose-600 text-white rounded-2xl flex items-center justify-center gap-3 font-black uppercase tracking-[0.1em] text-[10px] hover:bg-rose-700 transition-all shadow-lg shadow-rose-200 active:scale-[0.98]"
+                                        >
+                                            <FileText className="h-5 w-5" />
+                                            Reporte PDF
+                                        </button>
+                                    </>
+                                )}
                             </div>
 
                             <div className="flex gap-3">
@@ -820,7 +836,7 @@ export default function SalesList() {
                     <div className="p-6 border-t border-gray-50 bg-gray-50/30">
                         <Pagination 
                             currentPage={page}
-                            totalPages={salesData.pages}
+                            totalPages={salesData?.pages || 0}
                             onPageChange={setPage}
                         />
                     </div>
@@ -916,7 +932,7 @@ export default function SalesList() {
                                     Descargar Ticket
                                 </button>
                                 
-                                {selectedSale.status === 'completed' && (
+                                {selectedSale.status === 'completed' && hasPermission('sales:annul') && (
                                     <button 
                                         onClick={() => {
                                             if (confirm("¿Estás seguro de que deseas anular esta venta? El stock será devuelto al inventario automáticamente.")) {
