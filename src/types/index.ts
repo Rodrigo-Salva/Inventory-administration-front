@@ -87,6 +87,26 @@ export interface Tenant {
     created_at: string
 }
 
+export type UserRole = 'SUPERADMIN' | 'ADMIN' | 'MANAGER' | 'SELLER';
+
+export interface Permission {
+    id: number
+    name: string
+    codename: string
+    module: string
+    description?: string
+}
+
+export interface Role {
+    id: number
+    tenant_id: number
+    name: string
+    description?: string
+    is_system: boolean
+    permissions: Permission[]
+    created_at: string
+}
+
 export interface User {
     id: number
     email: string
@@ -95,6 +115,9 @@ export interface User {
     phone?: string
     avatar_url?: string
     is_admin: boolean
+    role: UserRole
+    role_id?: number
+    role_obj?: Role
     is_active: boolean
     tenant_id: number
     created_at: string

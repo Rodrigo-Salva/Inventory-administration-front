@@ -1,21 +1,23 @@
 import { NavLink } from 'react-router-dom'
-import { LayoutDashboard, Package, FolderTree, Building2, TrendingUp, LogOut, Users, Settings, ShoppingCart, History } from 'lucide-react'
+import { LayoutDashboard, Package, FolderTree, Building2, TrendingUp, LogOut, Users, Shield, Settings, ShoppingCart, History } from 'lucide-react'
 import { useAuthStore } from '@/store/authStore'
+import { usePermissions } from '@/hooks/usePermissions'
 import clsx from 'clsx'
 import { useQuery } from '@tanstack/react-query'
 import api from '@/api/client'
 import type { Tenant } from '@/types'
 
 const navigation = [
-    { name: 'Dashboard', href: '/', icon: LayoutDashboard },
-    { name: 'Productos', href: '/products', icon: Package },
-    { name: 'Categorías', href: '/categories', icon: FolderTree },
-    { name: 'Proveedores', href: '/suppliers', icon: Building2 },
-    { name: 'Inventario', href: '/inventory', icon: TrendingUp },
-    { name: 'Ventas (POS)', href: '/sales', icon: ShoppingCart },
-    { name: 'Historial Ventas', href: '/sales-history', icon: History },
-    { name: 'Usuarios', href: '/users', icon: Users },
-    { name: 'Configuración', href: '/settings', icon: Settings },
+    { name: 'Dashboard', href: '/', icon: LayoutDashboard, permission: 'dashboard:view' },
+    { name: 'Productos', href: '/products', icon: Package, permission: 'products:view' },
+    { name: 'Categorías', href: '/categories', icon: FolderTree, permission: 'categories:view' },
+    { name: 'Proveedores', href: '/suppliers', icon: Building2, permission: 'suppliers:view' },
+    { name: 'Inventario', href: '/inventory', icon: TrendingUp, permission: 'inventory:view' },
+    { name: 'Ventas (POS)', href: '/sales', icon: ShoppingCart, permission: 'sales:create' },
+    { name: 'Historial Ventas', href: '/sales-history', icon: History, permission: 'sales:view' },
+    { name: 'Usuarios', href: '/users', icon: Users, permission: 'users:view' },
+    { name: 'Roles y Permisos', href: '/roles', icon: Shield, permission: 'roles:manage' },
+    { name: 'Configuración', href: '/settings', icon: Settings, permission: 'settings:manage' },
 ]
 
 export interface SidebarProps {
@@ -25,6 +27,7 @@ export interface SidebarProps {
 
 export default function Sidebar({ isCollapsed, isMobileOpen }: SidebarProps) {
     const logout = useAuthStore((state) => state.logout)
+    
     const { data: tenant } = useQuery<Tenant>({
         queryKey: ['tenant-me'],
         queryFn: async () => {
@@ -33,6 +36,10 @@ export default function Sidebar({ isCollapsed, isMobileOpen }: SidebarProps) {
         },
         staleTime: 1000 * 60 * 5,
     })
+
+    const { hasPermission } = usePermissions();
+
+    const filteredNavigation = navigation.filter(item => hasPermission(item.permission));
 
     return (
         <div className={clsx(
@@ -61,7 +68,7 @@ export default function Sidebar({ isCollapsed, isMobileOpen }: SidebarProps) {
                 <ul role="list" className="flex flex-1 flex-col gap-y-7">
                     <li>
                         <ul role="list" className="space-y-1">
-                            {navigation.map((item) => (
+                            {filteredNavigation.map((item) => (
                                 <li key={item.name}>
                                     <NavLink
                                         to={item.href}
