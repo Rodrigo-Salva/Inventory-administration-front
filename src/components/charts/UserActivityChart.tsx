@@ -9,14 +9,14 @@ const COLORS = ['#6366F1', '#818CF8', '#A5B4FC', '#C7D2FE', '#E0E7FF']
 export default function UserActivityChart({ data }: UserActivityProps) {
     if (!data || data.length === 0) {
         return (
-            <div className="flex flex-col items-center justify-center h-[300px] text-gray-400">
+            <div className="flex flex-col items-center justify-center h-full text-gray-400">
                 <p className="text-sm font-medium">No hay actividad registrada</p>
             </div>
         )
     }
 
     return (
-        <div className="h-[300px] w-full">
+        <div className="w-full h-full flex flex-col">
             <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={data} layout="vertical" margin={{ left: 40, right: 20 }}>
                     <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#F3F4F6" />

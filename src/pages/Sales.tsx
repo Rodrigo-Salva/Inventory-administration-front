@@ -9,6 +9,8 @@ import {
 } from 'lucide-react'
 import clsx from "clsx";
 import type { Product, PaginatedResponse } from "@/types";
+import { usePermissions } from "@/hooks/usePermissions";
+import { Shield } from 'lucide-react'
 
 interface CartItem extends Product {
     cartQuantity: number;
@@ -22,6 +24,7 @@ export default function Sales() {
     const [lastSaleId, setLastSaleId] = useState<number | null>(null);
     const [paymentMethod, setPaymentMethod] = useState<"cash" | "card" | "transfer">("cash");
     const queryClient = useQueryClient();
+    const { hasPermission } = usePermissions();
 
     // 1. Cargar Productos
     const { data: productData, isLoading } = useQuery<PaginatedResponse<Product>>({
@@ -172,6 +175,16 @@ export default function Sales() {
             document.head.removeChild(styleTag);
         };
     }, []);
+
+    if (!hasPermission('sales:create')) {
+        return (
+            <div className="flex flex-col items-center justify-center min-h-[400px] text-center p-8 bg-white rounded-3xl border border-gray-100 shadow-sm">
+                <Shield className="h-16 w-16 text-gray-200 mb-4" />
+                <h2 className="text-xl font-bold text-gray-900">Acceso Denegado</h2>
+                <p className="text-gray-500 mt-2">No tienes permisos para acceder al Punto de Venta (POS).</p>
+            </div>
+        )
+    }
 
     return (
         <div className="flex h-[calc(100vh-140px)] gap-6 antialiased">

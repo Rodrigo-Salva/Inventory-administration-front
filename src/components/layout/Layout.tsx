@@ -3,11 +3,35 @@ import { Outlet, useLocation } from 'react-router-dom'
 import Sidebar from './Sidebar'
 import Header from './Header'
 import clsx from 'clsx'
+import { useAuthStore } from '@/store/authStore'
+import api from '@/api/client'
 
 export default function Layout() {
     const [isCollapsed, setIsCollapsed] = useState(false)
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
+    const { user, setUser, logout } = useAuthStore()
     const location = useLocation()
+
+    // Fetch profile if missing or on mount to ensure permissions are fresh
+    useEffect(() => {
+        const fetchProfile = async () => {
+            try {
+                const response = await api.get('/api/v1/users/me')
+                setUser(response.data)
+            } catch (error) {
+                console.error('Error fetching profile:', error)
+                // If it's a 401, logout
+                if ((error as any).response?.status === 401) {
+                    logout()
+                }
+            }
+        }
+        
+        // Refresh profile on mount or if user data is incomplete
+        if (!user?.role_obj) {
+            fetchProfile()
+        }
+    }, [user?.role_obj, setUser, logout])
 
     // Cerrar menú móvil cuando cambia la ruta
     useEffect(() => {

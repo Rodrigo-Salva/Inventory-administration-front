@@ -17,22 +17,22 @@ export default function CategoryValueChart({ data }: Props) {
     
     if (filteredData.length === 0) {
         return (
-            <div className="flex flex-col items-center justify-center h-[300px] text-gray-400 bg-gray-50/50 rounded-3xl border border-dashed border-gray-200">
+            <div className="flex flex-col items-center justify-center h-full text-gray-400 bg-gray-50/50 rounded-3xl border border-dashed border-gray-200">
                 <p className="text-xs font-bold uppercase tracking-widest">Sin datos de valorización</p>
             </div>
         )
     }
 
     return (
-        <div className="h-[300px] w-full relative">
+        <div className="h-full w-full relative flex flex-col">
             <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
                     <Pie
                         data={filteredData}
                         cx="50%"
                         cy="50%"
-                        innerRadius={70}
-                        outerRadius={95}
+                        innerRadius="65%"
+                        outerRadius="90%"
                         paddingAngle={4}
                         dataKey="value"
                         stroke="none"
@@ -46,12 +46,20 @@ export default function CategoryValueChart({ data }: Props) {
                         ))}
                     </Pie>
                     <Tooltip 
-                        formatter={(value: number | undefined) => value ? `$${value.toLocaleString(undefined, { minimumFractionDigits: 2 })}` : '$0.00'}
+                        formatter={(value: number | undefined) => value ? `$${value.toLocaleString(undefined, { minimumFractionDigits: 0 })}` : '$0.00'}
                         contentStyle={{ 
-                            borderRadius: '16px', 
+                            borderRadius: '20px', 
                             border: 'none', 
-                            boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)',
-                            padding: '12px'
+                            boxShadow: '0 20px 25px -5px rgb(0 0 0 / 0.1)',
+                            padding: '16px',
+                            backgroundColor: '#ffffff'
+                        }}
+                        itemStyle={{
+                            fontSize: '12px',
+                            fontWeight: '900',
+                            color: '#1e293b',
+                            textTransform: 'uppercase',
+                            letterSpacing: '0.05em'
                         }}
                     />
                     <Legend 
@@ -59,13 +67,14 @@ export default function CategoryValueChart({ data }: Props) {
                         align="center" 
                         verticalAlign="bottom"
                         iconType="circle"
-                        wrapperStyle={{ fontSize: '10px', paddingTop: '20px', fontWeight: 'bold', color: '#64748b' }}
+                        iconSize={8}
+                        wrapperStyle={{ fontSize: '9px', paddingTop: '30px', fontWeight: '900', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.1em' }}
                     />
                 </PieChart>
             </ResponsiveContainer>
-            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-center pointer-events-none pb-4">
-                <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Total</p>
-                <p className="text-xl font-black text-gray-900">${totalValue > 1000 ? (totalValue/1000).toFixed(1) + 'k' : totalValue.toFixed(0)}</p>
+            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-center pointer-events-none">
+                <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Valor</p>
+                <p className="text-2xl font-black text-slate-900 tracking-tighter">${totalValue > 1000 ? (totalValue/1000).toFixed(1) + 'k' : totalValue.toFixed(0)}</p>
             </div>
         </div>
     )

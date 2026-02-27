@@ -46,8 +46,14 @@ export default function Header({ onToggleSidebar }: HeaderProps) {
                     className="flex items-center gap-3 pl-2 cursor-pointer group hover:bg-gray-50 p-1.5 rounded-xl transition-all"
                 >
                     <div className="flex flex-col items-end hidden md:flex">
-                        <span className="text-xs font-bold text-gray-900 leading-none">{user?.email?.split('@')[0] || 'Cajero'}</span>
-                        <span className="text-[10px] text-primary-600 font-bold uppercase tracking-widest mt-1">Administrador</span>
+                        <span className="text-xs font-bold text-gray-900 leading-none">{user?.first_name || user?.email?.split('@')[0] || 'Usuario'}</span>
+                        <span className="text-[10px] text-primary-600 font-bold uppercase tracking-widest mt-1">
+                            {user?.role === 'SUPERADMIN' && 'Super Admin'}
+                            {user?.role === 'ADMIN' && 'Administrador'}
+                            {user?.role === 'MANAGER' && 'Manager'}
+                            {user?.role === 'SELLER' && 'Vendedor'}
+                            {!user?.role && (user?.is_admin ? 'Admin' : 'Operador')}
+                        </span>
                     </div>
                     <div className="h-9 w-9 flex items-center justify-center rounded-xl bg-primary-100 group-hover:bg-primary-200 transition-colors overflow-hidden">
                         {user?.avatar_url ? (

@@ -9,14 +9,14 @@ const COLORS = ['#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6', '#EC4899'
 export default function SupplierDistributionChart({ data }: SupplierDistributionProps) {
     if (!data || data.length === 0) {
         return (
-            <div className="flex flex-col items-center justify-center h-[300px] text-gray-400">
+            <div className="flex flex-col items-center justify-center h-full text-gray-400">
                 <p className="text-sm font-medium">No hay datos de proveedores</p>
             </div>
         )
     }
 
     return (
-        <div className="h-[300px] w-full">
+        <div className="w-full h-full flex flex-col">
             <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
                     <Pie

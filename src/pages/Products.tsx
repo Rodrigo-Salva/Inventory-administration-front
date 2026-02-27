@@ -6,13 +6,14 @@ import {
     Plus, Edit, Trash2, Search, X, Package, DollarSign, Layers, History,
     PlusCircle, MinusCircle, Filter,
     Barcode, Building2, ArrowUpRight, ArrowDownRight, UploadCloud, FileDown,
-    Printer, Tag
+    Printer, Shield
 } from 'lucide-react'
 import clsx from "clsx";
 import type { Product, PaginatedResponse, Category, Supplier } from "@/types";
 import ConfirmationModal from "@/components/common/ConfirmationModal";
 import Pagination from "@/components/common/Pagination";
 import DateRangePicker from "@/components/common/DateRangePicker";
+import { usePermissions } from "@/hooks/usePermissions";
 
 export default function Products() {
   const [page, setPage] = useState(1);
@@ -62,6 +63,7 @@ export default function Products() {
     name: string;
   } | null>(null);
 
+  const { hasPermission } = usePermissions();
   const queryClient = useQueryClient();
 
   // 1. Cargar Productos con Filtros
@@ -370,6 +372,16 @@ export default function Products() {
     }
   }
 
+  if (!hasPermission('products:view')) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[400px] text-center p-8 bg-white rounded-3xl border border-gray-100 shadow-sm">
+        <Shield className="h-16 w-16 text-gray-200 mb-4" />
+        <h2 className="text-xl font-bold text-gray-900">Acceso Denegado</h2>
+        <p className="text-gray-500 mt-2">No tienes permisos para ver el catálogo de productos.</p>
+      </div>
+    )
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -403,20 +415,24 @@ export default function Products() {
               <span className="flex h-2 w-2 rounded-full bg-primary-600 animate-pulse" />
             )}
           </button>
-          <button
-            onClick={() => setIsImportModalOpen(true)}
-            className="btn btn-secondary flex items-center gap-2 h-10 rounded-xl px-4 text-xs font-bold uppercase tracking-widest"
-          >
-            <UploadCloud className="h-5 w-5 text-gray-400" />
-            <span className="hidden sm:inline">Importar</span>
-          </button>
-          <button
-            onClick={() => openModal()}
-            className="btn btn-primary flex items-center gap-2 h-10 rounded-xl px-4 text-xs font-bold uppercase tracking-widest shadow-lg shadow-primary-200"
-          >
-            <Plus className="h-5 w-5" />
-            <span className="hidden sm:inline">Nuevo Producto</span>
-          </button>
+          {hasPermission('products:download') && (
+            <button
+                onClick={() => setIsImportModalOpen(true)}
+                className="btn btn-secondary flex items-center gap-2 h-10 rounded-xl px-4 text-xs font-bold uppercase tracking-widest"
+            >
+                <UploadCloud className="h-5 w-5 text-gray-400" />
+                <span className="hidden sm:inline">Importar</span>
+            </button>
+          )}
+          {hasPermission('products:create') && (
+            <button
+                onClick={() => openModal()}
+                className="btn btn-primary flex items-center gap-2 h-10 rounded-xl px-4 text-xs font-bold uppercase tracking-widest shadow-lg shadow-primary-200"
+            >
+                <Plus className="h-5 w-5" />
+                <span className="hidden sm:inline">Nuevo Producto</span>
+            </button>
+          )}
         </div>
       </div>
 
@@ -524,34 +540,40 @@ export default function Products() {
                       </td>
                       <td className="px-6 py-5 whitespace-nowrap text-right text-sm font-medium">
                         <div className="flex justify-end gap-2">
-                          <button
-                            onClick={() => {
-                              setSelectedProduct(product);
-                              setQuickMoveType("entry");
-                              setIsQuickMoveModalOpen(true);
-                            }}
-                            className="p-2 text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors"
-                            title="Entrada"
-                          >
-                            <PlusCircle className="h-5 w-5" />
-                          </button>
-                          <button
-                            onClick={() => {
-                              setSelectedProduct(product);
-                              setQuickMoveType("exit");
-                              setIsQuickMoveModalOpen(true);
-                            }}
-                            className="p-2 text-amber-600 hover:bg-amber-50 rounded-lg transition-colors"
-                            title="Salida"
-                          >
-                            <MinusCircle className="h-5 w-5" />
-                          </button>
-                          <button
-                            onClick={() => openModal(product)}
-                            className="p-2 text-primary-600 hover:bg-primary-50 rounded-lg transition-colors"
-                          >
-                            <Edit className="h-5 w-5" />
-                          </button>
+                          {hasPermission('inventory:adjust') && (
+                            <>
+                              <button
+                                onClick={() => {
+                                  setSelectedProduct(product);
+                                  setQuickMoveType("entry");
+                                  setIsQuickMoveModalOpen(true);
+                                }}
+                                className="p-2 text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors"
+                                title="Entrada"
+                              >
+                                <PlusCircle className="h-5 w-5" />
+                              </button>
+                              <button
+                                onClick={() => {
+                                  setSelectedProduct(product);
+                                  setQuickMoveType("exit");
+                                  setIsQuickMoveModalOpen(true);
+                                }}
+                                className="p-2 text-amber-600 hover:bg-amber-50 rounded-lg transition-colors"
+                                title="Salida"
+                              >
+                                <MinusCircle className="h-5 w-5" />
+                              </button>
+                            </>
+                          )}
+                          {hasPermission('products:edit') && (
+                            <button
+                              onClick={() => openModal(product)}
+                              className="p-2 text-primary-600 hover:bg-primary-50 rounded-lg transition-colors"
+                            >
+                              <Edit className="h-5 w-5" />
+                            </button>
+                          )}
                           <button
                             onClick={() => handlePrintLabels(product)}
                             className="p-2 text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
@@ -559,18 +581,20 @@ export default function Products() {
                           >
                             <Printer className="h-5 w-5" />
                           </button>
-                          <button
-                            onClick={() => {
-                              setProductToDelete({
-                                id: product.id,
-                                name: product.name,
-                              });
-                              setIsDeleteModalOpen(true);
-                            }}
-                            className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                          >
-                            <Trash2 className="h-5 w-5" />
-                          </button>
+                          {hasPermission('products:delete') && (
+                            <button
+                              onClick={() => {
+                                setProductToDelete({
+                                  id: product.id,
+                                  name: product.name,
+                                });
+                                setIsDeleteModalOpen(true);
+                              }}
+                              className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                            >
+                              <Trash2 className="h-5 w-5" />
+                            </button>
+                          )}
                         </div>
                       </td>
                     </tr>
@@ -628,28 +652,32 @@ export default function Products() {
                     </div>
 
                     <div className="flex gap-1">
-                      <button
-                        onClick={() => {
-                          setSelectedProduct(product);
-                          setQuickMoveType("entry");
-                          setIsQuickMoveModalOpen(true);
-                        }}
-                        className="p-2.5 text-emerald-600 bg-emerald-50 rounded-xl"
-                        title="Entrada"
-                      >
-                        <PlusCircle className="h-5 w-5" />
-                      </button>
-                      <button
-                        onClick={() => {
-                          setSelectedProduct(product);
-                          setQuickMoveType("exit");
-                          setIsQuickMoveModalOpen(true);
-                        }}
-                        className="p-2.5 text-amber-600 bg-amber-50 rounded-xl"
-                        title="Salida"
-                      >
-                        <MinusCircle className="h-5 w-5" />
-                      </button>
+                      {hasPermission('inventory:adjust') && (
+                        <>
+                          <button
+                            onClick={() => {
+                              setSelectedProduct(product);
+                              setQuickMoveType("entry");
+                              setIsQuickMoveModalOpen(true);
+                            }}
+                            className="p-2.5 text-emerald-600 bg-emerald-50 rounded-xl"
+                            title="Entrada"
+                          >
+                            <PlusCircle className="h-5 w-5" />
+                          </button>
+                          <button
+                            onClick={() => {
+                              setSelectedProduct(product);
+                              setQuickMoveType("exit");
+                              setIsQuickMoveModalOpen(true);
+                            }}
+                            className="p-2.5 text-amber-600 bg-amber-50 rounded-xl"
+                            title="Salida"
+                          >
+                            <MinusCircle className="h-5 w-5" />
+                          </button>
+                        </>
+                      )}
                       <button
                         onClick={() => handlePrintLabels(product)}
                         className="p-2.5 text-indigo-600 bg-indigo-50 rounded-xl"
@@ -657,24 +685,28 @@ export default function Products() {
                       >
                         <Printer className="h-5 w-5" />
                       </button>
-                      <button
-                        onClick={() => openModal(product)}
-                        className="p-2.5 text-primary-600 bg-primary-50 rounded-xl"
-                      >
-                        <Edit className="h-5 w-5" />
-                      </button>
-                      <button
-                        onClick={() => {
-                          setProductToDelete({
-                            id: product.id,
-                            name: product.name,
-                          });
-                          setIsDeleteModalOpen(true);
-                        }}
-                        className="p-2.5 text-red-600 bg-red-50 rounded-xl"
-                      >
-                        <Trash2 className="h-5 w-5" />
-                      </button>
+                      {hasPermission('products:edit') && (
+                        <button
+                          onClick={() => openModal(product)}
+                          className="p-2.5 text-primary-600 bg-primary-50 rounded-xl"
+                        >
+                          <Edit className="h-5 w-5" />
+                        </button>
+                      )}
+                      {hasPermission('products:delete') && (
+                        <button
+                          onClick={() => {
+                            setProductToDelete({
+                              id: product.id,
+                              name: product.name,
+                            });
+                            setIsDeleteModalOpen(true);
+                          }}
+                          className="p-2.5 text-red-600 bg-red-50 rounded-xl"
+                        >
+                          <Trash2 className="h-5 w-5" />
+                        </button>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -683,9 +715,9 @@ export default function Products() {
 
             <Pagination
               currentPage={page}
-              totalPages={productData?.metadata.pages || 0}
+              totalPages={productData?.metadata?.pages || 0}
               onPageChange={setPage}
-              totalItems={productData?.metadata.total}
+              totalItems={productData?.metadata?.total}
             />
           </>
         )}
@@ -1436,13 +1468,15 @@ export default function Products() {
                 </div>
 
                 <div className="pt-6 border-t border-gray-50 flex flex-col gap-3">
-                  <button
-                    onClick={handleExportExcel}
-                    className="btn bg-emerald-600 hover:bg-emerald-700 text-white flex items-center justify-center gap-2 h-12 rounded-xl font-bold uppercase tracking-widest text-xs shadow-lg shadow-emerald-200"
-                  >
-                    <FileDown className="h-5 w-5" />
-                    Exportar Inventario a Excel
-                  </button>
+                  {hasPermission('products:download') && (
+                    <button
+                      onClick={handleExportExcel}
+                      className="btn bg-emerald-600 hover:bg-emerald-700 text-white flex items-center justify-center gap-2 h-12 rounded-xl font-bold uppercase tracking-widest text-xs shadow-lg shadow-emerald-200"
+                    >
+                      <FileDown className="h-5 w-5" />
+                      Exportar Inventario a Excel
+                    </button>
+                  )}
 
                   <div className="grid grid-cols-2 gap-3">
                     <button

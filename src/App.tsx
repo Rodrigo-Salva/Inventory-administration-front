@@ -11,6 +11,7 @@ import Settings from './pages/Settings'
 import Profile from './pages/Profile'
 import Sales from './pages/Sales'
 import SalesList from './pages/SalesList'
+import Roles from './pages/Roles'
 import Layout from './components/layout/Layout'
 
 function PrivateRoute({ children }: { children: React.ReactNode }) {
@@ -38,6 +39,7 @@ function App() {
                 <Route path="sales" element={<Sales />} />
                 <Route path="sales-history" element={<SalesList />} />
                 <Route path="users" element={<Users />} />
+                <Route path="roles" element={<Roles />} />
                 <Route path="settings" element={<Settings />} />
                 <Route path="profile" element={<Profile />} />
             </Route>
