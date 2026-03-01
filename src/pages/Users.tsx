@@ -27,6 +27,8 @@ export default function Users() {
         role_id: undefined as number | undefined,
         is_active: true
     })
+    const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)
+    const [userToDelete, setUserToDelete] = useState<User | null>(null)
 
     const queryClient = useQueryClient()
     const { hasPermission } = usePermissions()
@@ -97,6 +99,8 @@ export default function Users() {
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['users'] })
             toast.success('Usuario eliminado')
+            setIsDeleteModalOpen(false)
+            setUserToDelete(null)
         },
         onError: (err: any) => {
             const detail = err.response?.data?.detail
@@ -175,10 +179,9 @@ export default function Users() {
         }
     }
 
-    const handleDelete = (id: number, email: string) => {
-        if (confirm(`¿Eliminar usuario "${email}"?`)) {
-            deleteMutation.mutate(id)
-        }
+    const handleDelete = (user: User) => {
+        setUserToDelete(user)
+        setIsDeleteModalOpen(true)
     }
 
     if (!hasPermission('users:view')) {
@@ -316,7 +319,7 @@ export default function Users() {
                                                 )}
                                                 {hasPermission('users:delete') && (
                                                     <button
-                                                        onClick={() => handleDelete(user.id, user.email)}
+                                                        onClick={() => handleDelete(user)}
                                                         className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
                                                     >
                                                         <Trash2 className="h-5 w-5" />
@@ -370,7 +373,7 @@ export default function Users() {
                                         )}
                                         {hasPermission('users:delete') && (
                                             <button 
-                                                onClick={() => handleDelete(user.id, user.email)}
+                                                onClick={() => handleDelete(user)}
                                                 className="px-4 py-2 text-sm font-bold text-red-600 bg-red-50 rounded-xl flex-1 max-w-[120px] text-center"
                                             >
                                                 Eliminar
@@ -565,6 +568,47 @@ export default function Users() {
                                         </button>
                                     </div>
                                 </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Modal Confirmar Eliminación */}
+            {isDeleteModalOpen && userToDelete && (
+                <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
+                    <div className="fixed inset-0 bg-gray-900/60 transition-opacity" onClick={() => setIsDeleteModalOpen(false)} />
+                    <div className="relative bg-white rounded-3xl shadow-2xl w-full max-w-sm overflow-hidden animate-in zoom-in-95 duration-200">
+                        <div className="p-8 text-center">
+                            <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-red-50 mb-6">
+                                <Trash2 className="h-10 w-10 text-red-500" />
+                            </div>
+                            <h3 className="text-xl font-black text-gray-900 mb-2">¿Eliminar usuario?</h3>
+                            <p className="text-sm text-gray-500 mb-8">
+                                Estás a punto de eliminar a <strong>{userToDelete.email}</strong>. 
+                                Esta acción revocará todo su acceso al sistema y no se puede deshacer.
+                            </p>
+                            
+                            <div className="grid grid-cols-2 gap-3">
+                                <button 
+                                    onClick={() => setIsDeleteModalOpen(false)}
+                                    className="btn bg-gray-50 text-gray-600 hover:bg-gray-100 border-none py-4 font-bold"
+                                    disabled={deleteMutation.isPending}
+                                >
+                                    Cancelar
+                                </button>
+                                <button 
+                                    onClick={() => deleteMutation.mutate(userToDelete.id)}
+                                    className="btn bg-red-500 text-white hover:bg-red-600 border-none shadow-lg shadow-red-200 py-4 font-bold flex items-center justify-center gap-2"
+                                    disabled={deleteMutation.isPending}
+                                >
+                                    {deleteMutation.isPending ? (
+                                        <div className="h-4 w-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                                    ) : (
+                                        <Trash2 className="h-4 w-4" />
+                                    )}
+                                    Eliminar
+                                </button>
                             </div>
                         </div>
                     </div>
