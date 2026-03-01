@@ -15,6 +15,8 @@ export default function Roles() {
     const [newRoleData, setNewRoleData] = useState({ name: '', description: '' })
     const [editingBasicInfo, setEditingBasicInfo] = useState(false)
     const [roleEditData, setRoleEditData] = useState({ name: '', description: '' })
+    const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)
+    const [roleToDelete, setRoleToDelete] = useState<Role | null>(null)
 
     const { data: roles, isLoading: isLoadingRoles } = useQuery<Role[]>({
         queryKey: ['roles'],
@@ -72,7 +74,9 @@ export default function Roles() {
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['roles'] })
             toast.success('Rol eliminado')
-            if (selectedRoleId === selectedRoleId) setSelectedRoleId(null)
+            setIsDeleteModalOpen(false)
+            setRoleToDelete(null)
+            if (selectedRoleId === roleToDelete?.id) setSelectedRoleId(null)
         },
         onError: (err: any) => {
             const detail = err.response?.data?.detail
@@ -213,10 +217,8 @@ export default function Roles() {
                                 <button 
                                     onClick={(e) => { 
                                         e.stopPropagation(); 
-                                        const msg = role.is_system 
-                                            ? '¡CUIDADO! Este es un ROL DEL SISTEMA. Si lo eliminas, los usuarios que lo tengan asignado podrían tener problemas. ¿Estás SEGURO de querer borrarlo?' 
-                                            : '¿Estás seguro de que quieres eliminar este tipo de usuario?';
-                                        if(confirm(msg)) deleteRoleMutation.mutate(role.id);
+                                        setRoleToDelete(role);
+                                        setIsDeleteModalOpen(true);
                                     }}
                                     className="p-1 hover:bg-red-100 text-red-500 rounded-lg"
                                 >
@@ -447,6 +449,48 @@ export default function Roles() {
                                     disabled={!newRoleData.name}
                                 >
                                     Crear Rol
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Modal Confirmar Eliminación */}
+            {isDeleteModalOpen && roleToDelete && (
+                <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
+                    <div className="fixed inset-0 bg-gray-900/60 transition-opacity" onClick={() => setIsDeleteModalOpen(false)} />
+                    <div className="relative bg-white rounded-3xl shadow-2xl w-full max-w-sm overflow-hidden animate-in zoom-in-95 duration-200">
+                        <div className="p-8 text-center">
+                            <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-red-50 mb-6">
+                                <Trash2 className="h-10 w-10 text-red-500" />
+                            </div>
+                            <h3 className="text-xl font-black text-gray-900 mb-2">¿Confirmar eliminación?</h3>
+                            <p className="text-sm text-gray-500 mb-8">
+                                {roleToDelete.is_system 
+                                    ? `⚠️ ¡CUIDADO! "${roleToDelete.name}" es un ROL DEL SISTEMA. Eliminarlo podría causar errores críticos.`
+                                    : `Estás a punto de eliminar el rol "${roleToDelete.name}". Esta acción no se puede deshacer.`}
+                            </p>
+                            
+                            <div className="grid grid-cols-2 gap-3">
+                                <button 
+                                    onClick={() => setIsDeleteModalOpen(false)}
+                                    className="btn bg-gray-50 text-gray-600 hover:bg-gray-100 border-none py-4 font-bold"
+                                    disabled={deleteRoleMutation.isPending}
+                                >
+                                    Cancelar
+                                </button>
+                                <button 
+                                    onClick={() => deleteRoleMutation.mutate(roleToDelete.id)}
+                                    className="btn bg-red-500 text-white hover:bg-red-600 border-none shadow-lg shadow-red-200 py-4 font-bold flex items-center justify-center gap-2"
+                                    disabled={deleteRoleMutation.isPending}
+                                >
+                                    {deleteRoleMutation.isPending ? (
+                                        <div className="h-4 w-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                                    ) : (
+                                        <Trash2 className="h-4 w-4" />
+                                    )}
+                                    Eliminar
                                 </button>
                             </div>
                         </div>
