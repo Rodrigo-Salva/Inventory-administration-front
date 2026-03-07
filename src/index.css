@@ -61,4 +61,26 @@
   .zoho-sidebar-item-active {
     @apply text-white bg-primary-600/20 border-l-4 border-primary-600 rounded-none;
   }
+
+  /* Custom Scrollbar for Sidebar */
+  .custom-scrollbar::-webkit-scrollbar {
+    width: 4px;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-track {
+    @apply bg-transparent;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    @apply bg-slate-700 rounded-full;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    @apply bg-slate-600;
+  }
+
+  /* Hide scrollbar utility */
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
 }
