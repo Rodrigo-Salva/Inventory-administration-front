@@ -5,12 +5,11 @@ import toast from "react-hot-toast";
 import { 
     Search, ShoppingCart, Trash2, Plus, Minus, Package, 
     CreditCard, Banknote, Receipt, X, CheckCircle2, 
-    ArrowRight, Loader2, ScanLine
+    ArrowRight, Loader2, ScanLine, Users, Shield
 } from 'lucide-react'
 import clsx from "clsx";
-import type { Product, PaginatedResponse } from "@/types";
+import type { Product, Customer, PaginatedResponse } from "@/types";
 import { usePermissions } from "@/hooks/usePermissions";
-import { Shield } from 'lucide-react'
 
 interface CartItem extends Product {
     cartQuantity: number;
@@ -22,6 +21,7 @@ export default function Sales() {
     const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
     const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false);
     const [lastSaleId, setLastSaleId] = useState<number | null>(null);
+    const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
     const [paymentMethod, setPaymentMethod] = useState<"cash" | "card" | "transfer">("cash");
     const queryClient = useQueryClient();
     const { hasPermission } = usePermissions();
@@ -36,6 +36,15 @@ export default function Sales() {
                 is_active: "true"
             });
             const response = await api.get(`/api/v1/products/?${params}`);
+            return response.data;
+        },
+    });
+
+    // 1.1 Cargar Clientes Activos
+    const { data: activeCustomers } = useQuery<Customer[]>({
+        queryKey: ["active-customers"],
+        queryFn: async () => {
+            const response = await api.get("/api/v1/customers/active");
             return response.data;
         },
     });
@@ -71,6 +80,7 @@ export default function Sales() {
             setIsPaymentModalOpen(false);
             setIsSuccessModalOpen(true);
             
+            setSelectedCustomer(null);
             // Opcional: Descarga automática inmediata
             downloadTicket(data.id);
 
@@ -145,7 +155,8 @@ export default function Sales() {
                 product_id: item.id,
                 quantity: item.cartQuantity,
                 unit_price: item.price
-            }))
+            })),
+            customer_id: selectedCustomer?.id || null
         };
         createSaleMutation.mutate(saleData);
     };
@@ -291,6 +302,51 @@ export default function Sales() {
                         </button>
                     )}
                 </div>
+
+                {/* SECCIÓN CLIENTE */}
+                <div className="px-6 py-4 bg-gray-50/30 border-y border-gray-100">
+                    <div className="flex items-center justify-between mb-3">
+                        <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Cliente</span>
+                        {selectedCustomer && (
+                            <button 
+                                onClick={() => setSelectedCustomer(null)}
+                                className="text-[10px] font-bold text-red-500 hover:underline uppercase tracking-tighter"
+                            >
+                                Quitar
+                            </button>
+                        )}
+                    </div>
+                    
+                    {selectedCustomer ? (
+                        <div className="flex items-center gap-3 p-3 bg-white rounded-2xl border border-primary-100 shadow-sm">
+                            <div className="h-10 w-10 rounded-xl bg-primary-50 flex items-center justify-center text-primary-600">
+                                <Users className="h-5 w-5" />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                                <h4 className="text-xs font-bold text-gray-900 truncate uppercase">{selectedCustomer.name}</h4>
+                                <p className="text-[10px] font-medium text-gray-400 truncate">{selectedCustomer.document_number || 'Sin documento'}</p>
+                            </div>
+                        </div>
+                    ) : (
+                        <div className="relative group/select">
+                            <Users className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 group-focus-within/select:text-primary-500 transition-colors" />
+                            <select 
+                                className="w-full bg-white border border-gray-100 rounded-2xl pl-10 pr-4 py-2.5 text-xs font-bold text-gray-700 focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all appearance-none cursor-pointer"
+                                onChange={(e) => {
+                                    const customer = activeCustomers?.find(c => c.id === Number(e.target.value));
+                                    if (customer) setSelectedCustomer(customer);
+                                }}
+                                value=""
+                            >
+                                <option value="" disabled>Seleccionar Cliente (Caminante por defecto)</option>
+                                {activeCustomers?.map(c => (
+                                    <option key={c.id} value={c.id}>{c.name} {c.document_number ? `(${c.document_number})` : ''}</option>
+                                ))}
+                            </select>
+                        </div>
+                    )}
+                </div>
+
 
                 <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-3 custom-scrollbar">
                     {cart.length === 0 ? (

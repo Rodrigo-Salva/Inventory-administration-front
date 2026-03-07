@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import api from "@/api/client";
 import toast from "react-hot-toast";
@@ -16,6 +17,7 @@ import DateRangePicker from "@/components/common/DateRangePicker";
 import { usePermissions } from "@/hooks/usePermissions";
 
 export default function Products() {
+  const navigate = useNavigate();
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -575,8 +577,15 @@ export default function Products() {
                             </button>
                           )}
                           <button
-                            onClick={() => handlePrintLabels(product)}
+                            onClick={() => navigate(`/inventory/kardex/${product.id}`)}
                             className="p-2 text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
+                            title="Ver Kardex (Historial)"
+                          >
+                            <History className="h-5 w-5" />
+                          </button>
+                          <button
+                            onClick={() => handlePrintLabels(product)}
+                            className="p-2 text-teal-600 hover:bg-teal-50 rounded-lg transition-colors"
                             title="Imprimir Etiquetas"
                           >
                             <Printer className="h-5 w-5" />
