@@ -1,161 +1,221 @@
 export interface Product {
-    id: number
-    tenant_id: number
-    name: string
-    sku: string
-    description?: string
-    category_id?: number
-    category?: Category
-    supplier_id?: number
-    supplier?: Supplier
-    price: number
-    cost?: number
-    stock: number
-    min_stock: number
-    max_stock?: number
-    barcode?: string
-    is_active: boolean
-    created_at: string
-    updated_at: string
+  id: number;
+  tenant_id: number;
+  name: string;
+  sku: string;
+  description?: string;
+  category_id?: number;
+  category?: Category;
+  supplier_id?: number;
+  supplier?: Supplier;
+  price: number;
+  cost?: number;
+  stock: number;
+  min_stock: number;
+  max_stock?: number;
+  barcode?: string;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
 }
 
 export interface Category {
-    id: number
-    tenant_id: number
-    name: string
-    code: string
-    description?: string
-    parent_id?: number
-    display_order: number
-    is_active: boolean
-    created_at: string
-    updated_at: string
-    children?: Category[]
+  id: number;
+  tenant_id: number;
+  name: string;
+  code: string;
+  description?: string;
+  parent_id?: number;
+  display_order: number;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+  children?: Category[];
 }
 
 export interface Supplier {
-    id: number
-    tenant_id: number
-    name: string
-    code: string
-    tax_id?: string
-    contact_name?: string
-    email?: string
-    phone?: string
-    mobile?: string
-    address?: string
-    city?: string
-    state?: string
-    country?: string
-    postal_code?: string
-    website?: string
-    payment_terms?: string
-    notes?: string
-    is_active: boolean
-    created_at: string
-    updated_at: string
+  id: number;
+  tenant_id: number;
+  name: string;
+  code: string;
+  tax_id?: string;
+  contact_name?: string;
+  email?: string;
+  phone?: string;
+  mobile?: string;
+  address?: string;
+  city?: string;
+  state?: string;
+  country?: string;
+  postal_code?: string;
+  website?: string;
+  payment_terms?: string;
+  notes?: string;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface Customer {
+  id: number;
+  tenant_id: number;
+  name: string;
+  document_type?: string;
+  document_number?: string;
+  email?: string;
+  phone?: string;
+  address?: string;
+  city?: string;
+  state?: string;
+  country?: string;
+  is_active: boolean;
+  notes?: string;
+  created_at: string;
+  updated_at: string;
 }
 
 export interface InventoryMovement {
-    id: number
-    tenant_id: number
-    product_id: number
-    movement_type: 'entry' | 'exit' | 'adjustment' | 'transfer' | 'initial'
-    quantity: number
-    stock_before: number
-    stock_after: number
-    unit_cost?: number
-    reference?: string
-    notes?: string
-    created_at: string
+  id: number;
+  tenant_id: number;
+  product_id: number;
+  movement_type: "entry" | "exit" | "adjustment" | "transfer" | "initial";
+  quantity: number;
+  stock_before: number;
+  stock_after: number;
+  unit_cost?: number;
+  reference?: string;
+  notes?: string;
+  created_at: string;
 }
 
 export interface Tenant {
-    id: number
-    name: string
-    subdomain?: string
-    tax_id?: string
-    email?: string
-    phone?: string
-    website?: string
-    address?: string
-    city?: string
-    state?: string
-    country?: string
-    logo_url?: string
-    plan: string
-    created_at: string
+  id: number;
+  name: string;
+  subdomain?: string;
+  tax_id?: string;
+  email?: string;
+  phone?: string;
+  website?: string;
+  address?: string;
+  city?: string;
+  state?: string;
+  country?: string;
+  logo_url?: string;
+  plan: string;
+  created_at: string;
 }
 
-export type UserRole = 'SUPERADMIN' | 'ADMIN' | 'MANAGER' | 'SELLER';
+export type UserRole = "SUPERADMIN" | "ADMIN" | "MANAGER" | "SELLER";
 
 export interface Permission {
-    id: number
-    name: string
-    codename: string
-    module: string
-    description?: string
+  id: number;
+  name: string;
+  codename: string;
+  module: string;
+  description?: string;
 }
 
 export interface Role {
-    id: number
-    tenant_id: number
-    name: string
-    description?: string
-    is_system: boolean
-    permissions: Permission[]
-    created_at: string
+  id: number;
+  tenant_id: number;
+  name: string;
+  description?: string;
+  is_system: boolean;
+  permissions: Permission[];
+  created_at: string;
 }
 
 export interface User {
-    id: number
-    email: string
-    first_name?: string
-    last_name?: string
-    phone?: string
-    avatar_url?: string
-    is_admin: boolean
-    role: UserRole
-    role_id?: number
-    role_obj?: Role
-    is_active: boolean
-    tenant_id: number
-    created_at: string
+  id: number;
+  email: string;
+  first_name?: string;
+  last_name?: string;
+  phone?: string;
+  avatar_url?: string;
+  is_admin: boolean;
+  role: UserRole;
+  role_id?: number;
+  role_obj?: Role;
+  is_active: boolean;
+  tenant_id: number;
+  created_at: string;
 }
 
 export interface SaleItem {
-    id: number
-    sale_id: number
-    product_id: number
-    product?: Product
-    quantity: number
-    unit_price: number
-    subtotal: number
+  id: number;
+  sale_id: number;
+  product_id: number;
+  product?: Product;
+  quantity: number;
+  unit_price: number;
+  subtotal: number;
 }
 
 export interface Sale {
-    id: number
-    tenant_id: number
-    user_id?: number
-    user?: User
-    total_amount: number
-    payment_method: string
-    status: 'completed' | 'annulled'
-    notes?: string
-    created_at: string
-    items: SaleItem[]
+  id: number;
+  tenant_id: number;
+  user_id?: number;
+  user?: User;
+  total_amount: number;
+  payment_method: string;
+  status: "completed" | "annulled";
+  customer_id?: number;
+  customer?: Customer;
+  notes?: string;
+  created_at: string;
+  items: SaleItem[];
+}
+
+export interface PurchaseItem {
+    id: number;
+    purchase_id: number;
+    product_id: number;
+    product?: Product;
+    quantity: number;
+    unit_cost: number;
+    subtotal: number;
+}
+
+export interface Purchase {
+    id: number;
+    tenant_id: number;
+    supplier_id: number;
+    supplier?: Supplier;
+    user_id?: number;
+    user?: User;
+    reference_number?: string;
+    total_amount: number;
+    status: 'draft' | 'received' | 'cancelled';
+    notes?: string;
+    created_at: string;
+    updated_at: string;
+    items: PurchaseItem[];
+}
+
+export type AdjustmentReason = "DAMAGE" | "LOSS" | "CORRECTION" | "INTERNAL_USE";
+
+export interface Adjustment {
+  id: number;
+  tenant_id: number;
+  product_id: number;
+  user_id: number;
+  adjustment_type: "IN" | "OUT";
+  quantity: number;
+  reason: AdjustmentReason;
+  notes?: string;
+  created_at: string;
 }
 
 export interface PaginatedResponse<T> {
-    items: T[]
-    total: number
-    page: number
-    size: number
-    pages: number
-    metadata?: {
-        total: number
-        page: number
-        size: number
-        pages: number
-    }
+  items: T[];
+  total: number;
+  page: number;
+  size: number;
+  pages: number;
+  metadata?: {
+    total: number;
+    page: number;
+    size: number;
+    pages: number;
+  };
 }

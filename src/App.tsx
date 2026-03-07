@@ -12,6 +12,12 @@ import Profile from './pages/Profile'
 import Sales from './pages/Sales'
 import SalesList from './pages/SalesList'
 import Roles from './pages/Roles'
+import Customers from './pages/Customers'
+import Purchases from './pages/Purchases'
+import NewPurchase from './pages/NewPurchase'
+import Kardex from './pages/Kardex'
+import Profitability from './pages/Profitability'
+import Adjustments from './pages/Adjustments'
 import Layout from './components/layout/Layout'
 
 function PrivateRoute({ children }: { children: React.ReactNode }) {
@@ -35,10 +41,16 @@ function App() {
                 <Route path="products" element={<Products />} />
                 <Route path="categories" element={<Categories />} />
                 <Route path="suppliers" element={<Suppliers />} />
+                <Route path="purchases" element={<Purchases />} />
+                <Route path="purchases/new" element={<NewPurchase />} />
                 <Route path="inventory" element={<Inventory />} />
+                <Route path="inventory/kardex/:id" element={<Kardex />} />
+                <Route path="inventory/adjustments" element={<Adjustments />} />
+                <Route path="profitability" element={<Profitability />} />
                 <Route path="sales" element={<Sales />} />
                 <Route path="sales-history" element={<SalesList />} />
                 <Route path="users" element={<Users />} />
+                <Route path="customers" element={<Customers />} />
                 <Route path="roles" element={<Roles />} />
                 <Route path="settings" element={<Settings />} />
                 <Route path="profile" element={<Profile />} />
