@@ -8,13 +8,14 @@ import {
   Wallet,
   ShoppingBag,
   ArrowUpRight,
-  CreditCard,
+  TrendingUp,
   Shield,
   Activity,
+  AlertTriangle,
 } from "lucide-react";
 import clsx from "clsx";
 import toast from "react-hot-toast";
-import SalesTrendsChart from "@/components/charts/SalesTrendsChart";
+import ComparisonTrendsChart from "@/components/charts/ComparisonTrendsChart";
 import MovementTrendsChart from "@/components/charts/MovementTrendsChart";
 import TopSellingProductsChart from "@/components/charts/TopSellingProductsChart";
 import TopMovingProductsChart from "@/components/charts/TopMovingProductsChart";
@@ -154,6 +155,29 @@ export default function Dashboard() {
           </div>
         </div>
 
+        {/* Merge trends for Comparison Chart */}
+        {(() => {
+          if (!dashboard) return null;
+          const mergedTrends = [...(dashboard.sales_trends || [])].map(s => ({
+            date: s.date,
+            sales: s.revenue,
+            purchases: dashboard.purchase_trends?.find((p: any) => p.date === s.date)?.revenue || 0
+          }));
+          // Add purchases dates that might not have sales
+          dashboard.purchase_trends?.forEach((p: any) => {
+            if (!mergedTrends.find(m => m.date === p.date)) {
+              mergedTrends.push({
+                date: p.date,
+                sales: 0,
+                purchases: p.revenue
+              });
+            }
+          });
+          mergedTrends.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+          (dashboard as any).comparison_trends = mergedTrends;
+          return null;
+        })()}
+
         {/* Row 1: Metrics 4-column grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 min-w-0">
           <div className="card bg-white border border-gray-100/50 rounded-[2.5rem] shadow-sm flex flex-col p-6 sm:p-8 group hover:shadow-xl hover:-translate-y-1 transition-all duration-300 overflow-hidden">
@@ -208,18 +232,18 @@ export default function Dashboard() {
           <div className="card bg-white border border-gray-100/50 rounded-[2.5rem] shadow-sm flex flex-col p-6 sm:p-8 group hover:shadow-xl hover:-translate-y-1 transition-all duration-300 overflow-hidden">
             <div className="flex items-center justify-between mb-5">
               <div className="p-4 bg-amber-50 text-amber-600 rounded-2xl group-hover:bg-amber-600 group-hover:text-white transition-all duration-300">
-                <CreditCard className="h-6 w-6" />
+                <TrendingUp className="h-6 w-6" />
               </div>
             </div>
             <span className="text-3xl font-black text-gray-900 tracking-tighter truncate">
               $
-              {dashboard?.stats?.total_inventory_value?.toLocaleString(
+              {dashboard?.stats?.total_investment?.toLocaleString(
                 undefined,
                 { maximumFractionDigits: 0 },
               )}
             </span>
             <span className="text-[10px] font-black text-gray-400 uppercase mt-2 tracking-widest leading-relaxed">
-              Valor en Almacén
+              Inversión en Compras
             </span>
           </div>
         </div>
@@ -229,17 +253,20 @@ export default function Dashboard() {
           <div className="mb-8 flex justify-between items-start">
             <div>
               <h3 className="text-xl font-black text-gray-900 tracking-tight leading-none uppercase">
-                Estadísticas de Ingresos
+                Balance Comercial: Ventas vs Compras
               </h3>
+              <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest mt-2">
+                Comparativa de ingresos frente a inversión de inventario
+              </p>
             </div>
             <div className="flex gap-2">
               <div className="h-8 w-8 bg-slate-50 rounded-lg flex items-center justify-center">
-                <Wallet className="h-4 w-4 text-slate-400" />
+                <Activity className="h-4 w-4 text-slate-400" />
               </div>
             </div>
           </div>
           <div className="w-full h-[450px] min-w-0">
-            <SalesTrendsChart data={dashboard?.sales_trends || []} />
+            <ComparisonTrendsChart data={(dashboard as any).comparison_trends || []} />
           </div>
         </div>
 
@@ -376,12 +403,49 @@ export default function Dashboard() {
                   <h4 className="text-lg font-black text-gray-900 uppercase tracking-tighter">Monitoreo Activo</h4>
                   <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest leading-loose max-w-[200px] mx-auto">
                     El sistema está sincronizado con el stock en tiempo real
-                  </p>
+              </p>
                </div>
             </div>
         </div>
 
-        {/* Row 9: Transaction Table (Full Width) */}
+        {/* Row 9: Low Stock Alerts */}
+        <div className="card bg-white border border-gray-100/50 rounded-[3rem] shadow-sm p-10 flex flex-col overflow-hidden min-w-0">
+          <div className="flex items-center justify-between mb-8">
+            <div>
+              <h3 className="text-xl font-black text-gray-900 tracking-tight uppercase">
+                Alertas de Stock Crítico
+              </h3>
+              <p className="text-[10px] text-rose-500 font-bold uppercase tracking-widest mt-1">
+                Productos por debajo del mínimo establecido
+              </p>
+            </div>
+            <div className="h-10 w-10 bg-rose-50 rounded-xl flex items-center justify-center text-rose-500">
+               <AlertTriangle className="h-6 w-6" />
+            </div>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {dashboard?.low_stock_products?.map((product: any) => (
+              <div key={product.id} className="p-6 bg-slate-50 rounded-3xl border border-gray-100 flex items-center justify-between group hover:bg-white hover:shadow-lg transition-all">
+                <div className="min-w-0">
+                  <p className="text-sm font-black text-gray-900 truncate">{product.name}</p>
+                  <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest mt-1">SKU: {product.sku}</p>
+                </div>
+                <div className="flex flex-col items-end">
+                   <span className="text-xl font-black text-rose-600 tracking-tighter">{product.stock}</span>
+                   <span className="text-[9px] font-black text-gray-400 uppercase">Min: {product.min_stock}</span>
+                </div>
+              </div>
+            ))}
+            {(!dashboard?.low_stock_products || dashboard?.low_stock_products.length === 0) && (
+              <div className="col-span-full py-10 text-center text-gray-300 font-bold uppercase text-[10px] tracking-[0.2em]">
+                No hay alertas de stock en este momento
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Row 10: Transaction Table (Full Width) */}
         <div className="card bg-white border border-gray-100/50 rounded-[3rem] shadow-sm p-10 flex flex-col overflow-hidden min-w-0">
           <div className="flex items-center justify-between mb-8 flex-wrap gap-4">
             <h3 className="text-xl font-black text-gray-900 tracking-tight uppercase">
