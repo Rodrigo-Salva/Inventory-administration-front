@@ -1,5 +1,7 @@
 import { NavLink } from 'react-router-dom'
-import { LayoutDashboard, Package, FolderTree, Building2, TrendingUp, LogOut, Users, Shield, Settings, ShoppingCart, History } from 'lucide-react'
+import { LayoutDashboard, Package,    FolderTree, Building2, TrendingUp, ShoppingCart, 
+    History, Users, Settings, LogOut, Truck, Shield
+} from 'lucide-react'
 import { useAuthStore } from '@/store/authStore'
 import { usePermissions } from '@/hooks/usePermissions'
 import clsx from 'clsx'
@@ -12,7 +14,11 @@ const navigation = [
     { name: 'Productos', href: '/products', icon: Package, permission: 'products:view' },
     { name: 'Categorías', href: '/categories', icon: FolderTree, permission: 'categories:view' },
     { name: 'Proveedores', href: '/suppliers', icon: Building2, permission: 'suppliers:view' },
-    { name: 'Inventario', href: '/inventory', icon: TrendingUp, permission: 'inventory:view' },
+    { name: 'Clientes', href: '/customers', icon: Users, permission: 'customers:view' },
+    { name: 'Compras', href: '/purchases', icon: Truck, permission: 'purchases:view' },
+    { name: 'Inventario', href: '/inventory', icon: History, permission: 'inventory:view' },
+    { name: 'Ajustes Stock', href: '/inventory/adjustments', icon: History, permission: 'adjustments:view' },
+    { name: 'Rentabilidad', href: '/profitability', icon: TrendingUp, permission: 'reports:view' },
     { name: 'Ventas (POS)', href: '/sales', icon: ShoppingCart, permission: 'sales:create' },
     { name: 'Historial Ventas', href: '/sales-history', icon: History, permission: 'sales:view' },
     { name: 'Usuarios', href: '/users', icon: Users, permission: 'users:view' },
@@ -103,5 +109,5 @@ export default function Sidebar({ isCollapsed, isMobileOpen }: SidebarProps) {
                 </ul>
             </nav>
         </div>
-    )
+    );
 }
