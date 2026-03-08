@@ -149,9 +149,9 @@ export default function Roles() {
             case 'sales_history': return { icon: <History className="h-5 w-5" />, name: 'Historial Ventas', color: 'text-cyan-600', bg: 'bg-cyan-50', border: 'border-cyan-100', shadow: 'shadow-cyan-50' };
             case 'users': return { icon: <UsersIcon className="h-5 w-5" />, name: 'Usuarios', color: 'text-purple-600', bg: 'bg-purple-50', border: 'border-purple-100', shadow: 'shadow-purple-50' };
             case 'roles_permissions': return { icon: <Shield className="h-5 w-5" />, name: 'Roles y Permisos', color: 'text-blue-700', bg: 'bg-blue-50', border: 'border-blue-200', shadow: 'shadow-blue-100' };
-            case 'settings': return { icon: <SettingsIcon className="h-5 w-5" />, name: 'Configuración', color: 'text-gray-600', bg: 'bg-gray-50', border: 'border-gray-100', shadow: 'shadow-gray-50' };
+            case 'settings': return { icon: <SettingsIcon className="h-5 w-5" />, name: 'Configuración', color: 'text-gray-600', bg: 'bg-white', border: 'border-gray-100', shadow: 'shadow-gray-50' };
             case 'reports': return { icon: <BarChart3 className="h-5 w-5" />, name: 'Reportes', color: 'text-pink-600', bg: 'bg-pink-50', border: 'border-pink-100', shadow: 'shadow-pink-50' };
-            default: return { icon: <Shield className="h-5 w-5" />, name: module, color: 'text-gray-600', bg: 'bg-gray-50', border: 'border-gray-100', shadow: 'shadow-gray-50' };
+            default: return { icon: <Shield className="h-5 w-5" />, name: module, color: 'text-gray-600', bg: 'bg-white', border: 'border-gray-100', shadow: 'shadow-gray-50' };
         }
     }
 
@@ -203,7 +203,7 @@ export default function Roles() {
                                 "p-4 rounded-xl cursor-pointer transition-all border flex items-center justify-between group",
                                 selectedRoleId === role.id 
                                     ? "bg-primary-50 border-primary-200 text-primary-700 shadow-sm" 
-                                    : "bg-white border-gray-100 text-gray-700 hover:bg-gray-50"
+                                    : "bg-white border-gray-100 text-gray-700 hover:bg-white"
                             )}
                         >
                             <div className="flex items-center gap-3">
@@ -270,7 +270,7 @@ export default function Roles() {
                                             <h3 className="text-2xl font-extrabold text-gray-900 group-hover:text-primary-600 transition-colors">
                                                 {selectedRole.name}
                                             </h3>
-                                            <div className="p-1.5 bg-gray-50 text-gray-400 group-hover:text-primary-600 group-hover:bg-primary-50 rounded-lg transition-all">
+                                            <div className="p-1.5 bg-white text-gray-400 group-hover:text-primary-600 group-hover:bg-primary-50 rounded-lg transition-all">
                                                 <Edit className="h-4 w-4" />
                                             </div>
                                         </div>
@@ -365,7 +365,7 @@ export default function Roles() {
                                                                 "flex items-center justify-between p-3 rounded-xl transition-all cursor-pointer group/item",
                                                                 isChecked 
                                                                     ? "bg-primary-50/50" 
-                                                                    : "hover:bg-gray-50 bg-gray-50/20 shadow-inner border border-gray-100/50"
+                                                                    : "hover:bg-white bg-white/20 shadow-inner border border-gray-100/50"
                                                             )}
                                                         >
                                                             <div className="flex flex-col">
@@ -402,7 +402,7 @@ export default function Roles() {
                             </div>
                         </div>
                     ) : (
-                        <div className="h-96 bg-gray-50 rounded-2xl border-2 border-dashed flex flex-col items-center justify-center text-gray-400 gap-4">
+                        <div className="h-96 bg-white rounded-2xl border-2 border-dashed flex flex-col items-center justify-center text-gray-400 gap-4">
                             <Shield className="h-12 w-12 opacity-20" />
                             <p className="font-medium">Selecciona un tipo de usuario para configurar sus permisos</p>
                         </div>
@@ -413,7 +413,7 @@ export default function Roles() {
             {/* Modal Crear Rol */}
             {isCreateModalOpen && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-                    <div className="fixed inset-0 bg-gray-900/60 transition-opacity" onClick={() => setIsCreateModalOpen(false)} />
+                    <div className="fixed inset-0 bg-white/60 transition-opacity" onClick={() => setIsCreateModalOpen(false)} />
                     <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-md p-6 animate-in zoom-in-95 duration-200">
                         <div className="flex items-center justify-between mb-6">
                             <h3 className="text-lg font-bold text-gray-900">Crear Nuevo Tipo de Usuario</h3>
@@ -459,7 +459,7 @@ export default function Roles() {
             {/* Modal Confirmar Eliminación */}
             {isDeleteModalOpen && roleToDelete && (
                 <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
-                    <div className="fixed inset-0 bg-gray-900/60 transition-opacity" onClick={() => setIsDeleteModalOpen(false)} />
+                    <div className="fixed inset-0 bg-white/60 transition-opacity" onClick={() => setIsDeleteModalOpen(false)} />
                     <div className="relative bg-white rounded-3xl shadow-2xl w-full max-w-sm overflow-hidden animate-in zoom-in-95 duration-200">
                         <div className="p-8 text-center">
                             <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-red-50 mb-6">
@@ -475,7 +475,7 @@ export default function Roles() {
                             <div className="grid grid-cols-2 gap-3">
                                 <button 
                                     onClick={() => setIsDeleteModalOpen(false)}
-                                    className="btn bg-gray-50 text-gray-600 hover:bg-gray-100 border-none py-4 font-bold"
+                                    className="btn bg-white text-gray-600 hover:bg-white border-none py-4 font-bold"
                                     disabled={deleteRoleMutation.isPending}
                                 >
                                     Cancelar

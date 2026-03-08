@@ -28,7 +28,7 @@ export default function ConfirmationModal({
         <div className="fixed inset-0 z-[100] overflow-y-auto">
             <div className="flex min-h-screen items-center justify-center p-4">
                 <div 
-                    className="fixed inset-0 bg-gray-900/60 backdrop-blur-sm transition-opacity" 
+                    className="fixed inset-0 bg-white/60 backdrop-blur-sm transition-opacity" 
                     onClick={onClose} 
                 />
                 
@@ -36,7 +36,7 @@ export default function ConfirmationModal({
                     <div className="absolute top-0 right-0 pt-4 pr-4">
                         <button 
                             onClick={onClose} 
-                            className="text-gray-400 hover:text-gray-600 p-1 hover:bg-gray-100 rounded-lg transition-colors"
+                            className="text-gray-400 hover:text-gray-600 p-1 hover:bg-white rounded-lg transition-colors"
                         >
                             <X className="h-6 w-6" />
                         </button>

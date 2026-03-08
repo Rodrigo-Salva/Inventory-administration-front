@@ -136,7 +136,7 @@ export default function NewPurchase() {
                             <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Proveedor *</label>
                             <select 
                                 required
-                                className="input h-12 rounded-2xl bg-gray-50 border-gray-100 text-sm font-bold"
+                                className="input h-12 rounded-2xl bg-white border-gray-100 text-sm font-bold"
                                 value={supplierId}
                                 onChange={(e) => setSupplierId(e.target.value === '' ? '' : Number(e.target.value))}
                             >
@@ -149,7 +149,7 @@ export default function NewPurchase() {
                             <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Nº Referencia / Factura</label>
                             <input 
                                 type="text"
-                                className="input h-12 rounded-2xl bg-gray-50 border-gray-100 text-sm font-bold"
+                                className="input h-12 rounded-2xl bg-white border-gray-100 text-sm font-bold"
                                 placeholder="Ej: FAC-2024-001"
                                 value={reference}
                                 onChange={(e) => setReference(e.target.value)}
@@ -159,7 +159,7 @@ export default function NewPurchase() {
                         <div>
                             <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Notas</label>
                             <textarea 
-                                className="input py-3 rounded-2xl bg-gray-50 border-gray-100 text-sm font-medium h-24"
+                                className="input py-3 rounded-2xl bg-white border-gray-100 text-sm font-medium h-24"
                                 placeholder="Observaciones de la compra..."
                                 value={notes}
                                 onChange={(e) => setNotes(e.target.value)}
@@ -167,9 +167,9 @@ export default function NewPurchase() {
                         </div>
 
                         <div className="pt-4">
-                            <div className="bg-slate-900 p-6 rounded-[2rem] text-center shadow-2xl shadow-slate-200">
+                            <div className="bg-white p-6 rounded-[2rem] text-center shadow-2xl shadow-slate-200">
                                 <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] mb-1">Inversión Total</p>
-                                <p className="text-4xl font-black text-white tracking-tighter">${total.toLocaleString()}</p>
+                                <p className="text-4xl font-black text-slate-900 tracking-tighter">${total.toLocaleString()}</p>
                             </div>
                         </div>
 
@@ -191,7 +191,7 @@ export default function NewPurchase() {
                             <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
                             <input 
                                 type="text"
-                                className="input h-14 pl-12 rounded-2xl bg-gray-50 border-gray-100 placeholder:italic font-medium"
+                                className="input h-14 pl-12 rounded-2xl bg-white border-gray-100 placeholder:italic font-medium"
                                 placeholder="Buscar productos para agregar a la compra..."
                                 value={search}
                                 onChange={(e) => setSearch(e.target.value)}
@@ -211,7 +211,7 @@ export default function NewPurchase() {
                                                 className="w-full p-4 flex items-center justify-between hover:bg-primary-50 transition-colors border-b border-gray-50 last:border-0 text-left"
                                             >
                                                 <div className="flex items-center gap-3">
-                                                    <div className="h-10 w-10 bg-gray-50 rounded-xl flex items-center justify-center text-primary-600">
+                                                    <div className="h-10 w-10 bg-white rounded-xl flex items-center justify-center text-primary-600">
                                                         <Package className="h-5 w-5" />
                                                     </div>
                                                     <div>
@@ -238,7 +238,7 @@ export default function NewPurchase() {
                                 </div>
                             ) : (
                                 items.map((item) => (
-                                    <div key={item.product_id} className="p-5 bg-gray-50 rounded-[2rem] border border-gray-100 flex flex-col md:flex-row md:items-center gap-6 group hover:border-primary-200 transition-all">
+                                    <div key={item.product_id} className="p-5 bg-white rounded-[2rem] border border-gray-100 flex flex-col md:flex-row md:items-center gap-6 group hover:border-primary-200 transition-all">
                                         <div className="flex-1 min-w-0">
                                             <h4 className="font-black text-gray-900 uppercase text-sm truncate leading-none mb-1.5">{item.name}</h4>
                                             <div className="flex items-center gap-2">

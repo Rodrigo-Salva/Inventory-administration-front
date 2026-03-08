@@ -120,7 +120,7 @@ export default function Purchases() {
                     <p className="mt-4 text-sm text-gray-500 font-bold uppercase tracking-widest font-mono">Cargando compras...</p>
                 </div>
             ) : data?.items.length === 0 ? (
-                <div className="text-center py-20 bg-gray-50 rounded-[2.5rem] border-2 border-dashed border-gray-200">
+                <div className="text-center py-20 bg-white rounded-[2.5rem] border-2 border-dashed border-gray-200">
                     <Truck className="h-16 w-16 text-gray-200 mx-auto mb-4" />
                     <p className="text-gray-400 font-bold uppercase tracking-widest text-sm">No hay registros de compras</p>
                     <button onClick={() => navigate('/purchases/new')} className="mt-4 text-primary-600 font-black text-sm uppercase tracking-widest hover:underline">
@@ -142,7 +142,7 @@ export default function Purchases() {
                                             <div className="flex items-center gap-3">
                                                 <h3 className="text-lg font-black text-gray-900 leading-tight">Compra #{purchase.id}</h3>
                                                 {purchase.reference_number && (
-                                                    <span className="px-2 py-0.5 bg-gray-100 text-[10px] font-mono font-black text-gray-400 rounded-md uppercase tracking-tighter">REF: {purchase.reference_number}</span>
+                                                    <span className="px-2 py-0.5 bg-white text-[10px] font-mono font-black text-gray-400 rounded-md uppercase tracking-tighter">REF: {purchase.reference_number}</span>
                                                 )}
                                             </div>
                                             <div className="flex items-center gap-4 mt-1 text-gray-500 text-xs font-bold uppercase tracking-widest">
@@ -162,7 +162,7 @@ export default function Purchases() {
                                             {(purchase as any).payment_status && (
                                                 <div className={clsx(
                                                     "flex items-center gap-1.5 px-3 py-1 rounded-lg border text-[10px] font-black uppercase tracking-tighter",
-                                                    paymentStatusMap[(purchase as any).payment_status as keyof typeof paymentStatusMap]?.color || "bg-gray-50 text-gray-500 border-gray-100"
+                                                    paymentStatusMap[(purchase as any).payment_status as keyof typeof paymentStatusMap]?.color || "bg-white text-gray-500 border-gray-100"
                                                 )}>
                                                     <span className={clsx(
                                                         "h-2 w-2 rounded-full",
@@ -190,7 +190,7 @@ export default function Purchases() {
                                             >
                                                 <FileDown className="h-5 w-5" />
                                             </button>
-                                            <button className="p-3 bg-gray-50 text-gray-400 hover:text-primary-600 hover:bg-primary-50 rounded-xl transition-all border border-transparent hover:border-primary-100">
+                                            <button className="p-3 bg-white text-gray-400 hover:text-primary-600 hover:bg-primary-50 rounded-xl transition-all border border-transparent hover:border-primary-100">
                                                 <Eye className="h-5 w-5" />
                                             </button>
                                         </div>

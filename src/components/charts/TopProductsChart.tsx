@@ -14,7 +14,7 @@ const COLORS = ['#6366f1', '#8b5cf6', '#ec4899', '#f43f5e', '#f97316']
 export default function TopProductsChart({ data }: Props) {
     if (!data || data.length === 0) {
         return (
-            <div className="flex flex-col items-center justify-center h-[300px] text-gray-400 bg-gray-50/50 rounded-3xl border border-dashed border-gray-200">
+            <div className="flex flex-col items-center justify-center h-[300px] text-gray-400 bg-white/50 rounded-3xl border border-dashed border-gray-200">
                 <p className="text-xs font-bold uppercase tracking-widest text-center px-4">No hay datos de stock de productos</p>
             </div>
         )

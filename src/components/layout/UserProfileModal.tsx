@@ -69,7 +69,7 @@ export default function UserProfileModal({ isOpen, onClose }: UserProfileModalPr
         <div className="fixed inset-0 z-[100] overflow-y-auto">
             <div className="flex min-h-screen items-center justify-center px-4 pt-4 pb-20 text-center sm:block sm:p-0">
                 <div 
-                    className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm transition-opacity" 
+                    className="fixed inset-0 bg-white/60 backdrop-blur-sm transition-opacity" 
                     onClick={onClose} 
                 />
                 
@@ -120,7 +120,7 @@ export default function UserProfileModal({ isOpen, onClose }: UserProfileModalPr
                                                     <input
                                                         autoFocus
                                                         type="text"
-                                                        className="flex-1 bg-slate-50 border-2 border-primary-500 rounded-xl px-3 text-sm focus:outline-none"
+                                                        className="flex-1 bg-white border-2 border-primary-500 rounded-xl px-3 text-sm focus:outline-none"
                                                         value={formData.first_name}
                                                         onChange={(e) => setFormData({...formData, first_name: e.target.value})}
                                                         onKeyDown={(e) => e.key === 'Enter' && handleSave('first_name')}
@@ -152,7 +152,7 @@ export default function UserProfileModal({ isOpen, onClose }: UserProfileModalPr
                                                     <input
                                                         autoFocus
                                                         type="text"
-                                                        className="flex-1 bg-slate-50 border-2 border-primary-500 rounded-xl px-3 text-sm focus:outline-none"
+                                                        className="flex-1 bg-white border-2 border-primary-500 rounded-xl px-3 text-sm focus:outline-none"
                                                         value={formData.last_name}
                                                         onChange={(e) => setFormData({...formData, last_name: e.target.value})}
                                                         onKeyDown={(e) => e.key === 'Enter' && handleSave('last_name')}
@@ -184,7 +184,7 @@ export default function UserProfileModal({ isOpen, onClose }: UserProfileModalPr
                                                     <input
                                                         autoFocus
                                                         type="text"
-                                                        className="flex-1 bg-slate-50 border-2 border-primary-500 rounded-xl px-3 text-sm font-mono focus:outline-none"
+                                                        className="flex-1 bg-white border-2 border-primary-500 rounded-xl px-3 text-sm font-mono focus:outline-none"
                                                         value={formData.phone}
                                                         onChange={(e) => setFormData({...formData, phone: e.target.value})}
                                                         onKeyDown={(e) => e.key === 'Enter' && handleSave('phone')}
@@ -211,7 +211,7 @@ export default function UserProfileModal({ isOpen, onClose }: UserProfileModalPr
                                 {/* Account Info Section */}
                                 <div className="pt-6 border-t border-slate-100 space-y-4">
                                     <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Credenciales de Acceso</h4>
-                                    <div className="flex items-center gap-4 p-4 bg-slate-50 rounded-2xl border border-slate-100">
+                                    <div className="flex items-center gap-4 p-4 bg-white rounded-2xl border border-slate-100">
                                         <div className="h-10 w-10 rounded-xl bg-white flex items-center justify-center text-slate-400 shadow-sm">
                                             <Mail className="h-5 w-5" />
                                         </div>

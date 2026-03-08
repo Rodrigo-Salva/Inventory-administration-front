@@ -16,7 +16,7 @@ export default function Header({ onToggleSidebar }: HeaderProps) {
             <div className="flex items-center gap-4">
                 <button
                     onClick={onToggleSidebar}
-                    className="p-2 text-gray-500 hover:bg-gray-100 rounded-lg transition-colors"
+                    className="p-2 text-gray-500 hover:bg-white rounded-lg transition-colors"
                 >
                     <Menu className="h-6 w-6" />
                 </button>
@@ -26,16 +26,16 @@ export default function Header({ onToggleSidebar }: HeaderProps) {
                     <input 
                         type="text" 
                         placeholder="Buscar en el inventario..."
-                        className="pl-10 pr-4 py-2 bg-gray-50 border-none rounded-lg text-sm w-64 focus:ring-2 focus:ring-primary-500/20 transition-all"
+                        className="pl-10 pr-4 py-2 bg-white border-none rounded-lg text-sm w-64 focus:ring-2 focus:ring-primary-500/20 transition-all"
                     />
                 </div>
             </div>
 
             <div className="flex items-center gap-2 sm:gap-4">
-                <button className="p-2 text-gray-400 hover:text-gray-600 rounded-full hover:bg-gray-50 transition-colors">
+                <button className="p-2 text-gray-400 hover:text-gray-600 rounded-full hover:bg-white transition-colors">
                     <HelpCircle className="h-5 w-5" />
                 </button>
-                <button className="p-2 text-gray-400 hover:text-gray-600 rounded-full hover:bg-gray-50 transition-colors">
+                <button className="p-2 text-gray-400 hover:text-gray-600 rounded-full hover:bg-white transition-colors">
                     <Bell className="h-5 w-5" />
                 </button>
                 
@@ -43,7 +43,7 @@ export default function Header({ onToggleSidebar }: HeaderProps) {
                 
                 <div 
                     onClick={() => navigate('/profile')}
-                    className="flex items-center gap-3 pl-2 cursor-pointer group hover:bg-gray-50 p-1.5 rounded-xl transition-all"
+                    className="flex items-center gap-3 pl-2 cursor-pointer group hover:bg-white p-1.5 rounded-xl transition-all"
                 >
                     <div className="flex flex-col items-end hidden md:flex">
                         <span className="text-xs font-bold text-gray-900 leading-none">{user?.first_name || user?.email?.split('@')[0] || 'Usuario'}</span>
