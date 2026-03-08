@@ -190,7 +190,7 @@ export default function Inventory() {
                             "btn flex items-center gap-2 h-10 px-4 transition-all border shadow-sm rounded-xl text-xs uppercase tracking-widest font-bold",
                             (startDate || endDate || movementSearch)
                                 ? "bg-primary-50 border-primary-200 text-primary-700" 
-                                : "bg-white border-gray-200 text-gray-600 hover:bg-gray-50"
+                                : "bg-white border-gray-200 text-gray-600 hover:bg-white"
                         )}
                     >
                         <Filter className="h-4 w-4" />
@@ -243,7 +243,7 @@ export default function Inventory() {
                             </div>
 
                             {selectedProductData && (
-                                <div className="p-4 bg-gray-50 rounded-lg">
+                                <div className="p-4 bg-white rounded-lg">
                                     <div className="grid grid-cols-2 gap-4 text-sm">
                                         <div>
                                             <span className="text-gray-600">SKU:</span>
@@ -382,7 +382,7 @@ export default function Inventory() {
                             </thead>
                             <tbody className="divide-y divide-gray-50">
                                 {movementsData?.items.map((m: any) => (
-                                    <tr key={m.id} className="text-sm hover:bg-gray-50/50 transition-colors">
+                                    <tr key={m.id} className="text-sm hover:bg-white/50 transition-colors">
                                         <td className="px-4 py-4 whitespace-nowrap">
                                             <div className="flex items-center gap-2">
                                                 <Calendar className="h-3.5 w-3.5 text-gray-300" />
@@ -459,7 +459,7 @@ export default function Inventory() {
                                     </div>
                                     <h3 className="text-xl font-bold text-gray-900 line-clamp-1">Filtros de Búsqueda</h3>
                                 </div>
-                                <button onClick={() => setIsFiltersVisible(false)} className="text-gray-400 hover:text-gray-500 p-1 hover:bg-gray-50 rounded-lg">
+                                <button onClick={() => setIsFiltersVisible(false)} className="text-gray-400 hover:text-gray-500 p-1 hover:bg-white rounded-lg">
                                     <X className="h-6 w-6" />
                                 </button>
                             </div>
@@ -472,7 +472,7 @@ export default function Inventory() {
                                         <input 
                                             type="text"
                                             placeholder="Producto, SKU o notas..."
-                                            className="input pl-12 h-12 bg-gray-50 border-gray-100 rounded-xl text-sm font-medium focus:bg-white transition-all shadow-sm"
+                                            className="input pl-12 h-12 bg-white border-gray-100 rounded-xl text-sm font-medium focus:bg-white transition-all shadow-sm"
                                             value={movementSearch}
                                             onChange={(e) => setMovementSearch(e.target.value)}
                                         />
@@ -507,7 +507,7 @@ export default function Inventory() {
                                                 setEndDate('')
                                                 setIsFiltersVisible(false)
                                             }}
-                                            className="btn border border-gray-200 text-gray-500 h-11 rounded-xl text-xs font-bold uppercase tracking-widest hover:bg-gray-50 shadow-sm"
+                                            className="btn border border-gray-200 text-gray-500 h-11 rounded-xl text-xs font-bold uppercase tracking-widest hover:bg-white shadow-sm"
                                         >
                                             Limpiar
                                         </button>

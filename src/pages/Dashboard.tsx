@@ -119,7 +119,7 @@ export default function Dashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50/50 -m-8 p-8 pb-16 antialiased">
+    <div className="min-h-screen bg-white/50 -m-8 p-8 pb-16 antialiased">
       <div className="max-w-6xl mx-auto space-y-10">
         {/* Header section with actions */}
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 bg-white p-8 rounded-[2.5rem] border border-gray-100 shadow-sm transition-all hover:shadow-md">
@@ -141,12 +141,12 @@ export default function Dashboard() {
               startDate={dateRange.start}
               endDate={dateRange.end}
               onChange={setDateRange}
-              className="bg-slate-50 p-2 rounded-2xl border border-gray-100"
+              className="bg-white p-2 rounded-2xl border border-gray-100"
             />
             {hasPermission("reports:view") && (
               <button
                 onClick={() => setIsExportModalOpen(true)}
-                className="h-14 px-8 bg-slate-900 hover:bg-black text-white rounded-2xl flex items-center gap-3 group shadow-xl shadow-slate-200 transition-all font-bold uppercase tracking-widest text-[11px]"
+                className="h-14 px-8 border border-slate-200 hover:bg-slate-50 text-slate-900 rounded-2xl flex items-center gap-3 group shadow-sm transition-all font-bold uppercase tracking-widest text-[11px]"
               >
                 <Download className="h-5 w-5 text-indigo-400 group-hover:scale-110 transition-transform" />
                 Reporte Ejecutivo
@@ -260,7 +260,7 @@ export default function Dashboard() {
               </p>
             </div>
             <div className="flex gap-2">
-              <div className="h-8 w-8 bg-slate-50 rounded-lg flex items-center justify-center">
+              <div className="h-8 w-8 bg-white rounded-lg flex items-center justify-center">
                 <Activity className="h-4 w-4 text-slate-400" />
               </div>
             </div>
@@ -375,7 +375,7 @@ export default function Dashboard() {
                 Actividad de Resurtido
               </h3>
               <div className="space-y-6">
-                <div className="flex items-center justify-between cursor-pointer hover:bg-slate-50 p-4 rounded-3xl transition-all min-w-0 border border-transparent hover:border-slate-100">
+                <div className="flex items-center justify-between cursor-pointer hover:bg-white p-4 rounded-3xl transition-all min-w-0 border border-transparent hover:border-slate-100">
                   <div className="flex items-center gap-4 min-w-0">
                     <div className="h-12 w-12 bg-emerald-50 rounded-2xl flex items-center justify-center text-emerald-500 flex-shrink-0">
                       <ArrowUpRight className="h-6 w-6" />
@@ -426,7 +426,7 @@ export default function Dashboard() {
           
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {dashboard?.low_stock_products?.map((product: any) => (
-              <div key={product.id} className="p-6 bg-slate-50 rounded-3xl border border-gray-100 flex items-center justify-between group hover:bg-white hover:shadow-lg transition-all">
+              <div key={product.id} className="p-6 bg-white rounded-3xl border border-gray-100 flex items-center justify-between group hover:bg-white hover:shadow-lg transition-all">
                 <div className="min-w-0">
                   <p className="text-sm font-black text-gray-900 truncate">{product.name}</p>
                   <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest mt-1">SKU: {product.sku}</p>
@@ -455,7 +455,7 @@ export default function Dashboard() {
               <input 
                 type="text" 
                 placeholder="Buscar movimiento..." 
-                className="bg-slate-50 border-none rounded-xl px-4 py-3 text-xs font-bold outline-none w-full sm:w-64 focus:ring-2 focus:ring-indigo-500 transition-all"
+                className="bg-white border-none rounded-xl px-4 py-3 text-xs font-bold outline-none w-full sm:w-64 focus:ring-2 focus:ring-indigo-500 transition-all"
               />
             </div>
           </div>
@@ -475,7 +475,7 @@ export default function Dashboard() {
                 </thead>
                 <tbody className="divide-y divide-gray-50">
                   {dashboard?.recent_movements?.slice(0, 10).map((m: any) => (
-                    <tr key={m.id} className="group hover:bg-slate-50/50 transition-all">
+                    <tr key={m.id} className="group hover:bg-white/50 transition-all">
                       <td className="py-5">
                         <div className={clsx(
                           "h-10 w-10 rounded-xl flex items-center justify-center font-black text-[10px]",
@@ -525,7 +525,7 @@ export default function Dashboard() {
           <div className="fixed inset-0 z-[100] overflow-y-auto">
             <div className="flex min-h-screen items-center justify-center p-4">
               <div
-                className="fixed inset-0 bg-slate-900/80 backdrop-blur-sm"
+                className="fixed inset-0 bg-white/80 backdrop-blur-sm"
                 onClick={() => setIsExportModalOpen(false)}
               />
               <div className="relative bg-white rounded-[2.5rem] shadow-2xl w-full max-w-md p-10 border border-gray-100 overflow-hidden">
@@ -542,7 +542,7 @@ export default function Dashboard() {
                     </div>
                     <button
                       onClick={() => setIsExportModalOpen(false)}
-                      className="p-2 hover:bg-gray-50 rounded-xl transition-all"
+                      className="p-2 hover:bg-white rounded-xl transition-all"
                     >
                       <X className="h-6 w-6 text-gray-400" />
                     </button>
@@ -554,7 +554,7 @@ export default function Dashboard() {
                         Categoría
                       </label>
                       <select
-                        className="w-full h-14 bg-gray-50 border-gray-100 rounded-2xl px-4 text-sm font-bold text-gray-700 outline-none focus:ring-2 focus:ring-indigo-500 transition-all cursor-pointer"
+                        className="w-full h-14 bg-white border-gray-100 rounded-2xl px-4 text-sm font-bold text-gray-700 outline-none focus:ring-2 focus:ring-indigo-500 transition-all cursor-pointer"
                         value={exportFilters.category_id}
                         onChange={(e) =>
                           setExportFilters({
@@ -587,7 +587,7 @@ export default function Dashboard() {
                               "h-12 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all",
                               exportFilters.status === s
                                 ? "bg-indigo-600 text-white shadow-lg shadow-indigo-200"
-                                : "bg-gray-50 text-gray-400 hover:bg-gray-100",
+                                : "bg-white text-gray-400 hover:bg-white",
                             )}
                           >
                             {s === "all"
@@ -602,7 +602,7 @@ export default function Dashboard() {
 
                     <button
                       onClick={handleDownloadExcel}
-                      className="w-full h-16 bg-slate-900 hover:bg-black text-white rounded-2xl flex items-center justify-center gap-3 font-black uppercase tracking-widest text-xs shadow-2xl shadow-slate-200 transition-all active:scale-95"
+                      className="w-full h-16 border border-slate-200 hover:bg-slate-50 text-slate-900 rounded-2xl flex items-center justify-center gap-3 font-black uppercase tracking-widest text-xs shadow-sm transition-all active:scale-95"
                     >
                       <Download className="h-5 w-5" />
                       Generar Reporte (.xlsx)

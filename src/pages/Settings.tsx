@@ -141,7 +141,7 @@ export default function Settings() {
                             <label className="block text-sm font-medium text-gray-500 mb-1.5 flex items-center gap-1.5">
                                 <Globe className="h-3.5 w-3.5" /> Subdominio (Solo lectura)
                             </label>
-                            <div className="input bg-gray-50 text-gray-500 border-gray-200 flex items-center font-mono text-sm">
+                            <div className="input bg-white text-gray-500 border-gray-200 flex items-center font-mono text-sm">
                                 {tenant?.subdomain}.tu-almacen.com
                             </div>
                         </div>
@@ -187,7 +187,7 @@ export default function Settings() {
                                     }}
                                 />
                             ) : (
-                                <div className="h-20 w-40 bg-gray-100 rounded flex items-center justify-center text-gray-300 italic text-xs">
+                                <div className="h-20 w-40 bg-white rounded flex items-center justify-center text-gray-300 italic text-xs">
                                     Sin Logo
                                 </div>
                             )}
@@ -323,7 +323,7 @@ export default function Settings() {
                 </div>
             </form>
 
-            <div className="card bg-gray-900 border-none text-gray-400 mt-8">
+            <div className="card bg-white border-none text-gray-400 mt-8">
                 <div className="flex justify-between items-center">
                     <div className="space-y-1">
                         <h4 className="text-white font-bold text-sm">Información de Seguridad</h4>

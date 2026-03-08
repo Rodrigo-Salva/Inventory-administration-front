@@ -159,7 +159,7 @@ export default function Customers() {
     const renderCustomers = () => {
         if (!data?.items || data.items.length === 0) {
             return (
-                <div className="text-center py-20 bg-gray-50 rounded-2xl border-2 border-dashed border-gray-100">
+                <div className="text-center py-20 bg-white rounded-2xl border-2 border-dashed border-gray-100">
                     <User className="h-16 w-16 text-gray-200 mx-auto" />
                     <p className="mt-4 text-gray-400 font-bold">No hay clientes registrados</p>
                     <button onClick={() => openModal()} className="mt-4 text-primary-600 font-black text-sm uppercase tracking-wider hover:underline">
@@ -175,7 +175,7 @@ export default function Customers() {
                     <div key={customer.id} className="card group hover:border-primary-200 hover:shadow-xl transition-all border-none shadow-lg shadow-gray-200/50 flex flex-col p-5">
                         <div className="flex items-start justify-between">
                             <div className="flex items-center gap-4">
-                                <div className="h-12 w-12 flex-shrink-0 rounded-2xl bg-gray-50 flex items-center justify-center text-primary-500 group-hover:bg-primary-50 transition-colors border border-transparent group-hover:border-primary-100">
+                                <div className="h-12 w-12 flex-shrink-0 rounded-2xl bg-white flex items-center justify-center text-primary-500 group-hover:bg-primary-50 transition-colors border border-transparent group-hover:border-primary-100">
                                     <User className="h-6 w-6" />
                                 </div>
                                 <div>
@@ -188,7 +188,7 @@ export default function Customers() {
                             <span
                                 className={clsx(
                                     "px-2.5 py-1 text-[10px] uppercase font-black tracking-widest rounded-md",
-                                    customer.is_active ? 'bg-emerald-50 text-emerald-700' : 'bg-gray-100 text-gray-500'
+                                    customer.is_active ? 'bg-emerald-50 text-emerald-700' : 'bg-white text-gray-500'
                                 )}
                             >
                                 {customer.is_active ? 'Activo' : 'Inactivo'}
@@ -198,7 +198,7 @@ export default function Customers() {
                         <div className="mt-6 space-y-3.5 flex-1">
                             {customer.email && (
                                 <div className="flex items-center gap-3 text-sm group/item">
-                                    <div className="h-7 w-7 rounded-lg bg-gray-50 flex items-center justify-center text-gray-400 group-hover/item:bg-primary-50 group-hover/item:text-primary-500 transition-colors">
+                                    <div className="h-7 w-7 rounded-lg bg-white flex items-center justify-center text-gray-400 group-hover/item:bg-primary-50 group-hover/item:text-primary-500 transition-colors">
                                         <Mail className="h-3.5 w-3.5" />
                                     </div>
                                     <a href={`mailto:${customer.email}`} className="font-medium text-gray-500 hover:text-primary-600 transition-colors truncate">{customer.email}</a>
@@ -206,7 +206,7 @@ export default function Customers() {
                             )}
                             {customer.phone && (
                                 <div className="flex items-center gap-3 text-sm group/item">
-                                    <div className="h-7 w-7 rounded-lg bg-gray-50 flex items-center justify-center text-gray-400 group-hover/item:bg-primary-50 group-hover/item:text-primary-500 transition-colors">
+                                    <div className="h-7 w-7 rounded-lg bg-white flex items-center justify-center text-gray-400 group-hover/item:bg-primary-50 group-hover/item:text-primary-500 transition-colors">
                                         <Phone className="h-3.5 w-3.5" />
                                     </div>
                                     <span className="font-medium text-gray-500">{customer.phone}</span>
@@ -214,7 +214,7 @@ export default function Customers() {
                             )}
                             {customer.city && (
                                 <div className="flex items-center gap-3 text-sm group/item">
-                                    <div className="h-7 w-7 rounded-lg bg-gray-50 flex items-center justify-center text-gray-400 group-hover/item:bg-primary-50 group-hover/item:text-primary-500 transition-colors">
+                                    <div className="h-7 w-7 rounded-lg bg-white flex items-center justify-center text-gray-400 group-hover/item:bg-primary-50 group-hover/item:text-primary-500 transition-colors">
                                         <MapPin className="h-3.5 w-3.5" />
                                     </div>
                                     <span className="font-medium text-gray-500 truncate">{customer.city}, {customer.country}</span>
@@ -264,7 +264,7 @@ export default function Customers() {
                             "btn flex items-center gap-2 h-10 px-4 transition-all border shadow-sm rounded-xl text-xs uppercase tracking-widest font-bold",
                             filterStatus !== 'all'
                                 ? "bg-primary-50 border-primary-200 text-primary-700 font-bold" 
-                                : "bg-white border-gray-200 text-gray-600 hover:bg-gray-50"
+                                : "bg-white border-gray-200 text-gray-600 hover:bg-white"
                         )}
                     >
                         <Filter className="h-4 w-4" />
@@ -328,10 +328,10 @@ export default function Customers() {
             {isModalOpen && (
                 <div className="fixed inset-0 z-50 overflow-y-auto">
                     <div className="flex min-h-screen items-center justify-center p-4">
-                        <div className="fixed inset-0 bg-gray-900 bg-opacity-50 backdrop-blur-sm" onClick={closeModal} />
+                        <div className="fixed inset-0 bg-white bg-opacity-50 backdrop-blur-sm" onClick={closeModal} />
                         <div className="relative transform overflow-hidden rounded-2xl bg-white shadow-2xl transition-all w-full max-w-2xl">
                             <div className="absolute top-0 right-0 pt-4 pr-4">
-                                <button onClick={closeModal} className="text-gray-400 hover:text-gray-600 p-1 hover:bg-gray-100 rounded-lg">
+                                <button onClick={closeModal} className="text-gray-400 hover:text-gray-600 p-1 hover:bg-white rounded-lg">
                                     <X className="h-6 w-6" />
                                 </button>
                             </div>
@@ -452,7 +452,7 @@ export default function Customers() {
                                         />
                                     </div>
 
-                                    <div className="flex items-center justify-between p-3 bg-gray-50 rounded-xl border">
+                                    <div className="flex items-center justify-between p-3 bg-white rounded-xl border">
                                         <span className="text-sm font-semibold text-gray-700">Estado del Cliente</span>
                                         <label className="relative inline-flex items-center cursor-pointer">
                                             <input 
@@ -503,7 +503,7 @@ export default function Customers() {
                                 <div>
                                     <label className="block text-xs font-black text-gray-400 uppercase tracking-widest mb-2 font-black">Estado</label>
                                     <select 
-                                        className="input h-12 bg-gray-50 border-gray-100 rounded-xl"
+                                        className="input h-12 bg-white border-gray-100 rounded-xl"
                                         value={filterStatus}
                                         onChange={(e) => setFilterStatus(e.target.value as any)}
                                     >

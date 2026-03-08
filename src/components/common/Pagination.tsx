@@ -43,7 +43,7 @@ export default function Pagination({ currentPage, totalPages, onPageChange, tota
                         <button
                             onClick={() => onPageChange(currentPage - 1)}
                             disabled={currentPage === 1}
-                            className="relative inline-flex items-center rounded-xl px-3 py-2 text-gray-500 bg-white border border-gray-200 hover:bg-gray-50 hover:border-primary-200 hover:text-primary-600 transition-all shadow-sm disabled:opacity-30 disabled:pointer-events-none"
+                            className="relative inline-flex items-center rounded-xl px-3 py-2 text-gray-500 bg-white border border-gray-200 hover:bg-white hover:border-primary-200 hover:text-primary-600 transition-all shadow-sm disabled:opacity-30 disabled:pointer-events-none"
                         >
                             <ChevronLeft className="h-5 w-5" aria-hidden="true" />
                             <span className="ml-1 text-xs font-bold uppercase tracking-wider">Anterior</span>
@@ -52,7 +52,7 @@ export default function Pagination({ currentPage, totalPages, onPageChange, tota
                         <button
                             onClick={() => onPageChange(currentPage + 1)}
                             disabled={currentPage === totalPages}
-                            className="relative inline-flex items-center rounded-xl px-3 py-2 text-gray-500 bg-white border border-gray-200 hover:bg-gray-50 hover:border-primary-200 hover:text-primary-600 transition-all shadow-sm disabled:opacity-30 disabled:pointer-events-none"
+                            className="relative inline-flex items-center rounded-xl px-3 py-2 text-gray-500 bg-white border border-gray-200 hover:bg-white hover:border-primary-200 hover:text-primary-600 transition-all shadow-sm disabled:opacity-30 disabled:pointer-events-none"
                         >
                             <span className="mr-1 text-xs font-bold uppercase tracking-wider">Siguiente</span>
                             <ChevronRight className="h-5 w-5" aria-hidden="true" />

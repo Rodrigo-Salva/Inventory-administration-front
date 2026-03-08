@@ -188,7 +188,7 @@ export default function Profile() {
                                                 <input
                                                     autoFocus
                                                     type="text"
-                                                    className="flex-1 bg-slate-50 border-2 border-primary-500 rounded-xl px-4 text-sm focus:outline-none"
+                                                    className="flex-1 bg-white border-2 border-primary-500 rounded-xl px-4 text-sm focus:outline-none"
                                                     value={formData.first_name}
                                                     onChange={(e) => setFormData({...formData, first_name: e.target.value})}
                                                     onKeyDown={(e) => e.key === 'Enter' && handleSave('first_name')}
@@ -220,7 +220,7 @@ export default function Profile() {
                                                 <input
                                                     autoFocus
                                                     type="text"
-                                                    className="flex-1 bg-slate-50 border-2 border-primary-500 rounded-xl px-4 text-sm focus:outline-none"
+                                                    className="flex-1 bg-white border-2 border-primary-500 rounded-xl px-4 text-sm focus:outline-none"
                                                     value={formData.last_name}
                                                     onChange={(e) => setFormData({...formData, last_name: e.target.value})}
                                                     onKeyDown={(e) => e.key === 'Enter' && handleSave('last_name')}
@@ -252,7 +252,7 @@ export default function Profile() {
                                                 <input
                                                     autoFocus
                                                     type="text"
-                                                    className="flex-1 bg-slate-50 border-2 border-primary-500 rounded-xl px-4 text-sm font-mono focus:outline-none"
+                                                    className="flex-1 bg-white border-2 border-primary-500 rounded-xl px-4 text-sm font-mono focus:outline-none"
                                                     value={formData.phone}
                                                     onChange={(e) => setFormData({...formData, phone: e.target.value})}
                                                     onKeyDown={(e) => e.key === 'Enter' && handleSave('phone')}
@@ -285,7 +285,7 @@ export default function Profile() {
                                                     autoFocus
                                                     type="text"
                                                     placeholder="URL de la imagen (ej: https://...)"
-                                                    className="flex-1 bg-slate-50 border-2 border-primary-500 rounded-xl px-4 text-sm focus:outline-none"
+                                                    className="flex-1 bg-white border-2 border-primary-500 rounded-xl px-4 text-sm focus:outline-none"
                                                     value={formData.avatar_url}
                                                     onChange={(e) => setFormData({...formData, avatar_url: e.target.value})}
                                                     onKeyDown={(e) => e.key === 'Enter' && handleSave('avatar_url')}
@@ -311,7 +311,7 @@ export default function Profile() {
                         </div>
 
                         <div className="pt-8 border-t border-slate-50">
-                            <div className="bg-slate-50/50 p-6 rounded-2xl flex items-center justify-between">
+                            <div className="bg-white/50 p-6 rounded-2xl flex items-center justify-between">
                                 <div className="flex items-center gap-4">
                                     <div className="h-10 w-10 bg-white rounded-xl flex items-center justify-center text-slate-400 shadow-sm border border-slate-100">
                                         <Mail className="h-5 w-5" />

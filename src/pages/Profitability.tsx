@@ -162,7 +162,7 @@ export default function Profitability() {
 
                 {/* Tabla Detallada */}
                 <div className="card bg-white border-none shadow-sm flex flex-col h-[384px]">
-                    <div className="p-6 border-b border-gray-100 flex items-center justify-between bg-gray-50/50">
+                    <div className="p-6 border-b border-gray-100 flex items-center justify-between bg-white/50">
                         <h3 className="text-sm font-black text-gray-900 uppercase tracking-tight">Detalle por Producto</h3>
                         <div className="relative">
                             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
@@ -187,7 +187,7 @@ export default function Profitability() {
                             </thead>
                             <tbody className="divide-y divide-gray-50">
                                 {filteredReport?.map((item) => (
-                                    <tr key={item.product_id} className="hover:bg-gray-50/50 transition-colors">
+                                    <tr key={item.product_id} className="hover:bg-white/50 transition-colors">
                                         <td className="px-6 py-3">
                                             <div className="flex flex-col">
                                                 <span className="text-xs font-bold text-gray-900 uppercase truncate max-w-[150px]">{item.name}</span>

@@ -39,11 +39,11 @@ export default function Layout() {
     }, [location.pathname])
 
     return (
-        <div className="min-h-screen bg-gray-50 flex">
+        <div className="min-h-screen bg-white flex">
             {/* Backdrop para móvil */}
             {isMobileMenuOpen && (
                 <div 
-                    className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-40 lg:hidden transition-opacity"
+                    className="fixed inset-0 bg-white/50 backdrop-blur-sm z-40 lg:hidden transition-opacity"
                     onClick={() => setIsMobileMenuOpen(false)}
                 />
             )}

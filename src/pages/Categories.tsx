@@ -207,13 +207,13 @@ export default function Categories() {
     const renderCategory = (category: Category, level = 0) => (
         <div key={category.id} className={`${level > 0 ? 'ml-8 mt-3' : 'mt-4'}`}>
             <div className="flex items-center gap-3 p-4 bg-white border border-gray-100 rounded-xl group hover:border-primary-200 hover:shadow-md transition-all">
-                <div className="h-10 w-10 flex-shrink-0 rounded-lg bg-gray-50 flex items-center justify-center text-primary-500 group-hover:bg-primary-50 transition-colors">
+                <div className="h-10 w-10 flex-shrink-0 rounded-lg bg-white flex items-center justify-center text-primary-500 group-hover:bg-primary-50 transition-colors">
                     <Layers className="h-5 w-5" />
                 </div>
                 <div className="flex-1">
                     <div className="flex items-center gap-3">
                         <span className="font-bold text-gray-900 group-hover:text-primary-700 transition-colors">{category.name}</span>
-                        <span className="text-[10px] font-mono font-bold bg-gray-100 px-2 py-0.5 rounded text-gray-400 uppercase tracking-widest">{category.code}</span>
+                        <span className="text-[10px] font-mono font-bold bg-white px-2 py-0.5 rounded text-gray-400 uppercase tracking-widest">{category.code}</span>
                     </div>
                     {category.description && (
                         <p className="text-[11px] text-gray-400 mt-0.5 line-clamp-1 italic">{category.description}</p>
@@ -244,7 +244,7 @@ export default function Categories() {
                 <span
                     className={clsx(
                         "px-2.5 py-1 text-[10px] uppercase font-black tracking-widest rounded-md",
-                        category.is_active ? 'bg-emerald-50 text-emerald-700' : 'bg-gray-100 text-gray-500'
+                        category.is_active ? 'bg-emerald-50 text-emerald-700' : 'bg-white text-gray-500'
                     )}
                 >
                     {category.is_active ? 'Activa' : 'Inactiva'}
@@ -272,7 +272,7 @@ export default function Categories() {
                             "btn flex items-center gap-2 h-10 px-4 transition-all border shadow-sm rounded-xl text-xs uppercase tracking-widest font-bold",
                             (startDate || endDate || filterStatus !== 'all')
                                 ? "bg-primary-50 border-primary-200 text-primary-700 font-bold" 
-                                : "bg-white border-gray-200 text-gray-600 hover:bg-gray-50"
+                                : "bg-white border-gray-200 text-gray-600 hover:bg-white"
                         )}
                     >
                         <Filter className="h-4 w-4" />
@@ -307,7 +307,7 @@ export default function Categories() {
 
             {search.length > 0 ? (
                 <div className="space-y-6">
-                    <div className="flex items-center gap-2 text-sm text-gray-500 bg-gray-50 p-3 rounded-xl border border-gray-100">
+                    <div className="flex items-center gap-2 text-sm text-gray-500 bg-white p-3 rounded-xl border border-gray-100">
                         <Info className="h-4 w-4 text-primary-500" />
                         Mostrando {searchResults?.metadata?.total || 0} resultados para "<span className="font-bold text-gray-900">{search}</span>"
                     </div>
@@ -354,7 +354,7 @@ export default function Categories() {
                             {tree.map((cat) => renderCategory(cat))}
                         </div>
                     ) : (
-                        <div className="text-center py-24 bg-gray-50 rounded-3xl border-2 border-dashed border-gray-200">
+                        <div className="text-center py-24 bg-white rounded-3xl border-2 border-dashed border-gray-200">
                             <FolderTree className="h-16 w-16 text-gray-200 mx-auto" />
                             <p className="mt-4 text-gray-400 font-bold px-4">No se encontraron categorías con los filtros actuales</p>
                             <button onClick={() => openModal()} className="mt-4 text-primary-600 font-black text-sm uppercase tracking-widest hover:underline">
@@ -380,11 +380,11 @@ export default function Categories() {
             {isModalOpen && (
                 <div className="fixed inset-0 z-50 overflow-y-auto">
                     <div className="flex min-h-screen items-end justify-center px-4 pt-4 pb-20 text-center sm:block sm:p-0">
-                        <div className="fixed inset-0 bg-gray-900 bg-opacity-50 backdrop-blur-sm transition-opacity" onClick={closeModal} />
+                        <div className="fixed inset-0 bg-white bg-opacity-50 backdrop-blur-sm transition-opacity" onClick={closeModal} />
                         <span className="hidden sm:inline-block sm:h-screen sm:align-middle">&#8203;</span>
                         <div className="inline-block transform overflow-hidden rounded-2xl bg-white px-4 pt-5 pb-4 text-left align-bottom shadow-2xl transition-all sm:my-8 sm:w-full sm:max-w-lg sm:p-6 sm:align-middle">
                             <div className="absolute top-0 right-0 pt-4 pr-4">
-                                <button onClick={closeModal} className="text-gray-400 hover:text-gray-600 p-1 hover:bg-gray-100 rounded-lg">
+                                <button onClick={closeModal} className="text-gray-400 hover:text-gray-600 p-1 hover:bg-white rounded-lg">
                                     <X className="h-6 w-6" />
                                 </button>
                             </div>
@@ -445,7 +445,7 @@ export default function Categories() {
                                         />
                                     </div>
 
-                                    <div className="bg-gray-50 p-3 rounded-xl border border-gray-100 flex items-center justify-between">
+                                    <div className="bg-white p-3 rounded-xl border border-gray-100 flex items-center justify-between">
                                         <div className="flex items-center gap-2">
                                             <span className="text-sm font-medium text-gray-700">Estado de la categoría</span>
                                             {formData.is_active ? (
@@ -512,7 +512,7 @@ export default function Categories() {
                                     </div>
                                     <h3 className="text-xl font-bold text-gray-900 line-clamp-1">Filtros de Búsqueda</h3>
                                 </div>
-                                <button onClick={() => setIsFiltersVisible(false)} className="text-gray-400 hover:text-gray-500 p-1 hover:bg-gray-50 rounded-lg">
+                                <button onClick={() => setIsFiltersVisible(false)} className="text-gray-400 hover:text-gray-500 p-1 hover:bg-white rounded-lg">
                                     <X className="h-6 w-6" />
                                 </button>
                             </div>
@@ -522,7 +522,7 @@ export default function Categories() {
                                     <div>
                                         <label className="block text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-2 font-black">Estado</label>
                                         <select 
-                                            className="input h-12 bg-gray-50 border-gray-100 rounded-xl text-sm font-medium focus:bg-white transition-all shadow-sm"
+                                            className="input h-12 bg-white border-gray-100 rounded-xl text-sm font-medium focus:bg-white transition-all shadow-sm"
                                             value={filterStatus}
                                             onChange={(e) => setFilterStatus(e.target.value as any)}
                                         >
@@ -563,7 +563,7 @@ export default function Categories() {
                                                 setEndDate('')
                                                 setIsFiltersVisible(false)
                                             }}
-                                            className="btn border border-gray-200 text-gray-500 h-11 rounded-xl text-xs font-bold uppercase tracking-widest hover:bg-gray-50 shadow-sm"
+                                            className="btn border border-gray-200 text-gray-500 h-11 rounded-xl text-xs font-bold uppercase tracking-widest hover:bg-white shadow-sm"
                                         >
                                             Limpiar
                                         </button>

@@ -16,6 +16,20 @@ const queryClient = new QueryClient({
     },
 })
 
+// Failsafe absoluto para forzar LIGHT MODE pase lo que pase
+const observer = new MutationObserver((mutations) => {
+    mutations.forEach((mutation) => {
+        if (mutation.attributeName === 'class') {
+            const html = document.documentElement
+            if (html.classList.contains('dark')) {
+                html.classList.remove('dark')
+                html.classList.add('light')
+            }
+        }
+    })
+})
+observer.observe(document.documentElement, { attributes: true })
+
 ReactDOM.createRoot(document.getElementById('root')!).render(
     <React.StrictMode>
         <QueryClientProvider client={queryClient}>
