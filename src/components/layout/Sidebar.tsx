@@ -1,6 +1,6 @@
 import { NavLink } from 'react-router-dom'
 import { LayoutDashboard, Package,    FolderTree, Building2, TrendingUp, ShoppingCart, 
-    History, Users, Settings, LogOut, Truck, Shield
+    History, Users, Settings, LogOut, Truck, Shield, Sparkles, Receipt
 } from 'lucide-react'
 import { useAuthStore } from '@/store/authStore'
 import { usePermissions } from '@/hooks/usePermissions'
@@ -24,6 +24,7 @@ const navigation = [
             { name: 'Proveedores', href: '/suppliers', icon: Building2, permission: 'suppliers:view' },
             { name: 'Compras', href: '/purchases', icon: Truck, permission: 'purchases:view' },
             { name: 'Inventario', href: '/inventory', icon: History, permission: 'inventory:view' },
+            { name: 'Gastos / Costos', href: '/expenses', icon: Receipt, permission: 'expenses:view' },
             { name: 'Ajustes Stock', href: '/inventory/adjustments', icon: History, permission: 'adjustments:view' },
         ]
     },
@@ -39,6 +40,7 @@ const navigation = [
         title: 'Análisis',
         items: [
             { name: 'Rentabilidad', href: '/profitability', icon: TrendingUp, permission: 'reports:view' },
+            // { name: 'AI Demand Insights', href: '/ai-analysis', icon: Sparkles, permission: 'reports:view' },
         ]
     },
     {
@@ -46,6 +48,7 @@ const navigation = [
         items: [
             { name: 'Usuarios', href: '/users', icon: Users, permission: 'users:view' },
             { name: 'Roles y Permisos', href: '/roles', icon: Shield, permission: 'roles:manage' },
+            { name: 'Logs Auditoría', href: '/audit-logs', icon: History, permission: 'settings:manage' },
             { name: 'Configuración', href: '/settings', icon: Settings, permission: 'settings:manage' },
         ]
     }

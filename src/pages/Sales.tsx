@@ -205,7 +205,7 @@ export default function Sales() {
                 <div className="relative group">
                     <div className="absolute inset-0 bg-primary-500/5 blur-2xl rounded-3xl group-focus-within:bg-primary-500/10 transition-all" />
                     <div className="relative bg-white border border-gray-100 rounded-3xl shadow-xl shadow-gray-200/40 p-2 flex items-center gap-3">
-                        <div className="p-3 bg-gray-50 rounded-2xl text-gray-400 group-focus-within:text-primary-500 transition-colors">
+                        <div className="p-3 bg-white rounded-2xl text-gray-400 group-focus-within:text-primary-500 transition-colors">
                             <Search className="h-6 w-6" />
                         </div>
                         <input 
@@ -245,7 +245,7 @@ export default function Sales() {
                                     className={clsx(
                                         "group text-left p-4 rounded-[2rem] border transition-all duration-300 active:scale-95",
                                         product.stock <= 0 
-                                            ? "bg-gray-50 border-gray-100 opacity-60 grayscale cursor-not-allowed" 
+                                            ? "bg-white border-gray-100 opacity-60 grayscale cursor-not-allowed" 
                                             : "bg-white border-gray-100 hover:border-primary-200 hover:shadow-2xl hover:shadow-primary-100/50"
                                     )}
                                 >
@@ -286,7 +286,7 @@ export default function Sales() {
 
             {/* SECCIÓN DERECHA: CARRITO Y PAGO */}
             <div className="w-[400px] flex flex-col bg-white border border-gray-100 rounded-[2.5rem] shadow-2xl shadow-gray-200/50 overflow-hidden">
-                <div className="p-6 bg-gray-50/50 border-b border-gray-50 flex items-center justify-between">
+                <div className="p-6 bg-white/50 border-b border-gray-50 flex items-center justify-between">
                     <div className="flex items-center gap-3">
                         <div className="p-2 bg-indigo-600 text-white rounded-xl shadow-lg shadow-indigo-200">
                             <ShoppingCart className="h-5 w-5" />
@@ -304,7 +304,7 @@ export default function Sales() {
                 </div>
 
                 {/* SECCIÓN CLIENTE */}
-                <div className="px-6 py-4 bg-gray-50/30 border-y border-gray-100">
+                <div className="px-6 py-4 bg-white/30 border-y border-gray-100">
                     <div className="flex items-center justify-between mb-3">
                         <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Cliente</span>
                         {selectedCustomer && (
@@ -351,7 +351,7 @@ export default function Sales() {
                 <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-3 custom-scrollbar">
                     {cart.length === 0 ? (
                         <div className="flex-1 flex flex-col items-center justify-center text-gray-300 gap-4 italic p-8 text-center">
-                            <div className="p-6 bg-gray-50 rounded-full">
+                            <div className="p-6 bg-white rounded-full">
                                 <Search className="h-10 w-10 opacity-20" />
                             </div>
                             <p className="text-sm">Escanea productos o búscalos para comenzar la venta</p>
@@ -360,7 +360,7 @@ export default function Sales() {
                         cart.map((item) => (
                             <div key={item.id} className="group bg-white p-3 rounded-2xl border border-gray-100 hover:border-primary-100 hover:shadow-lg transition-all">
                                 <div className="flex gap-3">
-                                    <div className="h-12 w-12 flex-shrink-0 bg-gray-50 rounded-xl flex items-center justify-center text-gray-400 group-hover:bg-primary-50 group-hover:text-primary-500 transition-colors">
+                                    <div className="h-12 w-12 flex-shrink-0 bg-white rounded-xl flex items-center justify-center text-gray-400 group-hover:bg-primary-50 group-hover:text-primary-500 transition-colors">
                                         <Package className="h-6 w-6" />
                                     </div>
                                     <div className="flex-1 min-w-0">
@@ -375,7 +375,7 @@ export default function Sales() {
                                     </button>
                                 </div>
                                 <div className="mt-3 flex items-center justify-between">
-                                    <div className="flex items-center gap-1 bg-gray-50 p-1 rounded-xl border border-gray-100">
+                                    <div className="flex items-center gap-1 bg-white p-1 rounded-xl border border-gray-100">
                                         <button 
                                             onClick={() => updateQuantity(item.id, -1)}
                                             className="h-7 w-7 flex items-center justify-center rounded-lg hover:bg-white text-gray-500 hover:text-red-500 hover:shadow-sm transition-all"
@@ -403,7 +403,7 @@ export default function Sales() {
                 </div>
 
                 {/* RESUMEN Y BOTÓN ACCIÓN */}
-                <div className="p-6 bg-slate-900">
+                <div className="p-6 bg-white">
                     <div className="space-y-3 mb-6">
                         <div className="flex justify-between items-center text-slate-400">
                             <span className="text-[10px] font-black uppercase tracking-widest">Subtotal</span>
@@ -413,9 +413,9 @@ export default function Sales() {
                             <span className="text-[10px] font-black uppercase tracking-widest">Impuestos (Incl.)</span>
                             <span className="text-sm font-bold">$0.00</span>
                         </div>
-                        <div className="pt-3 border-t border-white/10 flex justify-between items-center">
+                        <div className="pt-3 border-t border-slate-100 flex justify-between items-center">
                             <span className="text-[10px] font-black text-primary-400 uppercase tracking-[0.2em]">Total a Pagar</span>
-                            <span className="text-3xl font-black text-white tracking-tighter">${total.toLocaleString()}</span>
+                            <span className="text-3xl font-black text-slate-900 tracking-tighter">${total.toLocaleString()}</span>
                         </div>
                     </div>
 
@@ -425,7 +425,7 @@ export default function Sales() {
                         className={clsx(
                             "w-full h-16 rounded-2xl flex items-center justify-center gap-3 transition-all active:scale-[0.98] font-black uppercase tracking-[0.15em] text-sm shadow-2xl",
                             cart.length === 0 
-                                ? "bg-slate-800 text-slate-600 grayscale cursor-not-allowed" 
+                                ? "bg-white text-slate-600 grayscale cursor-not-allowed" 
                                 : "bg-primary-600 hover:bg-primary-500 text-white shadow-primary-600/30"
                         )}
                     >
@@ -439,7 +439,7 @@ export default function Sales() {
             {isPaymentModalOpen && (
                 <div className="fixed inset-0 z-[60] overflow-y-auto">
                     <div className="flex min-h-screen items-center justify-center p-4">
-                        <div className="fixed inset-0 bg-gray-900 bg-opacity-70 backdrop-blur-sm" onClick={() => setIsPaymentModalOpen(false)} />
+                        <div className="fixed inset-0 bg-white bg-opacity-70 backdrop-blur-sm" onClick={() => setIsPaymentModalOpen(false)} />
                         <div className="relative bg-white rounded-[2.5rem] shadow-2xl w-full max-w-lg overflow-hidden border border-gray-100">
                             <div className="p-8">
                                 <div className="flex justify-between items-center mb-8">
@@ -452,7 +452,7 @@ export default function Sales() {
                                             <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">Selecciona método de pago</p>
                                         </div>
                                     </div>
-                                    <button onClick={() => setIsPaymentModalOpen(false)} className="p-2 hover:bg-gray-50 rounded-xl transition-colors">
+                                    <button onClick={() => setIsPaymentModalOpen(false)} className="p-2 hover:bg-white rounded-xl transition-colors">
                                         <X className="h-6 w-6 text-gray-300" />
                                     </button>
                                 </div>
@@ -483,7 +483,7 @@ export default function Sales() {
                                     ))}
                                 </div>
 
-                                <div className="bg-gray-50 p-6 rounded-[2rem] border border-gray-100 mb-8 flex justify-between items-center">
+                                <div className="bg-white p-6 rounded-[2rem] border border-gray-100 mb-8 flex justify-between items-center">
                                     <span className="text-xs font-black text-gray-400 uppercase tracking-[0.2em]">Monto Total</span>
                                     <span className="text-4xl font-black text-gray-900 tracking-tighter">${total.toLocaleString()}</span>
                                 </div>
@@ -515,7 +515,7 @@ export default function Sales() {
             {isSuccessModalOpen && (
                 <div className="fixed inset-0 z-[70] overflow-y-auto">
                     <div className="flex min-h-screen items-center justify-center p-4">
-                        <div className="fixed inset-0 bg-slate-900/90 backdrop-blur-md" />
+                        <div className="fixed inset-0 bg-white/90 backdrop-blur-md" />
                         <div className="relative bg-white rounded-[3rem] shadow-2xl w-full max-w-md overflow-hidden p-10 text-center border border-gray-100">
                             <div className="flex justify-center mb-6">
                                 <div className="p-6 bg-emerald-50 text-emerald-500 rounded-full animate-bounce">
@@ -540,7 +540,7 @@ export default function Sales() {
                                         setIsSuccessModalOpen(false);
                                         setLastSaleId(null);
                                     }}
-                                    className="w-full h-16 bg-gray-50 hover:bg-gray-100 text-gray-600 rounded-2xl flex items-center justify-center gap-3 font-black uppercase tracking-widest text-sm transition-all active:scale-95"
+                                    className="w-full h-16 bg-white hover:bg-white text-gray-600 rounded-2xl flex items-center justify-center gap-3 font-black uppercase tracking-widest text-sm transition-all active:scale-95"
                                 >
                                     Nueva Venta
                                 </button>

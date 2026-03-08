@@ -231,7 +231,7 @@ export default function SalesList() {
                             "h-14 px-5 bg-white border rounded-2xl text-gray-500 font-bold text-xs uppercase tracking-widest transition-all flex items-center gap-2 shadow-sm",
                             (startDate || endDate || filterStatus || filterPaymentMethod || search) 
                                 ? "border-indigo-200 bg-indigo-50 text-indigo-600" 
-                                : "border-gray-100 hover:bg-gray-50"
+                                : "border-gray-100 hover:bg-white"
                         )}
                     >
                         <Filter className="h-4 w-4" />
@@ -323,7 +323,7 @@ export default function SalesList() {
 
                     <div className="h-[250px] w-full">
                         {isLoadingStats ? (
-                            <div className="h-full w-full bg-gray-50/50 animate-pulse rounded-2xl" />
+                            <div className="h-full w-full bg-white/50 animate-pulse rounded-2xl" />
                         ) : (
                             <ResponsiveContainer width="100%" height="100%">
                                 <AreaChart data={statsData?.trends || []}>
@@ -394,7 +394,7 @@ export default function SalesList() {
                     
                     <div className="h-[200px] w-full relative">
                         {isLoadingStats ? (
-                            <div className="h-full w-full bg-gray-50/50 animate-pulse rounded-2xl" />
+                            <div className="h-full w-full bg-white/50 animate-pulse rounded-2xl" />
                         ) : (
                             <ResponsiveContainer width="100%" height="100%">
                                 <PieChart>
@@ -442,7 +442,7 @@ export default function SalesList() {
 
                     <div className="grid grid-cols-2 gap-2 mt-4">
                         {statsData?.payment_distribution?.map((p: any) => (
-                            <div key={p.name} className="flex items-center gap-2 p-2 rounded-xl bg-gray-50">
+                            <div key={p.name} className="flex items-center gap-2 p-2 rounded-xl bg-white">
                                 <span className={clsx(
                                     "h-2 w-2 rounded-full",
                                     p.name === 'cash' ? 'bg-emerald-500' : 
@@ -464,7 +464,7 @@ export default function SalesList() {
                     
                     <div className="h-[200px] w-full relative">
                         {isLoadingStats ? (
-                            <div className="h-full w-full bg-gray-50/50 animate-pulse rounded-2xl" />
+                            <div className="h-full w-full bg-white/50 animate-pulse rounded-2xl" />
                         ) : (
                             <ResponsiveContainer width="100%" height="100%">
                                 <PieChart>
@@ -510,7 +510,7 @@ export default function SalesList() {
                     </div>
                     <div className="grid grid-cols-1 gap-2 mt-4 max-h-[100px] overflow-y-auto custom-scrollbar pr-1">
                         {statsData?.category_distribution?.slice(0, 4).map((c: any, index: number) => (
-                            <div key={c.name} className="flex items-center justify-between p-2 rounded-xl bg-gray-50/50">
+                            <div key={c.name} className="flex items-center justify-between p-2 rounded-xl bg-white/50">
                                 <div className="flex items-center gap-2">
                                     <span className="h-2 w-2 rounded-full" style={{ backgroundColor: ['#6366f1', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4'][index % 6] }} />
                                     <span className="text-[9px] font-black text-gray-500 uppercase tracking-tighter truncate w-24">
@@ -540,14 +540,14 @@ export default function SalesList() {
 
                 <div className="space-y-4">
                     {isLoadingStats ? (
-                        [1, 2, 3].map(i => <div key={i} className="h-14 w-full bg-gray-50 animate-pulse rounded-2xl" />)
+                        [1, 2, 3].map(i => <div key={i} className="h-14 w-full bg-white animate-pulse rounded-2xl" />)
                     ) : statsData?.low_stock_items?.length > 0 ? (
                         statsData.low_stock_items.map((item: any) => (
-                            <div key={item.id} className="group p-4 rounded-[1.5rem] bg-gray-50/50 border border-transparent hover:border-rose-100 hover:bg-white transition-all flex items-center justify-between">
+                            <div key={item.id} className="group p-4 rounded-[1.5rem] bg-white/50 border border-transparent hover:border-rose-100 hover:bg-white transition-all flex items-center justify-between">
                                 <div className="flex-1 min-w-0 pr-4">
                                     <p className="text-xs font-black text-gray-900 truncate uppercase tracking-tight">{item.name}</p>
                                     <div className="flex items-center gap-2 mt-1">
-                                        <div className="flex-1 h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                                        <div className="flex-1 h-1.5 bg-white rounded-full overflow-hidden">
                                             <div 
                                                 className="h-full bg-rose-500 rounded-full" 
                                                 style={{ width: `${Math.min((item.stock / item.min_stock) * 100, 100)}%` }}
@@ -574,7 +574,7 @@ export default function SalesList() {
             {isFiltersVisible && (
                 <div className="fixed inset-0 z-[70] flex items-center justify-center p-4">
                     <div 
-                        className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-300" 
+                        className="fixed inset-0 bg-white/60 backdrop-blur-sm animate-in fade-in duration-300" 
                         onClick={() => setIsFiltersVisible(false)} 
                     />
                     
@@ -589,7 +589,7 @@ export default function SalesList() {
                             </div>
                             <button 
                                 onClick={() => setIsFiltersVisible(false)} 
-                                className="p-2 hover:bg-gray-50 rounded-xl transition-all group"
+                                className="p-2 hover:bg-white rounded-xl transition-all group"
                             >
                                 <X className="h-8 w-8 text-gray-200 group-hover:text-gray-400" />
                             </button>
@@ -614,7 +614,7 @@ export default function SalesList() {
                                                     "h-12 px-2 rounded-xl text-[11px] font-black transition-all border uppercase tracking-widest",
                                                     filterStatus === s.id 
                                                         ? "bg-indigo-600 border-indigo-600 text-white shadow-lg shadow-indigo-100" 
-                                                        : "bg-white border-gray-100 text-gray-400 hover:bg-gray-50 hover:border-indigo-200"
+                                                        : "bg-white border-gray-100 text-gray-400 hover:bg-white hover:border-indigo-200"
                                                 )}
                                             >
                                                 {s.label}
@@ -639,8 +639,8 @@ export default function SalesList() {
                                                 className={clsx(
                                                     "h-12 px-2 rounded-xl text-[11px] font-black transition-all border uppercase tracking-widest",
                                                     filterPaymentMethod === p.id 
-                                                        ? "bg-slate-900 border-slate-900 text-white shadow-lg shadow-slate-100" 
-                                                        : "bg-white border-gray-100 text-gray-400 hover:bg-gray-50 hover:border-slate-300"
+                                                        ? "bg-slate-100 border-slate-200 text-slate-900 shadow-sm" 
+                                                        : "bg-white border-slate-200 text-slate-500 hover:bg-white hover:border-slate-300"
                                                 )}
                                             >
                                                 {p.label}
@@ -660,7 +660,7 @@ export default function SalesList() {
                                             "h-12 px-2 rounded-xl text-[11px] font-black transition-all border uppercase tracking-widest flex items-center justify-center gap-2",
                                             filterSellerId === "" 
                                                 ? "bg-indigo-600 border-indigo-600 text-white" 
-                                                : "bg-white border-gray-100 text-gray-400 hover:bg-gray-50"
+                                                : "bg-white border-gray-100 text-gray-400 hover:bg-white"
                                         )}
                                     >
                                         TODOS
@@ -673,7 +673,7 @@ export default function SalesList() {
                                                 "h-12 px-2 rounded-xl text-[11px] font-black transition-all border uppercase tracking-widest flex items-center justify-center gap-2",
                                                 filterSellerId === s.id.toString()
                                                     ? "bg-indigo-600 border-indigo-600 text-white shadow-lg shadow-indigo-100" 
-                                                    : "bg-white border-gray-100 text-gray-400 hover:bg-gray-50 hover:border-indigo-200"
+                                                    : "bg-white border-gray-100 text-gray-400 hover:bg-white hover:border-indigo-200"
                                             )}
                                         >
                                             <UserIcon className="h-3 w-3" />
@@ -699,7 +699,7 @@ export default function SalesList() {
                         </div>
 
                         {/* Footer Modal */}
-                        <div className="px-8 py-8 bg-gray-50/50 border-t border-gray-100 space-y-3">
+                        <div className="px-8 py-8 bg-white/50 border-t border-gray-100 space-y-3">
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                                 {hasPermission('reports:view') && (
                                     <>
@@ -731,7 +731,7 @@ export default function SalesList() {
                                         setFilterSellerId("");
                                         setSearch("");
                                     }}
-                                    className="flex-1 h-14 bg-white border border-gray-200 text-gray-500 rounded-2xl font-black uppercase tracking-widest text-[10px] hover:bg-gray-50 transition-all"
+                                    className="flex-1 h-14 bg-white border border-gray-200 text-gray-500 rounded-2xl font-black uppercase tracking-widest text-[10px] hover:bg-white transition-all"
                                 >
                                     Limpiar Filtros
                                 </button>
@@ -752,7 +752,7 @@ export default function SalesList() {
                 <div className="overflow-x-auto">
                     <table className="w-full text-left border-collapse">
                         <thead>
-                            <tr className="bg-gray-50/50">
+                            <tr className="bg-white/50">
                                 <th className="px-6 py-5 text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">ID Venta</th>
                                 <th className="px-6 py-5 text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Fecha</th>
                                 <th className="px-6 py-5 text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Vendedor</th>
@@ -770,7 +770,7 @@ export default function SalesList() {
                                     </tr>
                                 ))
                             ) : salesData?.items.map((sale) => (
-                                <tr key={sale.id} className="hover:bg-gray-50/50 transition-colors group">
+                                <tr key={sale.id} className="hover:bg-white/50 transition-colors group">
                                     <td className="px-6 py-5">
                                         <span className="text-sm font-black text-gray-900 font-mono tracking-tighter">#{sale.id}</span>
                                     </td>
@@ -833,7 +833,7 @@ export default function SalesList() {
                 </div>
                 
                 {salesData && salesData.pages > 1 && (
-                    <div className="p-6 border-t border-gray-50 bg-gray-50/30">
+                    <div className="p-6 border-t border-gray-50 bg-white/30">
                         <Pagination 
                             currentPage={page}
                             totalPages={salesData?.pages || 0}
@@ -847,7 +847,7 @@ export default function SalesList() {
             {isDetailsModalOpen && selectedSale && (
                 <div className="fixed inset-0 z-[60] overflow-y-auto">
                     <div className="flex min-h-screen items-center justify-center p-4">
-                        <div className="fixed inset-0 bg-slate-900/90 backdrop-blur-md" onClick={() => setIsDetailsModalOpen(false)} />
+                        <div className="fixed inset-0 bg-white/90 backdrop-blur-md" onClick={() => setIsDetailsModalOpen(false)} />
                         <div className="relative bg-white rounded-[2.5rem] shadow-2xl w-full max-w-2xl overflow-hidden border border-gray-100">
                             {/* Header del Modal */}
                             <div className="px-8 py-8 border-b border-gray-50 bg-white flex items-center justify-between sticky top-0 z-10">
@@ -866,7 +866,7 @@ export default function SalesList() {
                                         </div>
                                     </div>
                                 </div>
-                                <button onClick={() => setIsDetailsModalOpen(false)} className="p-2 hover:bg-gray-50 rounded-xl transition-all group">
+                                <button onClick={() => setIsDetailsModalOpen(false)} className="p-2 hover:bg-white rounded-xl transition-all group">
                                     <XCircle className="h-8 w-8 text-gray-200 group-hover:text-gray-400" />
                                 </button>
                             </div>
@@ -878,7 +878,7 @@ export default function SalesList() {
                                     <label className="block text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-4">Productos en la Venta</label>
                                     <div className="space-y-3">
                                         {selectedSale.items.map((item) => (
-                                            <div key={item.id} className="flex items-center justify-between p-4 bg-gray-50/50 rounded-2xl border border-gray-100">
+                                            <div key={item.id} className="flex items-center justify-between p-4 bg-white/50 rounded-2xl border border-gray-100">
                                                 <div className="flex items-center gap-4">
                                                     <div className="h-10 w-10 bg-white rounded-xl flex items-center justify-center text-indigo-400 shadow-sm border border-gray-100">
                                                         <span className="text-[10px] font-black uppercase tracking-tighter">x{item.quantity}</span>
@@ -899,7 +899,7 @@ export default function SalesList() {
 
                                 {/* Resumen Financiero */}
                                 <div className="grid grid-cols-2 gap-4">
-                                    <div className="p-6 bg-slate-900 rounded-[2rem] text-white">
+                                    <div className="p-6 bg-white rounded-[2rem] text-slate-900 border border-slate-100 shadow-sm">
                                         <p className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] mb-4">Resumen de Pago</p>
                                         <div className="space-y-3">
                                             <div className="flex justify-between items-center opacity-60">
@@ -913,7 +913,7 @@ export default function SalesList() {
                                         </div>
                                     </div>
                                     
-                                    <div className="p-6 bg-gray-50 rounded-[2rem] border border-gray-100">
+                                    <div className="p-6 bg-white rounded-[2rem] border border-gray-100">
                                         <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-4">Notas de la Venta</p>
                                         <p className="text-sm font-medium text-gray-600 italic">
                                             {selectedSale.notes || 'Sin notas adicionales para esta venta.'}
@@ -923,10 +923,10 @@ export default function SalesList() {
                             </div>
 
                             {/* Footer con Acciones Críticas */}
-                            <div className="p-8 bg-gray-50 border-t border-gray-100 flex gap-3">
+                            <div className="p-8 bg-white border-t border-gray-100 flex gap-3">
                                 <button 
                                     onClick={() => downloadTicket(selectedSale.id)}
-                                    className="flex-1 h-16 bg-white border border-gray-200 text-gray-600 rounded-2xl flex items-center justify-center gap-3 font-black uppercase tracking-widest text-xs hover:bg-gray-100 transition-all shadow-sm"
+                                    className="flex-1 h-16 bg-white border border-gray-200 text-gray-600 rounded-2xl flex items-center justify-center gap-3 font-black uppercase tracking-widest text-xs hover:bg-white transition-all shadow-sm"
                                 >
                                     <FileDown className="h-5 w-5" />
                                     Descargar Ticket

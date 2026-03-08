@@ -208,7 +208,7 @@ export default function Users() {
                             "btn flex items-center gap-2 h-10 px-4 transition-all border shadow-sm rounded-xl text-xs uppercase tracking-widest font-bold",
                             (startDate || endDate || filterStatus !== 'all')
                                 ? "bg-primary-50 border-primary-200 text-primary-700 font-bold" 
-                                : "bg-white border-gray-200 text-gray-600 hover:bg-gray-50"
+                                : "bg-white border-gray-200 text-gray-600 hover:bg-white"
                         )}
                     >
                         <Filter className="h-4 w-4" />
@@ -250,7 +250,7 @@ export default function Users() {
                     <div className="overflow-x-auto">
                         {/* Tabla (Desktop) */}
                         <table className="min-w-full divide-y divide-gray-200 hidden lg:table">
-                            <thead className="bg-gray-50">
+                            <thead className="bg-white">
                                 <tr>
                                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Usuario</th>
                                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Rol</th>
@@ -261,7 +261,7 @@ export default function Users() {
                             </thead>
                             <tbody className="bg-white divide-y divide-gray-200">
                                 {usersData?.items.map((user) => (
-                                    <tr key={user.id} className="hover:bg-gray-50 transition-colors">
+                                    <tr key={user.id} className="hover:bg-white transition-colors">
                                         <td className="px-6 py-4 whitespace-nowrap">
                                             <div className="flex items-center">
                                                 <div className="h-10 w-10 flex-shrink-0">
@@ -508,7 +508,7 @@ export default function Users() {
                                     </div>
                                     <h3 className="text-xl font-bold text-gray-900 line-clamp-1">Filtros de Búsqueda</h3>
                                 </div>
-                                <button onClick={() => setIsFiltersVisible(false)} className="text-gray-400 hover:text-gray-500 p-1 hover:bg-gray-50 rounded-lg">
+                                <button onClick={() => setIsFiltersVisible(false)} className="text-gray-400 hover:text-gray-500 p-1 hover:bg-white rounded-lg">
                                     <X className="h-6 w-6" />
                                 </button>
                             </div>
@@ -517,7 +517,7 @@ export default function Users() {
                                 <div>
                                     <label className="block text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-2">Estado de Usuario</label>
                                     <select 
-                                        className="input h-12 bg-gray-50 border-gray-100 rounded-xl text-sm font-medium focus:bg-white transition-all"
+                                        className="input h-12 bg-white border-gray-100 rounded-xl text-sm font-medium focus:bg-white transition-all"
                                         value={filterStatus}
                                         onChange={(e) => setFilterStatus(e.target.value as any)}
                                     >
@@ -556,7 +556,7 @@ export default function Users() {
                                                 setEndDate('')
                                                 setIsFiltersVisible(false)
                                             }}
-                                            className="btn border border-gray-200 text-gray-500 h-11 rounded-xl text-xs font-bold uppercase tracking-widest hover:bg-gray-50"
+                                            className="btn border border-gray-200 text-gray-500 h-11 rounded-xl text-xs font-bold uppercase tracking-widest hover:bg-white"
                                         >
                                             Limpiar
                                         </button>
@@ -577,7 +577,7 @@ export default function Users() {
             {/* Modal Confirmar Eliminación */}
             {isDeleteModalOpen && userToDelete && (
                 <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
-                    <div className="fixed inset-0 bg-gray-900/60 transition-opacity" onClick={() => setIsDeleteModalOpen(false)} />
+                    <div className="fixed inset-0 bg-white/60 transition-opacity" onClick={() => setIsDeleteModalOpen(false)} />
                     <div className="relative bg-white rounded-3xl shadow-2xl w-full max-w-sm overflow-hidden animate-in zoom-in-95 duration-200">
                         <div className="p-8 text-center">
                             <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-red-50 mb-6">
@@ -592,7 +592,7 @@ export default function Users() {
                             <div className="grid grid-cols-2 gap-3">
                                 <button 
                                     onClick={() => setIsDeleteModalOpen(false)}
-                                    className="btn bg-gray-50 text-gray-600 hover:bg-gray-100 border-none py-4 font-bold"
+                                    className="btn bg-white text-gray-600 hover:bg-white border-none py-4 font-bold"
                                     disabled={deleteMutation.isPending}
                                 >
                                     Cancelar

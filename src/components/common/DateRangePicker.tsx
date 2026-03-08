@@ -122,7 +122,7 @@ export default function DateRangePicker({ startDate, endDate, onChange, classNam
                     <button
                         onClick={() => setIsOpen(isOpen === 'start' ? null : 'start')}
                         className={clsx(
-                            "w-full flex items-center justify-between px-3 h-12 bg-gray-50/50 border rounded-xl transition-all font-medium text-gray-700 shadow-sm hover:border-primary-300",
+                            "w-full flex items-center justify-between px-3 h-12 bg-white/50 border rounded-xl transition-all font-medium text-gray-700 shadow-sm hover:border-primary-300",
                             isOpen === 'start' ? "border-primary-500 ring-4 ring-primary-500/10 bg-white" : "border-gray-100"
                         )}
                     >
@@ -144,7 +144,7 @@ export default function DateRangePicker({ startDate, endDate, onChange, classNam
                     <button
                         onClick={() => setIsOpen(isOpen === 'end' ? null : 'end')}
                         className={clsx(
-                            "w-full flex items-center justify-between px-3 h-12 bg-gray-50/50 border rounded-xl transition-all font-medium text-gray-700 shadow-sm hover:border-primary-300",
+                            "w-full flex items-center justify-between px-3 h-12 bg-white/50 border rounded-xl transition-all font-medium text-gray-700 shadow-sm hover:border-primary-300",
                             isOpen === 'end' ? "border-primary-500 ring-4 ring-primary-500/10 bg-white" : "border-gray-100"
                         )}
                     >
@@ -267,7 +267,7 @@ function CalendarDropdown({
                 {viewMode === 'calendar' && (
                     <>
                         <div className="flex items-center justify-between w-full">
-                            <button onClick={() => handleMonthChange(-1)} className="p-1.5 hover:bg-gray-50 rounded-full transition-colors">
+                            <button onClick={() => handleMonthChange(-1)} className="p-1.5 hover:bg-white rounded-full transition-colors">
                                 <ChevronLeft className="h-4 w-4 text-gray-400" />
                             </button>
                             <button 
@@ -276,7 +276,7 @@ function CalendarDropdown({
                             >
                                 {months[month]}
                             </button>
-                            <button onClick={() => handleMonthChange(1)} className="p-1.5 hover:bg-gray-50 rounded-full transition-colors">
+                            <button onClick={() => handleMonthChange(1)} className="p-1.5 hover:bg-white rounded-full transition-colors">
                                 <ChevronRight className="h-4 w-4 text-gray-400" />
                             </button>
                         </div>
@@ -300,7 +300,7 @@ function CalendarDropdown({
                                                     ? "bg-primary-500 text-white shadow-lg shadow-primary-200 scale-105" 
                                                     : isToday(day)
                                                         ? "bg-primary-50 text-primary-600"
-                                                        : "text-gray-600 hover:bg-gray-50"
+                                                        : "text-gray-600 hover:bg-white"
                                             )}
                                         >
                                             {day}
@@ -325,7 +325,7 @@ function CalendarDropdown({
                                 }}
                                 className={clsx(
                                     "py-3 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all",
-                                    month === idx ? "bg-primary-500 text-white" : "hover:bg-gray-50 text-gray-500"
+                                    month === idx ? "bg-primary-500 text-white" : "hover:bg-white text-gray-500"
                                 )}
                             >
                                 {m.slice(0, 3)}
@@ -347,7 +347,7 @@ function CalendarDropdown({
                                 }}
                                 className={clsx(
                                     "py-3 rounded-xl text-xs font-black transition-all",
-                                    year === y ? "bg-primary-500 text-white" : "hover:bg-gray-50 text-gray-500"
+                                    year === y ? "bg-primary-500 text-white" : "hover:bg-white text-gray-500"
                                 )}
                             >
                                 {y}

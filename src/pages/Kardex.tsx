@@ -50,7 +50,7 @@ export default function Kardex() {
                 <div className="flex items-center gap-4">
                     <button 
                         onClick={() => navigate(-1)}
-                        className="p-2.5 hover:bg-gray-100 rounded-xl transition-colors border border-gray-200 bg-white shadow-sm"
+                        className="p-2.5 hover:bg-white rounded-xl transition-colors border border-gray-200 bg-white shadow-sm"
                     >
                         <ArrowLeft className="h-5 w-5 text-gray-600" />
                     </button>
@@ -75,10 +75,10 @@ export default function Kardex() {
                     <div>
                         <h2 className="text-lg font-black text-gray-900 uppercase leading-tight">{product?.name}</h2>
                         <div className="flex items-center gap-3 mt-1">
-                            <span className="flex items-center gap-1 text-[11px] font-bold text-gray-400 bg-gray-50 px-2 py-0.5 rounded-lg border border-gray-100">
+                            <span className="flex items-center gap-1 text-[11px] font-bold text-gray-400 bg-white px-2 py-0.5 rounded-lg border border-gray-100">
                                 <Hash className="h-3 w-3" /> SKU: {product?.sku}
                             </span>
-                            <span className="flex items-center gap-1 text-[11px] font-bold text-gray-400 bg-gray-50 px-2 py-0.5 rounded-lg border border-gray-100">
+                            <span className="flex items-center gap-1 text-[11px] font-bold text-gray-400 bg-white px-2 py-0.5 rounded-lg border border-gray-100">
                                 <Tag className="h-3 w-3" /> {product?.category?.name || "Sin Categoría"}
                             </span>
                         </div>
@@ -107,7 +107,7 @@ export default function Kardex() {
 
             {/* Línea de Tiempo de Movimientos */}
             <div className="card border-none shadow-sm bg-white overflow-hidden">
-                <div className="px-6 py-4 bg-gray-50/50 border-b border-gray-100 flex items-center justify-between">
+                <div className="px-6 py-4 bg-white/50 border-b border-gray-100 flex items-center justify-between">
                     <h3 className="text-sm font-black text-gray-900 uppercase tracking-tight">Historial de Operaciones</h3>
                     <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">
                         {movements?.length || 0} Registros encontrados
@@ -117,7 +117,7 @@ export default function Kardex() {
                 <div className="overflow-x-auto">
                     <table className="min-w-full divide-y divide-gray-100">
                         <thead>
-                            <tr className="bg-gray-50/30">
+                            <tr className="bg-white/30">
                                 <th className="px-6 py-4 text-left text-[10px] font-black text-gray-400 uppercase tracking-widest">Fecha / Hora</th>
                                 <th className="px-6 py-4 text-left text-[10px] font-black text-gray-400 uppercase tracking-widest">Tipo</th>
                                 <th className="px-6 py-4 text-center text-[10px] font-black text-gray-400 uppercase tracking-widest">Cantidad</th>
@@ -128,7 +128,7 @@ export default function Kardex() {
                         </thead>
                         <tbody className="divide-y divide-gray-50">
                             {movements?.map((m) => (
-                                <tr key={m.id} className="hover:bg-gray-50/50 transition-colors">
+                                <tr key={m.id} className="hover:bg-white/50 transition-colors">
                                     <td className="px-6 py-4 whitespace-nowrap">
                                         <div className="flex flex-col">
                                             <span className="text-xs font-bold text-gray-900">
@@ -168,7 +168,7 @@ export default function Kardex() {
                                     <td className="px-6 py-4 whitespace-nowrap text-center">
                                         <div className="flex flex-col items-center">
                                             <span className="text-xs font-black text-gray-900">{m.stock_after}</span>
-                                            <div className="w-8 h-0.5 bg-gray-100 mt-1 rounded-full"></div>
+                                            <div className="w-8 h-0.5 bg-white mt-1 rounded-full"></div>
                                         </div>
                                     </td>
                                     <td className="px-6 py-4">
@@ -191,7 +191,7 @@ export default function Kardex() {
 
                 {movements?.length === 0 && (
                     <div className="p-20 text-center">
-                        <div className="h-20 w-20 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-4 border border-dashed border-gray-200">
+                        <div className="h-20 w-20 bg-white rounded-full flex items-center justify-center mx-auto mb-4 border border-dashed border-gray-200">
                             <Info className="h-10 w-10 text-gray-300" />
                         </div>
                         <h4 className="text-gray-900 font-bold">Sin movimientos</h4>

@@ -99,7 +99,7 @@ export default function Adjustments() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50/50 -m-8 p-8 pb-16 antialiased">
+    <div className="min-h-screen bg-white/50 -m-8 p-8 pb-16 antialiased">
       <div className="max-w-6xl mx-auto space-y-10">
         {/* Header */}
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 bg-white p-8 rounded-[2.5rem] border border-gray-100 shadow-sm transition-all hover:shadow-md">
@@ -119,7 +119,7 @@ export default function Adjustments() {
           {hasPermission("adjustments:create") && (
             <button
               onClick={() => setIsModalOpen(true)}
-              className="h-14 px-8 bg-slate-900 hover:bg-black text-white rounded-2xl flex items-center gap-3 group shadow-xl shadow-slate-200 transition-all font-bold uppercase tracking-widest text-[11px]"
+              className="h-14 px-8 bg-white hover:bg-black text-white rounded-2xl flex items-center gap-3 group shadow-xl shadow-slate-200 transition-all font-bold uppercase tracking-widest text-[11px]"
             >
               <Plus className="h-5 w-5 text-indigo-400 group-hover:rotate-90 transition-transform" />
               Nuevo Ajuste
@@ -143,7 +143,7 @@ export default function Adjustments() {
               </thead>
               <tbody className="divide-y divide-gray-50">
                 {adjustments?.map((adj) => (
-                  <tr key={adj.id} className="group hover:bg-slate-50/50 transition-all">
+                  <tr key={adj.id} className="group hover:bg-white/50 transition-all">
                     <td className="py-5">
                       <div className={clsx(
                         "h-10 w-10 rounded-xl flex items-center justify-center font-black text-[10px]",
@@ -156,7 +156,7 @@ export default function Adjustments() {
                       <p className="text-sm font-black text-gray-900 truncate">ID: {adj.product_id}</p>
                     </td>
                     <td className="py-5">
-                      <span className="px-3 py-1 bg-slate-100 text-slate-600 rounded-lg text-[10px] font-black uppercase tracking-widest">
+                      <span className="px-3 py-1 bg-white text-slate-600 rounded-lg text-[10px] font-black uppercase tracking-widest">
                         {adj.reason}
                       </span>
                     </td>
@@ -190,7 +190,7 @@ export default function Adjustments() {
         {isModalOpen && (
           <div className="fixed inset-0 z-[100] overflow-y-auto">
             <div className="flex min-h-screen items-center justify-center p-4">
-              <div className="fixed inset-0 bg-slate-900/80 backdrop-blur-sm" onClick={() => setIsModalOpen(false)} />
+              <div className="fixed inset-0 bg-white/80 backdrop-blur-sm" onClick={() => setIsModalOpen(false)} />
               <div className="relative bg-white rounded-[2.5rem] shadow-2xl w-full max-w-lg p-10 border border-gray-100 overflow-hidden">
                 <div className="absolute top-0 right-0 w-32 h-32 bg-rose-50 rounded-full -mr-16 -mt-16" />
                 <div className="relative">
@@ -199,7 +199,7 @@ export default function Adjustments() {
                       <h3 className="text-2xl font-black text-gray-900 tracking-tight uppercase">Nuevo Ajuste</h3>
                       <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest mt-1">Sincronización de existencia física</p>
                     </div>
-                    <button onClick={() => setIsModalOpen(false)} className="p-2 hover:bg-gray-50 rounded-xl transition-all">
+                    <button onClick={() => setIsModalOpen(false)} className="p-2 hover:bg-white rounded-xl transition-all">
                       <X className="h-6 w-6 text-gray-400" />
                     </button>
                   </div>
@@ -214,7 +214,7 @@ export default function Adjustments() {
                           value={searchTerm}
                           onChange={(e) => setSearchTerm(e.target.value)}
                           placeholder="Nombre o SKU..."
-                          className="w-full h-14 bg-gray-50 border-gray-100 rounded-2xl px-12 text-sm font-bold text-gray-700 outline-none focus:ring-2 focus:ring-rose-500 transition-all"
+                          className="w-full h-14 bg-white border-gray-100 rounded-2xl px-12 text-sm font-bold text-gray-700 outline-none focus:ring-2 focus:ring-rose-500 transition-all"
                         />
                         <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-300" />
                       </div>
@@ -229,7 +229,7 @@ export default function Adjustments() {
                                 setSelectedProduct(p);
                                 setSearchTerm(p.name);
                               }}
-                              className="w-full p-4 flex items-center justify-between hover:bg-slate-50 transition-all text-left"
+                              className="w-full p-4 flex items-center justify-between hover:bg-white transition-all text-left"
                             >
                               <div>
                                 <p className="text-sm font-black text-gray-900">{p.name}</p>
@@ -272,7 +272,7 @@ export default function Adjustments() {
                         placeholder="Cantidad"
                         value={quantity || ""}
                         onChange={(e) => setQuantity(parseFloat(e.target.value))}
-                        className="h-14 bg-gray-50 border-gray-100 rounded-2xl px-4 text-center text-sm font-black text-gray-900 outline-none focus:ring-2 focus:ring-rose-500 transition-all"
+                        className="h-14 bg-white border-gray-100 rounded-2xl px-4 text-center text-sm font-black text-gray-900 outline-none focus:ring-2 focus:ring-rose-500 transition-all"
                       />
                     </div>
 
@@ -282,7 +282,7 @@ export default function Adjustments() {
                       <select
                         value={reason}
                         onChange={(e) => setReason(e.target.value)}
-                        className="w-full h-14 bg-gray-50 border-gray-100 rounded-2xl px-4 text-sm font-bold text-gray-700 outline-none focus:ring-2 focus:ring-rose-500 transition-all cursor-pointer"
+                        className="w-full h-14 bg-white border-gray-100 rounded-2xl px-4 text-sm font-bold text-gray-700 outline-none focus:ring-2 focus:ring-rose-500 transition-all cursor-pointer"
                       >
                         <option value="DAMAGE">Daño / Rotura</option>
                         <option value="LOSS">Pérdida / Robo</option>
@@ -296,13 +296,13 @@ export default function Adjustments() {
                       placeholder="Notas adicionales..."
                       value={notes}
                       onChange={(e) => setNotes(e.target.value)}
-                      className="w-full h-24 bg-gray-50 border-gray-100 rounded-2xl p-4 text-sm font-medium text-gray-700 outline-none focus:ring-2 focus:ring-rose-500 transition-all resize-none"
+                      className="w-full h-24 bg-white border-gray-100 rounded-2xl p-4 text-sm font-medium text-gray-700 outline-none focus:ring-2 focus:ring-rose-500 transition-all resize-none"
                     />
 
                     <button
                       type="submit"
                       disabled={mutation.isPending}
-                      className="w-full h-16 bg-slate-900 hover:bg-black text-white rounded-2xl flex items-center justify-center gap-3 font-black uppercase tracking-widest text-xs shadow-2xl shadow-slate-200 transition-all active:scale-95 disabled:opacity-50"
+                      className="w-full h-16 bg-white hover:bg-black text-white rounded-2xl flex items-center justify-center gap-3 font-black uppercase tracking-widest text-xs shadow-2xl shadow-slate-200 transition-all active:scale-95 disabled:opacity-50"
                     >
                       {mutation.isPending ? "Procesando..." : (
                         <>

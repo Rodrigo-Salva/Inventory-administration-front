@@ -404,7 +404,7 @@ export default function Products() {
                 startDate ||
                 endDate
                 ? "bg-primary-50 border-primary-200 text-primary-700 font-bold"
-                : "bg-white border-gray-200 text-gray-600 hover:bg-gray-50",
+                : "bg-white border-gray-200 text-gray-600 hover:bg-white",
             )}
           >
             <Filter className="h-4 w-4" />
@@ -462,7 +462,7 @@ export default function Products() {
             {/* Vista de Tabla (Desktop) */}
             <div className="hidden lg:block overflow-x-auto">
               <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50/50">
+                <thead className="bg-white/50">
                   <tr>
                     <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">
                       Producto
@@ -492,7 +492,7 @@ export default function Products() {
                     >
                       <td className="px-6 py-5 whitespace-nowrap">
                         <div className="flex items-center">
-                          <div className="h-11 w-11 flex-shrink-0 rounded-xl bg-gray-50 flex items-center justify-center text-gray-400 group-hover:bg-white transition-all border border-transparent group-hover:border-gray-100 shadow-sm group-hover:shadow-md">
+                          <div className="h-11 w-11 flex-shrink-0 rounded-xl bg-white flex items-center justify-center text-gray-400 group-hover:bg-white transition-all border border-transparent group-hover:border-gray-100 shadow-sm group-hover:shadow-md">
                             <Package className="h-5 w-5" />
                           </div>
                           <div className="ml-4">
@@ -621,7 +621,7 @@ export default function Products() {
                 >
                   <div className="flex items-start justify-between mb-4">
                     <div className="flex items-center gap-3">
-                      <div className="h-10 w-10 shrink-0 rounded-xl bg-gray-50 flex items-center justify-center text-gray-400 border border-gray-100">
+                      <div className="h-10 w-10 shrink-0 rounded-xl bg-white flex items-center justify-center text-gray-400 border border-gray-100">
                         <Package className="h-5 w-5" />
                       </div>
                       <div>
@@ -744,14 +744,14 @@ export default function Products() {
         <div className="fixed inset-0 z-50 overflow-y-auto">
           <div className="flex min-h-screen items-center justify-center p-4">
             <div
-              className="fixed inset-0 bg-gray-900 bg-opacity-50 backdrop-blur-sm"
+              className="fixed inset-0 bg-white bg-opacity-50 backdrop-blur-sm"
               onClick={closeModal}
             />
             <div className="relative transform overflow-hidden rounded-2xl bg-white shadow-2xl transition-all w-full max-w-2xl">
               <div className="absolute top-0 right-0 pt-4 pr-4">
                 <button
                   onClick={closeModal}
-                  className="text-gray-400 hover:text-gray-600 p-1 hover:bg-gray-100 rounded-lg"
+                  className="text-gray-400 hover:text-gray-600 p-1 hover:bg-white rounded-lg"
                 >
                   <X className="h-6 w-6" />
                 </button>
@@ -798,7 +798,7 @@ export default function Products() {
                           type="text"
                           required
                           placeholder="AUTO-GENERADO-001"
-                          className="input font-mono text-xs shadow-sm bg-gray-50/50"
+                          className="input font-mono text-xs shadow-sm bg-white/50"
                           value={formData.sku}
                           onChange={(e) =>
                             setFormData({
@@ -886,7 +886,7 @@ export default function Products() {
                           <input
                             type="number"
                             step="0.01"
-                            className="input pl-9 text-gray-600 bg-gray-50/30 border-gray-200 shadow-sm"
+                            className="input pl-9 text-gray-600 bg-white/30 border-gray-200 shadow-sm"
                             value={formData.cost}
                             onChange={(e) =>
                               setFormData({ ...formData, cost: e.target.value })
@@ -905,7 +905,7 @@ export default function Products() {
                           className={clsx(
                             "input text-center h-11 font-black",
                             editingProduct
-                              ? "bg-gray-100 text-gray-400 border-gray-200"
+                              ? "bg-white text-gray-400 border-gray-200"
                               : "bg-primary-50 border-primary-200 text-primary-700",
                           )}
                           value={formData.stock}
@@ -1012,7 +1012,7 @@ export default function Products() {
                       </div>
                     </div>
 
-                    <div className="bg-gray-50/80 p-5 rounded-2xl border border-gray-100 flex items-center justify-between shadow-sm">
+                    <div className="bg-white/80 p-5 rounded-2xl border border-gray-100 flex items-center justify-between shadow-sm">
                       <div className="flex flex-col">
                         <span className="text-sm font-bold text-gray-900">
                           Estado del Producto
@@ -1073,14 +1073,14 @@ export default function Products() {
         <div className="fixed inset-0 z-50 overflow-y-auto">
           <div className="flex min-h-screen items-center justify-center p-4">
             <div
-              className="fixed inset-0 bg-gray-900 bg-opacity-70 backdrop-blur-sm"
+              className="fixed inset-0 bg-white bg-opacity-70 backdrop-blur-sm"
               onClick={() => setIsHistoryModalOpen(false)}
             />
             <div className="relative transform overflow-hidden rounded-2xl bg-white shadow-2xl transition-all w-full max-w-xl">
               <div className="absolute top-0 right-0 pt-4 pr-4">
                 <button
                   onClick={() => setIsHistoryModalOpen(false)}
-                  className="text-gray-400 hover:text-gray-600 p-1 hover:bg-gray-100 rounded-lg"
+                  className="text-gray-400 hover:text-gray-600 p-1 hover:bg-white rounded-lg"
                 >
                   <X className="h-6 w-6" />
                 </button>
@@ -1101,7 +1101,7 @@ export default function Products() {
                       </p>
                     </div>
                   </div>
-                  <div className="flex bg-gray-50 p-3 rounded-xl border border-gray-100 mt-4 justify-between items-center">
+                  <div className="flex bg-white p-3 rounded-xl border border-gray-100 mt-4 justify-between items-center">
                     <div className="text-xs text-gray-500 font-mono uppercase tracking-widest">
                       {selectedProduct.sku}
                     </div>
@@ -1209,7 +1209,7 @@ export default function Products() {
         <div className="fixed inset-0 z-[60] overflow-y-auto">
           <div className="flex min-h-screen items-center justify-center p-4">
             <div
-              className="fixed inset-0 bg-gray-900 bg-opacity-70 backdrop-blur-sm"
+              className="fixed inset-0 bg-white bg-opacity-70 backdrop-blur-sm"
               onClick={() => setIsQuickMoveModalOpen(false)}
             />
             <div className="relative transform overflow-hidden rounded-2xl bg-white shadow-2xl transition-all w-full max-w-md">
@@ -1219,7 +1219,7 @@ export default function Products() {
                     ? "Entrada de Stock"
                     : "Salida de Stock"}
                 </h3>
-                <div className="p-3 bg-gray-50 rounded-xl mb-4 flex items-center gap-3">
+                <div className="p-3 bg-white rounded-xl mb-4 flex items-center gap-3">
                   <div className="p-2 bg-white rounded-lg shadow-sm">
                     <Package className="h-5 w-5 text-primary-600" />
                   </div>
@@ -1307,7 +1307,7 @@ export default function Products() {
         <div className="fixed inset-0 z-[60] overflow-y-auto">
           <div className="flex min-h-screen items-center justify-center p-4">
             <div
-              className="fixed inset-0 bg-gray-900 bg-opacity-70 backdrop-blur-sm"
+              className="fixed inset-0 bg-white bg-opacity-70 backdrop-blur-sm"
               onClick={() => setIsImportModalOpen(false)}
             />
             <div className="relative transform overflow-hidden rounded-2xl bg-white shadow-2xl transition-all w-full max-w-lg">
@@ -1408,7 +1408,7 @@ export default function Products() {
                 </div>
                 <button
                   onClick={() => setIsFiltersVisible(false)}
-                  className="text-gray-400 hover:text-gray-500 p-1 hover:bg-gray-50 rounded-lg"
+                  className="text-gray-400 hover:text-gray-500 p-1 hover:bg-white rounded-lg"
                 >
                   <X className="h-6 w-6" />
                 </button>
@@ -1421,7 +1421,7 @@ export default function Products() {
                       Categoría
                     </label>
                     <select
-                      className="input h-12 bg-gray-50 border-gray-100 rounded-xl text-sm font-medium focus:bg-white transition-all shadow-sm"
+                      className="input h-12 bg-white border-gray-100 rounded-xl text-sm font-medium focus:bg-white transition-all shadow-sm"
                       value={filterCategory}
                       onChange={(e) => setFilterCategory(e.target.value)}
                     >
@@ -1438,7 +1438,7 @@ export default function Products() {
                       Proveedor
                     </label>
                     <select
-                      className="input h-12 bg-gray-50 border-gray-100 rounded-xl text-sm font-medium focus:bg-white transition-all shadow-sm"
+                      className="input h-12 bg-white border-gray-100 rounded-xl text-sm font-medium focus:bg-white transition-all shadow-sm"
                       value={filterSupplier}
                       onChange={(e) => setFilterSupplier(e.target.value)}
                     >
@@ -1455,7 +1455,7 @@ export default function Products() {
                       Estado
                     </label>
                     <select
-                      className="input h-12 bg-gray-50 border-gray-100 rounded-xl text-sm font-medium focus:bg-white transition-all shadow-sm"
+                      className="input h-12 bg-white border-gray-100 rounded-xl text-sm font-medium focus:bg-white transition-all shadow-sm"
                       value={filterStatus}
                       onChange={(e) => setFilterStatus(e.target.value as any)}
                     >
@@ -1498,7 +1498,7 @@ export default function Products() {
                         setEndDate("");
                         setIsFiltersVisible(false);
                       }}
-                      className="btn border border-gray-200 text-gray-500 h-11 rounded-xl text-xs font-bold uppercase tracking-widest hover:bg-gray-50 shadow-sm"
+                      className="btn border border-gray-200 text-gray-500 h-11 rounded-xl text-xs font-bold uppercase tracking-widest hover:bg-white shadow-sm"
                     >
                       Limpiar Filtros
                     </button>
@@ -1521,7 +1521,7 @@ export default function Products() {
         <div className="fixed inset-0 z-[60] overflow-y-auto">
           <div className="flex min-h-screen items-center justify-center p-4">
             <div
-              className="fixed inset-0 bg-gray-900 bg-opacity-70 backdrop-blur-sm"
+              className="fixed inset-0 bg-white bg-opacity-70 backdrop-blur-sm"
               onClick={() => setIsPrintModalOpen(false)}
             />
             <div className="relative transform overflow-hidden rounded-2xl bg-white text-left shadow-2xl transition-all sm:my-8 sm:w-full sm:max-w-xl">
@@ -1537,7 +1537,7 @@ export default function Products() {
                 </div>
                 <button
                   onClick={() => setIsPrintModalOpen(false)}
-                  className="text-gray-400 hover:text-gray-500 p-1 hover:bg-gray-50 rounded-lg"
+                  className="text-gray-400 hover:text-gray-500 p-1 hover:bg-white rounded-lg"
                 >
                   <X className="h-6 w-6" />
                 </button>
@@ -1545,7 +1545,7 @@ export default function Products() {
 
               {/* Contenido con espaciado y estilo de etiquetas */}
               <div className="px-6 py-8 space-y-8">
-                <div className="bg-gray-50/50 p-5 rounded-2xl border border-gray-100 mb-2">
+                <div className="bg-white/50 p-5 rounded-2xl border border-gray-100 mb-2">
                   <div className="flex items-center gap-3">
                     <div className="h-10 w-10 bg-white rounded-xl flex items-center justify-center text-primary-500 shadow-sm border border-gray-50">
                       <Package className="h-5 w-5" />
@@ -1565,19 +1565,19 @@ export default function Products() {
                     <div className="flex items-center gap-2">
                       <button 
                         onClick={() => setPrintQuantity(Math.max(1, printQuantity - 1))}
-                        className="h-12 w-12 rounded-xl border border-gray-100 flex items-center justify-center text-gray-500 hover:bg-gray-50 active:scale-95 transition-all shadow-sm"
+                        className="h-12 w-12 rounded-xl border border-gray-100 flex items-center justify-center text-gray-500 hover:bg-white active:scale-95 transition-all shadow-sm"
                       >
                         <MinusCircle className="h-5 w-5" />
                       </button>
                       <input 
                         type="number" 
-                        className="w-24 h-12 text-center text-xl font-black bg-gray-50 border-none rounded-xl focus:ring-2 focus:ring-indigo-500"
+                        className="w-24 h-12 text-center text-xl font-black bg-white border-none rounded-xl focus:ring-2 focus:ring-indigo-500"
                         value={printQuantity}
                         onChange={(e) => setPrintQuantity(parseInt(e.target.value) || 0)}
                       />
                       <button 
                         onClick={() => setPrintQuantity(printQuantity + 1)}
-                        className="h-12 w-12 rounded-xl border border-gray-100 flex items-center justify-center text-gray-500 hover:bg-gray-50 active:scale-95 transition-all shadow-sm"
+                        className="h-12 w-12 rounded-xl border border-gray-100 flex items-center justify-center text-gray-500 hover:bg-white active:scale-95 transition-all shadow-sm"
                       >
                         <PlusCircle className="h-5 w-5" />
                       </button>
@@ -1607,7 +1607,7 @@ export default function Products() {
                   <div className="grid grid-cols-2 gap-3">
                     <button
                       onClick={() => setIsPrintModalOpen(false)}
-                      className="btn border border-gray-200 text-gray-500 h-12 rounded-xl text-xs font-bold uppercase tracking-widest hover:bg-gray-50 shadow-sm"
+                      className="btn border border-gray-200 text-gray-500 h-12 rounded-xl text-xs font-bold uppercase tracking-widest hover:bg-white shadow-sm"
                     >
                       Cancelar
                     </button>

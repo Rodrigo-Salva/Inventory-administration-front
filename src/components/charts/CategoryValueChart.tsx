@@ -17,7 +17,7 @@ export default function CategoryValueChart({ data }: Props) {
     
     if (filteredData.length === 0) {
         return (
-            <div className="flex flex-col items-center justify-center h-full text-gray-400 bg-gray-50/50 rounded-3xl border border-dashed border-gray-200">
+            <div className="flex flex-col items-center justify-center h-full text-gray-400 bg-white/50 rounded-3xl border border-dashed border-gray-200">
                 <p className="text-xs font-bold uppercase tracking-widest">Sin datos de valorización</p>
             </div>
         )
