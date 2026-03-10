@@ -2,7 +2,8 @@ import { useState, useEffect } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import api from '@/api/client'
 import toast from 'react-hot-toast'
-import { Building2, Mail, Phone, MapPin, Plus, Edit, Trash2, X, Globe, User, Package, FileDown, Filter } from 'lucide-react'
+import { Building2, Mail, Phone, MapPin, Plus, Edit, Trash2, X, Globe, User, Package, FileDown, Filter, Eye, CheckCircle, XCircle } from 'lucide-react'
+import DetailModal from '@/components/common/DetailModal'
 import clsx from 'clsx'
 import type { Supplier, PaginatedResponse } from '@/types'
 import ConfirmationModal from '@/components/common/ConfirmationModal'
@@ -20,6 +21,8 @@ export default function Suppliers() {
     const [startDate, setStartDate] = useState('')
     const [endDate, setEndDate] = useState('')
     const [isFiltersVisible, setIsFiltersVisible] = useState(false)
+    const [selectedSupplier, setSelectedSupplier] = useState<Supplier | null>(null)
+    const [isDetailModalOpen, setIsDetailModalOpen] = useState(false)
     const [formData, setFormData] = useState({
         name: '',
         code: '',
@@ -284,16 +287,24 @@ export default function Suppliers() {
 
                         <div className="mt-8 pt-6 border-t border-gray-50 flex items-center justify-between">
                             <div className="flex items-center gap-1.5 opacity-0 group-hover:opacity-100 transition-all transform translate-y-1 group-hover:translate-y-0 text-[11px] font-bold text-gray-400 uppercase tracking-tighter">
-                                {supplier.payment_terms ? (
+                                {supplier.payment_terms && (
                                     <>
                                         <Package className="h-3 w-3" />
                                         <span>{supplier.payment_terms}</span>
                                     </>
-                                ) : (
-                                    <span>Ver detalles</span>
                                 )}
                             </div>
                             <div className="flex items-center gap-1">
+                                <button 
+                                    onClick={() => {
+                                        setSelectedSupplier(supplier)
+                                        setIsDetailModalOpen(true)
+                                    }}
+                                    className="p-2.5 text-slate-600 hover:bg-slate-50 rounded-xl transition-all"
+                                    title="Ver Detalles"
+                                >
+                                    <Eye className="h-4.5 w-4.5" />
+                                </button>
                                 {hasPermission('suppliers:edit') && (
                                     <button 
                                         onClick={() => openModal(supplier)}
@@ -401,23 +412,29 @@ export default function Suppliers() {
 
             {/* Modal de Formulario */}
             {isModalOpen && (
-                <div className="fixed inset-0 z-50 overflow-y-auto">
-                    <div className="flex min-h-screen items-center justify-center p-4">
-                        <div className="fixed inset-0 bg-white bg-opacity-50 backdrop-blur-sm" onClick={closeModal} />
-                        <div className="relative transform overflow-hidden rounded-2xl bg-white shadow-2xl transition-all w-full max-w-2xl">
-                            <div className="absolute top-0 right-0 pt-4 pr-4">
-                                <button onClick={closeModal} className="text-gray-400 hover:text-gray-600 p-1 hover:bg-white rounded-lg">
-                                    <X className="h-6 w-6" />
-                                </button>
-                            </div>
+                <div className="fixed inset-0 z-50 flex flex-col items-center justify-center p-4">
+                    {/* Backdrop */}
+                    <div 
+                        className="fixed inset-0 bg-white/60 backdrop-blur-sm animate-in fade-in duration-300" 
+                        onClick={closeModal} 
+                    />
+                    
+                    {/* Modal Container */}
+                    <div className="relative transform overflow-hidden rounded-[2.5rem] bg-white shadow-2xl transition-all w-full max-w-xl border border-gray-100 animate-in zoom-in-95 duration-300 flex flex-col max-h-[90vh]">
+                        {/* Header */}
+                        <div className="px-8 py-6 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
+                            <h3 className="text-xl font-bold text-gray-900 flex items-center gap-2">
+                                <Building2 className="h-6 w-6 text-primary-600" />
+                                {editingSupplier ? 'Editar Proveedor' : 'Nueva Proveedor'}
+                            </h3>
+                            <button onClick={closeModal} className="text-gray-400 hover:text-gray-600 p-2 hover:bg-white rounded-xl transition-all">
+                                <X className="h-6 w-6" />
+                            </button>
+                        </div>
 
-                            <div className="p-6">
-                                <h3 className="text-xl font-bold text-gray-900 flex items-center gap-2">
-                                    <Building2 className="h-6 w-6 text-primary-600" />
-                                    {editingSupplier ? 'Editar Proveedor' : 'Agregar nuevo Proveedor'}
-                                </h3>
-
-                                <form onSubmit={handleSubmit} className="mt-8 space-y-6">
+                        {/* Content */}
+                        <div className="px-8 py-8 overflow-y-auto custom-scrollbar">
+                            <form id="supplier-form" onSubmit={handleSubmit} className="space-y-6">
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                                         <div className="space-y-4">
                                             <h4 className="text-xs font-bold text-gray-400 uppercase tracking-widest border-b pb-1">Información General</h4>
@@ -570,27 +587,29 @@ export default function Suppliers() {
                                         </label>
                                     </div>
 
-                                    <div className="pt-4 flex gap-4">
-                                        <button
-                                            type="button"
-                                            className="btn btn-secondary flex-1 h-12 font-bold"
-                                            onClick={closeModal}
-                                        >
-                                            Cancelar
-                                        </button>
-                                        <button
-                                            type="submit"
-                                            className="btn btn-primary flex-1 h-12 font-bold shadow-lg shadow-primary-200"
-                                            disabled={createMutation.isPending || updateMutation.isPending}
-                                        >
-                                            {createMutation.isPending || updateMutation.isPending ? 'Guardando...' : (editingSupplier ? 'Actualizar Proveedor' : 'Crear Proveedor')}
-                                        </button>
-                                    </div>
                                 </form>
+                            </div>
+
+                            {/* Footer */}
+                            <div className="px-8 py-6 border-t border-gray-100 flex justify-end gap-3 bg-gray-50/50">
+                                <button
+                                    type="button"
+                                    onClick={closeModal}
+                                    className="px-6 h-12 text-gray-700 hover:bg-white rounded-xl border border-gray-200 transition-all shadow-sm font-bold uppercase tracking-widest text-[10px]"
+                                >
+                                    Cancelar
+                                </button>
+                                <button
+                                    type="submit"
+                                    form="supplier-form"
+                                    className="px-8 h-12 bg-primary-600 text-white rounded-xl hover:bg-primary-700 transition-all shadow-lg shadow-primary-200 font-bold uppercase tracking-widest text-[10px]"
+                                    disabled={createMutation.isPending || updateMutation.isPending}
+                                >
+                                    {createMutation.isPending || updateMutation.isPending ? 'Procesando...' : (editingSupplier ? 'Guardar Cambios' : 'Crear Proveedor')}
+                                </button>
                             </div>
                         </div>
                     </div>
-                </div>
             )}
             {/* Modal de Filtros (Ventana Flotante) */}
             {isFiltersVisible && (
@@ -674,6 +693,85 @@ export default function Suppliers() {
                     </div>
                 </div>
             )}
+
+            <DetailModal
+                isOpen={isDetailModalOpen}
+                onClose={() => setIsDetailModalOpen(false)}
+                title={selectedSupplier?.name || "Detalles del Proveedor"}
+                subtitle={selectedSupplier ? `Código: ${selectedSupplier.code}` : ""}
+                icon={Building2}
+                statusBadge={
+                    selectedSupplier && (
+                        <span className={clsx(
+                            "flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider",
+                            selectedSupplier.is_active ? "bg-emerald-50 text-emerald-600" : "bg-red-50 text-red-600"
+                        )}>
+                            {selectedSupplier.is_active ? <CheckCircle className="h-3 w-3" /> : <XCircle className="h-3 w-3" />}
+                            {selectedSupplier.is_active ? "Activo" : "Inactivo"}
+                        </span>
+                    )
+                }
+                sections={[
+                    {
+                        title: "Información General",
+                        fields: [
+                            { label: "Nombre de la Empresa", value: selectedSupplier?.name },
+                            { label: "Código", value: selectedSupplier?.code },
+                            { label: "ID Fiscal / RUC / NIT", value: selectedSupplier?.tax_id || "N/A" },
+                            { label: "Nombre de Contacto", value: selectedSupplier?.contact_name || "N/A" },
+                        ]
+                    },
+                    {
+                        title: "Contacto",
+                        fields: [
+                            { label: "Email", value: selectedSupplier?.email },
+                            { label: "Teléfono", value: selectedSupplier?.phone || "N/A" },
+                            { label: "Móvil", value: selectedSupplier?.mobile || "N/A" },
+                            { label: "Sito Web", value: selectedSupplier?.website || "N/A" },
+                        ]
+                    },
+                    {
+                        title: "Ubicación",
+                        fields: [
+                            { label: "Dirección", value: selectedSupplier?.address, fullWidth: true },
+                            { label: "Ciudad", value: selectedSupplier?.city },
+                            { label: "Estado/Provincia", value: selectedSupplier?.state },
+                            { label: "País", value: selectedSupplier?.country },
+                            { label: "Código Postal", value: selectedSupplier?.postal_code },
+                        ]
+                    },
+                    {
+                        title: "Términos y Notas",
+                        fields: [
+                            { label: "Términos de Pago", value: selectedSupplier?.payment_terms || "N/A" },
+                            { label: "Notas", value: selectedSupplier?.notes, fullWidth: true },
+                        ]
+                    },
+                    {
+                        title: "Fechas",
+                        fields: [
+                            { label: "Fecha de Registro", value: selectedSupplier ? new Date(selectedSupplier.created_at).toLocaleString() : "" },
+                            { label: "Última Actualización", value: selectedSupplier ? new Date(selectedSupplier.updated_at).toLocaleString() : "" },
+                        ]
+                    }
+                ]}
+                footerActions={
+                    <>
+                        {hasPermission('suppliers:edit') && (
+                            <button 
+                                onClick={() => {
+                                    setIsDetailModalOpen(false)
+                                    if (selectedSupplier) openModal(selectedSupplier)
+                                }}
+                                className="flex-[1.5] h-14 bg-primary-600 text-white rounded-2xl flex items-center justify-center gap-3 font-black uppercase tracking-widest text-[10px] hover:bg-primary-700 transition-all shadow-lg shadow-primary-100 active:scale-95"
+                            >
+                                <Edit className="h-5 w-5" />
+                                Editar Proveedor
+                            </button>
+                        )}
+                    </>
+                }
+            />
         </div>
     )
 }

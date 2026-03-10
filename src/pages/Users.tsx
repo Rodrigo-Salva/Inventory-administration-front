@@ -2,7 +2,8 @@ import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import api from '@/api/client'
 import toast from 'react-hot-toast'
-import { Plus, Edit, Trash2, Shield, User as UserIcon, X, FileDown, Filter, Search } from 'lucide-react'
+import { Plus, Edit, Trash2, Shield, User as UserIcon, X, FileDown, Filter, Search, Eye, CheckCircle, XCircle } from 'lucide-react'
+import DetailModal from '@/components/common/DetailModal'
 import type { User, PaginatedResponse, UserRole, Role } from '@/types'
 import Pagination from '@/components/common/Pagination'
 import DateRangePicker from '@/components/common/DateRangePicker'
@@ -19,6 +20,8 @@ export default function Users() {
     const [page, setPage] = useState(1)
     const [isModalOpen, setIsModalOpen] = useState(false)
     const [editingUser, setEditingUser] = useState<User | null>(null)
+    const [selectedUser, setSelectedUser] = useState<User | null>(null)
+    const [isDetailModalOpen, setIsDetailModalOpen] = useState(false)
     const [formData, setFormData] = useState({
         email: '',
         password: '',
@@ -307,9 +310,19 @@ export default function Users() {
                                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 font-medium">
                                             {new Date(user.created_at).toLocaleDateString()}
                                         </td>
-                                        <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                            <div className="flex justify-end gap-1">
-                                                {hasPermission('users:edit') && (
+                                         <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                             <div className="flex justify-end gap-1">
+                                                 <button 
+                                                     onClick={() => {
+                                                         setSelectedUser(user)
+                                                         setIsDetailModalOpen(true)
+                                                     }}
+                                                     className="p-2 text-slate-600 hover:bg-slate-50 rounded-lg transition-colors"
+                                                     title="Ver Detalles"
+                                                 >
+                                                     <Eye className="h-5 w-5" />
+                                                 </button>
+                                                 {hasPermission('users:edit') && (
                                                     <button 
                                                         onClick={() => openModal(user)}
                                                         className="p-2 text-primary-600 hover:bg-primary-50 rounded-lg transition-colors"
@@ -362,8 +375,17 @@ export default function Users() {
                                             <p className="text-[10px] text-gray-400 mt-1 font-bold">{new Date(user.created_at).toLocaleDateString()}</p>
                                         </div>
                                     </div>
-                                    <div className="flex gap-2 pt-3 border-t border-gray-50 justify-end">
-                                        {hasPermission('users:edit') && (
+                                     <div className="flex gap-2 pt-3 border-t border-gray-50 justify-end">
+                                         <button 
+                                             onClick={() => {
+                                                 setSelectedUser(user)
+                                                 setIsDetailModalOpen(true)
+                                             }}
+                                             className="px-4 py-2 text-sm font-bold text-slate-600 bg-slate-50 rounded-xl flex-1 max-w-[120px] text-center"
+                                         >
+                                             Ver
+                                         </button>
+                                         {hasPermission('users:edit') && (
                                             <button 
                                                 onClick={() => openModal(user)}
                                                 className="px-4 py-2 text-sm font-bold text-primary-600 bg-primary-50 rounded-xl flex-1 max-w-[120px] text-center"
@@ -396,21 +418,29 @@ export default function Users() {
 
             {/* Modal */}
             {isModalOpen && (
-                <div className="fixed inset-0 z-50 overflow-y-auto">
-                    <div className="flex min-h-screen items-end justify-center px-4 pt-4 pb-20 text-center sm:block sm:p-0">
-                        <div className="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" onClick={closeModal} />
-                        <span className="hidden sm:inline-block sm:h-screen sm:align-middle">&#8203;</span>
-                        <div className="inline-block transform overflow-hidden rounded-lg bg-white px-4 pt-5 pb-4 text-left align-bottom shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-lg sm:p-6 sm:align-middle">
-                            <div className="absolute top-0 right-0 pt-4 pr-4">
-                                <button onClick={closeModal} className="text-gray-400 hover:text-gray-500">
-                                    <X className="h-6 w-6" />
-                                </button>
-                            </div>
-                            <div>
-                                <h3 className="text-lg font-medium leading-6 text-gray-900">
-                                    {editingUser ? 'Editar Usuario' : 'Agregar nuevo Usuario'}
-                                </h3>
-                                <form onSubmit={handleSubmit} className="mt-6 space-y-4">
+                <div className="fixed inset-0 z-50 flex flex-col items-center justify-center p-4">
+                    {/* Backdrop */}
+                    <div 
+                        className="fixed inset-0 bg-white/60 backdrop-blur-sm animate-in fade-in duration-300" 
+                        onClick={closeModal} 
+                    />
+                    
+                    {/* Modal Container */}
+                    <div className="relative transform overflow-hidden rounded-[2.5rem] bg-white shadow-2xl transition-all w-full max-w-xl border border-gray-100 animate-in zoom-in-95 duration-300 flex flex-col max-h-[90vh]">
+                        {/* Header */}
+                        <div className="px-8 py-6 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
+                            <h3 className="text-xl font-bold text-gray-900 flex items-center gap-2">
+                                <UserIcon className="h-6 w-6 text-primary-600" />
+                                {editingUser ? 'Editar Usuario' : 'Nuevo Usuario'}
+                            </h3>
+                            <button onClick={closeModal} className="text-gray-400 hover:text-gray-600 p-2 hover:bg-white rounded-xl transition-all">
+                                <X className="h-6 w-6" />
+                            </button>
+                        </div>
+
+                        {/* Content */}
+                        <div className="px-8 py-8 overflow-y-auto custom-scrollbar">
+                            <form id="user-form" onSubmit={handleSubmit} className="space-y-6">
                                     <div>
                                         <label className="block text-sm font-medium text-gray-700">Email</label>
                                         <input
@@ -433,66 +463,68 @@ export default function Users() {
                                             onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                                         />
                                     </div>
-                                    <div className="grid grid-cols-2 gap-4">
-                                        <div>
-                                            <label className="block text-sm font-medium text-gray-700">Tipo de Usuario (Rol)</label>
-                                            <select
-                                                className="input mt-1"
-                                                value={formData.role_id || ''}
-                                                onChange={(e) => {
-                                                    const val = e.target.value
-                                                    if (!val) return;
-                                                    const selectedRole = roles?.find(r => r.id === Number(val))
-                                                    setFormData({ 
-                                                        ...formData, 
-                                                        role_id: Number(val), 
-                                                        is_admin: selectedRole?.name.toUpperCase().includes('ADMIN') || false,
-                                                        role: 'SELLER' // Valor por defecto para compatibilidad backend
-                                                    })
-                                                }}
-                                            >
-                                                <option value="">Seleccionar Tipo de Usuario...</option>
-                                                {roles?.map(role => (
-                                                    <option key={role.id} value={role.id}>{role.name}</option>
-                                                ))}
-                                            </select>
-                                        </div>
-                                        <div>
-                                            <label className="block text-sm font-medium text-gray-700">Estado</label>
-                                            <div className="flex items-center mt-3 gap-4">
-                                                <label className="flex items-center gap-2 cursor-pointer">
-                                                    <input
-                                                        type="checkbox"
-                                                        className="rounded border-gray-300 text-primary-600 focus:ring-primary-500"
-                                                        checked={formData.is_active}
-                                                        onChange={(e) => setFormData({ ...formData, is_active: e.target.checked })}
-                                                    />
-                                                    <span className="text-sm text-gray-700">Activo</span>
-                                                </label>
-                                            </div>
-                                        </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700">Tipo de Usuario (Rol)</label>
+                                        <select
+                                            className="input mt-1"
+                                            value={formData.role_id || ''}
+                                            onChange={(e) => {
+                                                const val = e.target.value
+                                                if (!val) return;
+                                                const selectedRole = roles?.find(r => r.id === Number(val))
+                                                setFormData({ 
+                                                    ...formData, 
+                                                    role_id: Number(val), 
+                                                    is_admin: selectedRole?.name.toUpperCase().includes('ADMIN') || false,
+                                                    role: 'SELLER' // Valor por defecto para compatibilidad backend
+                                                })
+                                            }}
+                                        >
+                                            <option value="">Seleccionar Tipo de Usuario...</option>
+                                            {roles?.map(role => (
+                                                <option key={role.id} value={role.id}>{role.name}</option>
+                                            ))}
+                                        </select>
                                     </div>
-                                    <div className="mt-5 sm:mt-6 flex gap-3">
-                                        <button
-                                            type="button"
-                                            className="btn btn-secondary flex-1"
-                                            onClick={closeModal}
-                                        >
-                                            Cancelar
-                                        </button>
-                                        <button
-                                            type="submit"
-                                            className="btn btn-primary flex-1"
-                                            disabled={createMutation.isPending || updateMutation.isPending}
-                                        >
-                                            {editingUser ? 'Actualizar' : 'Crear'}
-                                        </button>
+
+                                    <div className="flex items-center justify-between p-4 bg-gray-50/50 rounded-2xl border border-gray-100">
+                                        <div className="space-y-0.5">
+                                            <span className="text-sm font-bold text-gray-900">Estado del Usuario</span>
+                                            <p className="text-[10px] text-gray-500 font-medium uppercase tracking-wider">Habilitar o deshabilitar acceso</p>
+                                        </div>
+                                        <label className="relative inline-flex items-center cursor-pointer">
+                                            <input 
+                                                type="checkbox" 
+                                                className="sr-only peer" 
+                                                checked={formData.is_active}
+                                                onChange={(e) => setFormData({...formData, is_active: e.target.checked})}
+                                            />
+                                            <div className="w-11 h-6 bg-gray-200 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary-600"></div>
+                                        </label>
                                     </div>
                                 </form>
                             </div>
+
+                            {/* Footer */}
+                            <div className="px-8 py-6 border-t border-gray-100 flex justify-end gap-3 bg-gray-50/50">
+                                <button
+                                    type="button"
+                                    onClick={closeModal}
+                                    className="px-6 h-12 text-gray-700 hover:bg-white rounded-xl border border-gray-200 transition-all shadow-sm font-bold uppercase tracking-widest text-[10px]"
+                                >
+                                    Cancelar
+                                </button>
+                                <button
+                                    type="submit"
+                                    form="user-form"
+                                    className="px-8 h-12 bg-primary-600 text-white rounded-xl hover:bg-primary-700 transition-all shadow-lg shadow-primary-200 font-bold uppercase tracking-widest text-[10px]"
+                                    disabled={createMutation.isPending || updateMutation.isPending}
+                                >
+                                    {createMutation.isPending || updateMutation.isPending ? 'Procesando...' : (editingUser ? 'Guardar Cambios' : 'Crear Usuario')}
+                                </button>
+                            </div>
                         </div>
                     </div>
-                </div>
             )}
             {/* Modal de Filtros (Ventana Flotante) */}
             {isFiltersVisible && (
@@ -614,6 +646,71 @@ export default function Users() {
                     </div>
                 </div>
             )}
+
+            <DetailModal
+                isOpen={isDetailModalOpen}
+                onClose={() => setIsDetailModalOpen(false)}
+                title={selectedUser?.email || "Detalles de Usuario"}
+                subtitle={selectedUser?.role_obj?.name || selectedUser?.role || "Sin Rol"}
+                icon={UserIcon}
+                statusBadge={
+                    selectedUser && (
+                        <span className={clsx(
+                            "flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider",
+                            selectedUser.is_active ? "bg-emerald-50 text-emerald-600" : "bg-red-50 text-red-600"
+                        )}>
+                            {selectedUser.is_active ? <CheckCircle className="h-3 w-3" /> : <XCircle className="h-3 w-3" />}
+                            {selectedUser.is_active ? "Activo" : "Inactivo"}
+                        </span>
+                    )
+                }
+                sections={[
+                    {
+                        title: "Información de Usuario",
+                        fields: [
+                            { label: "Email", value: selectedUser?.email },
+                            { label: "Nombre", value: selectedUser?.first_name || "N/A" },
+                            { label: "Apellido", value: selectedUser?.last_name || "N/A" },
+                            { label: "Teléfono", value: selectedUser?.phone || "N/A" },
+                        ]
+                    },
+                    {
+                        title: "Seguridad y Accesos",
+                        fields: [
+                            { 
+                                label: "Rol Asignado", 
+                                value: selectedUser?.role_obj?.name || selectedUser?.role || "N/A" 
+                            },
+                            { 
+                                label: "Administrador de Sistema", 
+                                value: selectedUser?.is_admin ? "SÍ" : "NO" 
+                            },
+                        ]
+                    },
+                    {
+                        title: "Fechas",
+                        fields: [
+                            { label: "Fecha de Registro", value: selectedUser ? new Date(selectedUser.created_at).toLocaleString() : "" },
+                        ]
+                    }
+                ]}
+                footerActions={
+                    <>
+                        {hasPermission('users:edit') && (
+                            <button 
+                                onClick={() => {
+                                    setIsDetailModalOpen(false)
+                                    if (selectedUser) openModal(selectedUser)
+                                }}
+                                className="flex-[1.5] h-14 bg-primary-600 text-white rounded-2xl flex items-center justify-center gap-3 font-black uppercase tracking-widest text-[10px] hover:bg-primary-700 transition-all shadow-lg shadow-primary-100 active:scale-95"
+                            >
+                                <Edit className="h-5 w-5" />
+                                Editar Usuario
+                            </button>
+                        )}
+                    </>
+                }
+            />
         </div>
     )
 }
