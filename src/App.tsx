@@ -21,6 +21,7 @@ import Adjustments from './pages/Adjustments'
 import Expenses from './pages/Expenses'
 import AIInsights from './pages/AIInsights'
 import AuditLogs from './pages/AuditLogs'
+import { Branches } from './pages/Branches'
 import Layout from './components/layout/Layout'
 
 function PrivateRoute({ children }: { children: React.ReactNode }) {
@@ -59,6 +60,7 @@ function App() {
                 <Route path="roles" element={<Roles />} />
                 <Route path="audit-logs" element={<AuditLogs />} />
                 <Route path="settings" element={<Settings />} />
+                <Route path="branches" element={<Branches />} />
                 <Route path="profile" element={<Profile />} />
             </Route>
         </Routes>

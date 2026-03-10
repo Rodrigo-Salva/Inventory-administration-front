@@ -1,6 +1,6 @@
 import { NavLink } from 'react-router-dom'
 import { LayoutDashboard, Package,    FolderTree, Building2, TrendingUp, ShoppingCart, 
-    History, Users, Settings, LogOut, Truck, Shield, Sparkles, Receipt
+    History, Users, Settings, LogOut, Truck, Shield, Receipt
 } from 'lucide-react'
 import { useAuthStore } from '@/store/authStore'
 import { usePermissions } from '@/hooks/usePermissions'
@@ -46,6 +46,7 @@ const navigation = [
     {
         title: 'Administración',
         items: [
+            { name: 'Sucursales', href: '/branches', icon: Building2, permission: 'branches:view' },
             { name: 'Usuarios', href: '/users', icon: Users, permission: 'users:view' },
             { name: 'Roles y Permisos', href: '/roles', icon: Shield, permission: 'roles:manage' },
             { name: 'Logs Auditoría', href: '/audit-logs', icon: History, permission: 'settings:manage' },
@@ -86,7 +87,7 @@ export default function Sidebar({ isCollapsed, isMobileOpen }: SidebarProps) {
                     ) : (
                         <>
                             <div className="h-8 w-8 bg-primary-600 rounded-lg flex items-center justify-center font-bold text-white shadow-lg shadow-primary-600/20">I</div>
-                            {(!isCollapsed || isMobileOpen) && <h1 className="text-lg font-bold text-white tracking-tight">Inventory PRO</h1>}
+                            {(!isCollapsed || isMobileOpen) && <h1 className="text-lg font-bold text-white tracking-tight">Inventory Administration</h1>}
                         </>
                     )}
                 </div>
