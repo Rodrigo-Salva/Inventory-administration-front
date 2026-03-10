@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import api from '@/api/client'
-import { FolderTree, Plus, Edit, Trash2, X, AlertTriangle, Layers, Info, FileDown, Filter } from 'lucide-react'
+import { FolderTree, Plus, Edit, Trash2, X, AlertTriangle, Layers, Info, FileDown, Filter, Eye, CheckCircle, XCircle } from 'lucide-react'
 import toast from 'react-hot-toast'
 import clsx from 'clsx'
 import type { Category, PaginatedResponse } from '@/types'
@@ -9,6 +9,7 @@ import ConfirmationModal from '@/components/common/ConfirmationModal'
 import Pagination from '@/components/common/Pagination'
 import DateRangePicker from '@/components/common/DateRangePicker'
 import { usePermissions } from '@/hooks/usePermissions'
+import DetailModal from '@/components/common/DetailModal'
 import { Shield } from 'lucide-react'
 
 export default function Categories() {
@@ -20,6 +21,8 @@ export default function Categories() {
     const [startDate, setStartDate] = useState('')
     const [endDate, setEndDate] = useState('')
     const [isFiltersVisible, setIsFiltersVisible] = useState(false)
+    const [selectedCategory, setSelectedCategory] = useState<Category | null>(null)
+    const [isDetailModalOpen, setIsDetailModalOpen] = useState(false)
     const [formData, setFormData] = useState({
         name: '',
         code: '',
@@ -221,6 +224,16 @@ export default function Categories() {
                 </div>
                 
                 <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <button 
+                        onClick={() => {
+                            setSelectedCategory(category)
+                            setIsDetailModalOpen(true)
+                        }}
+                        className="p-2 text-slate-600 hover:bg-slate-50 rounded-lg transition-all"
+                        title="Ver Detalles"
+                    >
+                        <Eye className="h-4 w-4" />
+                    </button>
                     {hasPermission('categories:edit') && (
                         <button 
                             onClick={() => openModal(category)}
@@ -378,122 +391,130 @@ export default function Categories() {
 
             {/* Modal de Formulario */}
             {isModalOpen && (
-                <div className="fixed inset-0 z-50 overflow-y-auto">
-                    <div className="flex min-h-screen items-end justify-center px-4 pt-4 pb-20 text-center sm:block sm:p-0">
-                        <div className="fixed inset-0 bg-white bg-opacity-50 backdrop-blur-sm transition-opacity" onClick={closeModal} />
-                        <span className="hidden sm:inline-block sm:h-screen sm:align-middle">&#8203;</span>
-                        <div className="inline-block transform overflow-hidden rounded-2xl bg-white px-4 pt-5 pb-4 text-left align-bottom shadow-2xl transition-all sm:my-8 sm:w-full sm:max-w-lg sm:p-6 sm:align-middle">
-                            <div className="absolute top-0 right-0 pt-4 pr-4">
-                                <button onClick={closeModal} className="text-gray-400 hover:text-gray-600 p-1 hover:bg-white rounded-lg">
-                                    <X className="h-6 w-6" />
-                                </button>
-                            </div>
-                            <div>
-                                <h3 className="text-xl font-bold text-gray-900 flex items-center gap-2">
-                                    <FolderTree className="h-6 w-6 text-primary-600" />
-                                    {editingCategory ? 'Editar Categoría' : 'Agregar nueva Categoría'}
-                                </h3>
-                                <form onSubmit={handleSubmit} className="mt-6 space-y-5">
-                                    <div className="grid grid-cols-2 gap-4">
-                                        <div className="col-span-2">
-                                            <label className="block text-sm font-semibold text-gray-700">Nombre</label>
-                                            <input
-                                                type="text"
-                                                required
-                                                placeholder="Ej: Electrónica, Muebles..."
-                                                className="input mt-1.5 focus:ring-2 focus:ring-primary-500"
-                                                value={formData.name}
-                                                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                                            />
-                                        </div>
-                                        <div>
-                                            <label className="block text-sm font-semibold text-gray-700">Código</label>
-                                            <input
-                                                type="text"
-                                                required
-                                                placeholder="ELEC-01"
-                                                className="input mt-1.5 font-mono text-sm"
-                                                value={formData.code}
-                                                onChange={(e) => setFormData({ ...formData, code: e.target.value.toUpperCase() })}
-                                            />
-                                        </div>
-                                        <div>
-                                            <label className="block text-sm font-semibold text-gray-700">Categoría Padre</label>
-                                            <select
-                                                className="input mt-1.5"
-                                                value={formData.parent_id}
-                                                onChange={(e) => setFormData({ ...formData, parent_id: e.target.value })}
-                                            >
-                                                <option value="">Ninguna (Raíz)</option>
-                                                {flatCategories
-                                                    ?.filter(c => c.id !== editingCategory?.id) // Evitar seleccionarse a sí mismo
-                                                    .map(c => (
-                                                        <option key={c.id} value={c.id}>{c.name}</option>
-                                                    ))
-                                                }
-                                            </select>
-                                        </div>
-                                    </div>
+                <div className="fixed inset-0 z-50 flex flex-col items-center justify-center p-4">
+                    {/* Backdrop */}
+                    <div 
+                        className="fixed inset-0 bg-white/60 backdrop-blur-sm animate-in fade-in duration-300" 
+                        onClick={closeModal} 
+                    />
+                    
+                    {/* Modal Container */}
+                    <div className="relative transform overflow-hidden rounded-[2.5rem] bg-white shadow-2xl transition-all w-full max-w-xl border border-gray-100 animate-in zoom-in-95 duration-300 flex flex-col max-h-[90vh]">
+                        {/* Header */}
+                        <div className="px-8 py-6 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
+                            <h3 className="text-xl font-bold text-gray-900 flex items-center gap-2">
+                                <FolderTree className="h-6 w-6 text-primary-600" />
+                                {editingCategory ? 'Editar Categoría' : 'Nueva Categoría'}
+                            </h3>
+                            <button onClick={closeModal} className="text-gray-400 hover:text-gray-600 p-2 hover:bg-white rounded-xl transition-all">
+                                <X className="h-6 w-6" />
+                            </button>
+                        </div>
 
-                                    <div>
-                                        <label className="block text-sm font-semibold text-gray-700">Descripción</label>
-                                        <textarea
-                                            className="input mt-1.5 h-24 resize-none"
-                                            placeholder="Detalles opcionales sobre esta categoría..."
-                                            value={formData.description}
-                                            onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                        {/* Content */}
+                        <div className="px-8 py-8 overflow-y-auto custom-scrollbar">
+                            <form id="category-form" onSubmit={handleSubmit} className="space-y-6">
+                                <div className="grid grid-cols-2 gap-6">
+                                    <div className="col-span-2">
+                                        <label className="block text-sm font-semibold text-gray-700">Nombre</label>
+                                        <input
+                                            type="text"
+                                            required
+                                            placeholder="Ej: Electrónica, Muebles..."
+                                            className="input mt-1.5 focus:ring-2 focus:ring-primary-500"
+                                            value={formData.name}
+                                            onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                                         />
                                     </div>
-
-                                    <div className="bg-white p-3 rounded-xl border border-gray-100 flex items-center justify-between">
-                                        <div className="flex items-center gap-2">
-                                            <span className="text-sm font-medium text-gray-700">Estado de la categoría</span>
-                                            {formData.is_active ? (
-                                                <span className="text-[10px] bg-green-100 text-green-700 px-2 py-0.5 rounded-full font-bold">ACTIVA</span>
-                                            ) : (
-                                                <span className="text-[10px] bg-gray-200 text-gray-600 px-2 py-0.5 rounded-full font-bold">INACTIVA</span>
-                                            )}
-                                        </div>
-                                        <label className="relative inline-flex items-center cursor-pointer">
-                                            <input 
-                                                type="checkbox" 
-                                                className="sr-only peer" 
-                                                checked={formData.is_active}
-                                                onChange={(e) => setFormData({...formData, is_active: e.target.checked})}
-                                            />
-                                            <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary-600"></div>
-                                        </label>
+                                    <div>
+                                        <label className="block text-sm font-semibold text-gray-700">Código</label>
+                                        <input
+                                            type="text"
+                                            required
+                                            placeholder="ELEC-01"
+                                            className="input mt-1.5 font-mono text-sm"
+                                            value={formData.code}
+                                            onChange={(e) => setFormData({ ...formData, code: e.target.value.toUpperCase() })}
+                                        />
                                     </div>
-
-                                    {editingCategory && (
-                                        <div className="flex items-start gap-2 p-3 bg-amber-50 rounded-lg border border-amber-100">
-                                            <AlertTriangle className="h-5 w-5 text-amber-500 shrink-0" />
-                                            <p className="text-xs text-amber-700 leading-tight">
-                                                Si cambias el padre o el estado, afectará a todas las subcategorías y productos asociados a este nivel.
-                                            </p>
-                                        </div>
-                                    )}
-
-                                    <div className="pt-4 flex gap-3">
-                                        <button
-                                            type="button"
-                                            className="btn btn-secondary flex-1 font-semibold"
-                                            onClick={closeModal}
+                                    <div>
+                                        <label className="block text-sm font-semibold text-gray-700">Categoría Padre</label>
+                                        <select
+                                            className="input mt-1.5"
+                                            value={formData.parent_id}
+                                            onChange={(e) => setFormData({ ...formData, parent_id: e.target.value })}
                                         >
-                                            Cancelar
-                                        </button>
-                                        <button
-                                            type="submit"
-                                            className="btn btn-primary flex-1 font-semibold"
-                                            disabled={createMutation.isPending || updateMutation.isPending}
-                                        >
-                                            {createMutation.isPending || updateMutation.isPending 
-                                                ? 'Procesando...' 
-                                                : (editingCategory ? 'Actualizar' : 'Crear Categoría')}
-                                        </button>
+                                            <option value="">Ninguna (Raíz)</option>
+                                            {flatCategories
+                                                ?.filter(c => c.id !== editingCategory?.id)
+                                                .map(c => (
+                                                    <option key={c.id} value={c.id}>{c.name}</option>
+                                                ))
+                                            }
+                                        </select>
                                     </div>
-                                </form>
-                            </div>
+                                </div>
+
+                                <div>
+                                    <label className="block text-sm font-semibold text-gray-700">Descripción</label>
+                                    <textarea
+                                        className="input mt-1.5 h-24 resize-none"
+                                        placeholder="Detalles opcionales sobre esta categoría..."
+                                        value={formData.description}
+                                        onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                                    />
+                                </div>
+
+                                <div className="bg-white p-3 rounded-xl border border-gray-100 flex items-center justify-between">
+                                    <div className="flex items-center gap-2">
+                                        <span className="text-sm font-medium text-gray-700">Estado de la categoría</span>
+                                        {formData.is_active ? (
+                                            <span className="text-[10px] bg-green-100 text-green-700 px-2 py-0.5 rounded-full font-bold">ACTIVA</span>
+                                        ) : (
+                                            <span className="text-[10px] bg-gray-200 text-gray-600 px-2 py-0.5 rounded-full font-bold">INACTIVA</span>
+                                        )}
+                                    </div>
+                                    <label className="relative inline-flex items-center cursor-pointer">
+                                        <input 
+                                            type="checkbox" 
+                                            className="sr-only peer" 
+                                            checked={formData.is_active}
+                                            onChange={(e) => setFormData({...formData, is_active: e.target.checked})}
+                                        />
+                                        <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary-600"></div>
+                                    </label>
+                                </div>
+
+                                {editingCategory && (
+                                    <div className="flex items-start gap-2 p-3 bg-amber-50 rounded-lg border border-amber-100">
+                                        <AlertTriangle className="h-5 w-5 text-amber-500 shrink-0" />
+                                        <p className="text-xs text-amber-700 leading-tight">
+                                            Si cambias el padre o el estado, afectará a todas las subcategorías y productos asociados a este nivel.
+                                        </p>
+                                    </div>
+                                )}
+                            </form>
+                        </div>
+
+                        {/* Footer */}
+                        <div className="px-8 py-6 border-t border-gray-100 flex justify-end gap-3 bg-gray-50/50">
+                            <button
+                                type="button"
+                                onClick={closeModal}
+                                className="px-6 h-12 text-gray-700 hover:bg-white rounded-xl border border-gray-200 transition-all shadow-sm font-bold uppercase tracking-widest text-[10px]"
+                            >
+                                Cancelar
+                            </button>
+                            <button
+                                type="submit"
+                                form="category-form"
+                                className="px-8 h-12 bg-primary-600 text-white rounded-xl hover:bg-primary-700 transition-all shadow-lg shadow-primary-200 font-bold uppercase tracking-widest text-[10px]"
+                                disabled={createMutation.isPending || updateMutation.isPending}
+                            >
+                                {createMutation.isPending || updateMutation.isPending 
+                                    ? 'Procesando...' 
+                                    : (editingCategory ? 'Guardar Cambios' : 'Crear Categoría')}
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -580,6 +601,68 @@ export default function Categories() {
                     </div>
                 </div>
             )}
+
+            <DetailModal
+                isOpen={isDetailModalOpen}
+                onClose={() => setIsDetailModalOpen(false)}
+                title={selectedCategory?.name || "Detalles de Categoría"}
+                subtitle={selectedCategory ? `Código: ${selectedCategory.code}` : ""}
+                icon={Layers}
+                statusBadge={
+                    selectedCategory && (
+                        <span className={clsx(
+                            "flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider",
+                            selectedCategory.is_active ? "bg-emerald-50 text-emerald-600" : "bg-red-50 text-red-600"
+                        )}>
+                            {selectedCategory.is_active ? <CheckCircle className="h-3 w-3" /> : <XCircle className="h-3 w-3" />}
+                            {selectedCategory.is_active ? "Activa" : "Inactiva"}
+                        </span>
+                    )
+                }
+                sections={[
+                    {
+                        title: "Información General",
+                        fields: [
+                            { label: "Nombre", value: selectedCategory?.name },
+                            { label: "Código", value: selectedCategory?.code },
+                            { label: "Descripción", value: selectedCategory?.description, fullWidth: true },
+                        ]
+                    },
+                    {
+                        title: "Jerarquía",
+                        fields: [
+                            { 
+                                label: "Categoría Padre", 
+                                value: flatCategories?.find(c => c.id === selectedCategory?.parent_id)?.name || "Ninguna (Raíz)" 
+                            },
+                            { label: "Orden de Visualización", value: selectedCategory?.display_order },
+                        ]
+                    },
+                    {
+                        title: "Fechas",
+                        fields: [
+                            { label: "Fecha de Registro", value: selectedCategory ? new Date(selectedCategory.created_at).toLocaleString() : "" },
+                            { label: "Última Actualización", value: selectedCategory ? new Date(selectedCategory.updated_at).toLocaleString() : "" },
+                        ]
+                    }
+                ]}
+                footerActions={
+                    <>
+                        {hasPermission('categories:edit') && (
+                            <button 
+                                onClick={() => {
+                                    setIsDetailModalOpen(false)
+                                    if (selectedCategory) openModal(selectedCategory)
+                                }}
+                                className="flex-[1.5] h-14 bg-primary-600 text-white rounded-2xl flex items-center justify-center gap-3 font-black uppercase tracking-widest text-[10px] hover:bg-primary-700 transition-all shadow-lg shadow-primary-100 active:scale-95"
+                            >
+                                <Edit className="h-5 w-5" />
+                                Editar Categoría
+                            </button>
+                        )}
+                    </>
+                }
+            />
         </div>
     )
 }
