@@ -10,9 +10,11 @@ import clsx from 'clsx'
 import { useEffect } from 'react'
 import { usePermissions } from '@/hooks/usePermissions'
 import { Shield } from 'lucide-react'
+import { branchApi, Branch } from '@/api/branches'
 
 export default function Inventory() {
     const [selectedProduct, setSelectedProduct] = useState<number | null>(null)
+    const [selectedBranch, setSelectedBranch] = useState<number | null>(null)
     const [quantity, setQuantity] = useState('')
     const [notes, setNotes] = useState('')
     const [selectedCategory, setSelectedCategory] = useState<number | 'all'>('all')
@@ -29,6 +31,14 @@ export default function Inventory() {
         queryFn: async () => {
             const response = await api.get('/api/v1/categories/?size=100')
             return response.data
+        }
+    })
+
+    const { data: branchesData } = useQuery<Branch[]>({
+        queryKey: ['branches-active'],
+        queryFn: async () => {
+            const response = await branchApi.getActive()
+            return response.data || []
         }
     })
 
@@ -103,36 +113,39 @@ export default function Inventory() {
     }
 
     const handleAddStock = () => {
-        if (!selectedProduct || !quantity) {
-            toast.error('Selecciona un producto y cantidad')
+        if (!selectedProduct || !quantity || !selectedBranch) {
+            toast.error('Selecciona un producto, sucursal y cantidad')
             return
         }
         addStockMutation.mutate({
             product_id: selectedProduct,
+            branch_id: selectedBranch,
             quantity: parseInt(quantity),
             notes,
         })
     }
 
     const handleRemoveStock = () => {
-        if (!selectedProduct || !quantity) {
-            toast.error('Selecciona un producto y cantidad')
+        if (!selectedProduct || !quantity || !selectedBranch) {
+            toast.error('Selecciona un producto, sucursal y cantidad')
             return
         }
         removeStockMutation.mutate({
             product_id: selectedProduct,
+            branch_id: selectedBranch,
             quantity: parseInt(quantity),
             notes,
         })
     }
 
     const handleAdjustStock = () => {
-        if (!selectedProduct || !quantity) {
-            toast.error('Selecciona un producto y cantidad')
+        if (!selectedProduct || !quantity || !selectedBranch) {
+            toast.error('Selecciona un producto, sucursal y cantidad')
             return
         }
         adjustStockMutation.mutate({
             product_id: selectedProduct,
+            branch_id: selectedBranch,
             new_stock: parseInt(quantity),
             notes,
         })
@@ -265,16 +278,31 @@ export default function Inventory() {
                                 </div>
                             )}
 
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Cantidad</label>
-                                <input
-                                    type="number"
-                                    className="input"
-                                    value={quantity}
-                                    onChange={(e) => setQuantity(e.target.value)}
-                                    placeholder="0"
-                                    min="0"
-                                />
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Sucursal</label>
+                                    <select
+                                        className="input"
+                                        value={selectedBranch || ''}
+                                        onChange={(e) => setSelectedBranch(Number(e.target.value))}
+                                    >
+                                        <option value="">Seleccionar sucursal...</option>
+                                        {branchesData?.map((branch: Branch) => (
+                                            <option key={branch.id} value={branch.id}>{branch.name}</option>
+                                        ))}
+                                    </select>
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Cantidad</label>
+                                    <input
+                                        type="number"
+                                        className="input"
+                                        value={quantity}
+                                        onChange={(e) => setQuantity(e.target.value)}
+                                        placeholder="0"
+                                        min="0"
+                                    />
+                                </div>
                             </div>
 
                             <div>

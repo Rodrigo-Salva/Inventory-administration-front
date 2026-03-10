@@ -2,7 +2,8 @@ import { useState, useEffect } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import api from '@/api/client'
 import toast from 'react-hot-toast'
-import { User, Mail, Phone, MapPin, Plus, Edit, Trash2, X, Filter, Shield, Search } from 'lucide-react'
+import { User, Mail, Phone, MapPin, Plus, Edit, Trash2, X, Filter, Shield, Search, Eye, CheckCircle, XCircle } from 'lucide-react'
+import DetailModal from '@/components/common/DetailModal'
 import clsx from 'clsx'
 import type { Customer, PaginatedResponse } from '@/types'
 import ConfirmationModal from '@/components/common/ConfirmationModal'
@@ -16,6 +17,8 @@ export default function Customers() {
     const [search, setSearch] = useState('')
     const [filterStatus, setFilterStatus] = useState<'all' | 'active' | 'inactive'>('all')
     const [isFiltersVisible, setIsFiltersVisible] = useState(false)
+    const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null)
+    const [isDetailModalOpen, setIsDetailModalOpen] = useState(false)
     const [formData, setFormData] = useState({
         name: '',
         document_type: '',
@@ -224,6 +227,16 @@ export default function Customers() {
 
                         <div className="mt-8 pt-6 border-t border-gray-50 flex items-center justify-between">
                             <div className="flex items-center gap-1">
+                                <button 
+                                    onClick={() => {
+                                        setSelectedCustomer(customer)
+                                        setIsDetailModalOpen(true)
+                                    }}
+                                    className="p-2.5 text-slate-600 hover:bg-slate-50 rounded-xl transition-all"
+                                    title="Ver Detalles"
+                                >
+                                    <Eye className="h-4.5 w-4.5" />
+                                </button>
                                 {hasPermission('customers:edit') && (
                                     <button 
                                         onClick={() => openModal(customer)}
@@ -326,23 +339,29 @@ export default function Customers() {
             />
 
             {isModalOpen && (
-                <div className="fixed inset-0 z-50 overflow-y-auto">
-                    <div className="flex min-h-screen items-center justify-center p-4">
-                        <div className="fixed inset-0 bg-white bg-opacity-50 backdrop-blur-sm" onClick={closeModal} />
-                        <div className="relative transform overflow-hidden rounded-2xl bg-white shadow-2xl transition-all w-full max-w-2xl">
-                            <div className="absolute top-0 right-0 pt-4 pr-4">
-                                <button onClick={closeModal} className="text-gray-400 hover:text-gray-600 p-1 hover:bg-white rounded-lg">
-                                    <X className="h-6 w-6" />
-                                </button>
-                            </div>
+                <div className="fixed inset-0 z-50 flex flex-col items-center justify-center p-4">
+                    {/* Backdrop */}
+                    <div 
+                        className="fixed inset-0 bg-white/60 backdrop-blur-sm animate-in fade-in duration-300" 
+                        onClick={closeModal} 
+                    />
+                    
+                    {/* Modal Container */}
+                    <div className="relative transform overflow-hidden rounded-[2.5rem] bg-white shadow-2xl transition-all w-full max-w-xl border border-gray-100 animate-in zoom-in-95 duration-300 flex flex-col max-h-[90vh]">
+                        {/* Header */}
+                        <div className="px-8 py-6 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
+                            <h3 className="text-xl font-bold text-gray-900 flex items-center gap-2">
+                                <User className="h-6 w-6 text-primary-600" />
+                                {editingCustomer ? 'Editar Cliente' : 'Nuevo Cliente'}
+                            </h3>
+                            <button onClick={closeModal} className="text-gray-400 hover:text-gray-600 p-2 hover:bg-white rounded-xl transition-all">
+                                <X className="h-6 w-6" />
+                            </button>
+                        </div>
 
-                            <div className="p-6">
-                                <h3 className="text-xl font-bold text-gray-900 flex items-center gap-2">
-                                    <User className="h-6 w-6 text-primary-600" />
-                                    {editingCustomer ? 'Editar Cliente' : 'Agregar nuevo Cliente'}
-                                </h3>
-
-                                <form onSubmit={handleSubmit} className="mt-8 space-y-6">
+                        {/* Content */}
+                        <div className="px-8 py-8 overflow-y-auto custom-scrollbar">
+                            <form id="customer-form" onSubmit={handleSubmit} className="space-y-6">
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                                         <div className="space-y-4">
                                             <h4 className="text-xs font-bold text-gray-400 uppercase tracking-widest border-b pb-1">Identificación</h4>
@@ -465,27 +484,29 @@ export default function Customers() {
                                         </label>
                                     </div>
 
-                                    <div className="pt-4 flex gap-4">
-                                        <button
-                                            type="button"
-                                            className="btn btn-secondary flex-1 h-12 font-bold"
-                                            onClick={closeModal}
-                                        >
-                                            Cancelar
-                                        </button>
-                                        <button
-                                            type="submit"
-                                            className="btn btn-primary flex-1 h-12 font-bold shadow-lg shadow-primary-200"
-                                            disabled={createMutation.isPending || updateMutation.isPending}
-                                        >
-                                            {createMutation.isPending || updateMutation.isPending ? 'Guardando...' : (editingCustomer ? 'Actualizar Cliente' : 'Crear Cliente')}
-                                        </button>
-                                    </div>
                                 </form>
+                            </div>
+
+                            {/* Footer */}
+                            <div className="px-8 py-6 border-t border-gray-100 flex justify-end gap-3 bg-gray-50/50">
+                                <button
+                                    type="button"
+                                    onClick={closeModal}
+                                    className="px-6 h-12 text-gray-700 hover:bg-white rounded-xl border border-gray-200 transition-all shadow-sm font-bold uppercase tracking-widest text-[10px]"
+                                >
+                                    Cancelar
+                                </button>
+                                <button
+                                    type="submit"
+                                    form="customer-form"
+                                    className="px-8 h-12 bg-primary-600 text-white rounded-xl hover:bg-primary-700 transition-all shadow-lg shadow-primary-200 font-bold uppercase tracking-widest text-[10px]"
+                                    disabled={createMutation.isPending || updateMutation.isPending}
+                                >
+                                    {createMutation.isPending || updateMutation.isPending ? 'Procesando...' : (editingCustomer ? 'Guardar Cambios' : 'Crear Cliente')}
+                                </button>
                             </div>
                         </div>
                     </div>
-                </div>
             )}
 
             {isFiltersVisible && (
@@ -535,6 +556,80 @@ export default function Customers() {
                     </div>
                 </div>
             )}
+
+            <DetailModal
+                isOpen={isDetailModalOpen}
+                onClose={() => setIsDetailModalOpen(false)}
+                title={selectedCustomer?.name || "Detalles del Cliente"}
+                subtitle={selectedCustomer ? `${selectedCustomer.document_type}: ${selectedCustomer.document_number}` : ""}
+                icon={User}
+                statusBadge={
+                    selectedCustomer && (
+                        <span className={clsx(
+                            "flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider",
+                            selectedCustomer.is_active ? "bg-emerald-50 text-emerald-600" : "bg-red-50 text-red-600"
+                        )}>
+                            {selectedCustomer.is_active ? <CheckCircle className="h-3 w-3" /> : <XCircle className="h-3 w-3" />}
+                            {selectedCustomer.is_active ? "Activa" : "Inactiva"}
+                        </span>
+                    )
+                }
+                sections={[
+                    {
+                        title: "Información Personal",
+                        fields: [
+                            { label: "Nombre Completo", value: selectedCustomer?.name },
+                            { label: "Tipo de Documento", value: selectedCustomer?.document_type },
+                            { label: "Número de Documento", value: selectedCustomer?.document_number },
+                        ]
+                    },
+                    {
+                        title: "Contacto",
+                        fields: [
+                            { label: "Email", value: selectedCustomer?.email || "N/A" },
+                            { label: "Teléfono", value: selectedCustomer?.phone || "N/A" },
+                        ]
+                    },
+                    {
+                        title: "Ubicación",
+                        fields: [
+                            { label: "Dirección", value: selectedCustomer?.address, fullWidth: true },
+                            { label: "Ciudad", value: selectedCustomer?.city },
+                            { label: "Estado/Provincia", value: selectedCustomer?.state },
+                            { label: "País", value: selectedCustomer?.country },
+                        ]
+                    },
+                    {
+                        title: "Otros",
+                        fields: [
+                            { label: "Notas", value: selectedCustomer?.notes, fullWidth: true },
+                        ]
+                    },
+                    {
+                        title: "Fechas",
+                        fields: [
+                            { label: "Fecha de Registro", value: selectedCustomer ? new Date(selectedCustomer.created_at).toLocaleString() : "" },
+                            { label: "Última Actualización", value: selectedCustomer ? new Date(selectedCustomer.updated_at).toLocaleString() : "" },
+                        ]
+                    }
+                ]}
+                footerActions={
+                    <>
+                        {hasPermission('customers:edit') && (
+                            <button 
+                                onClick={() => {
+                                    setIsDetailModalOpen(false)
+                                    if (selectedCustomer) openModal(selectedCustomer)
+                                }}
+                                className="flex-[1.5] h-14 bg-primary-600 text-white rounded-2xl flex items-center justify-center gap-3 font-black uppercase tracking-widest text-[10px] hover:bg-primary-700 transition-all shadow-lg shadow-primary-100 active:scale-95"
+                            >
+                                <Edit className="h-5 w-5" />
+                                Editar Cliente
+                            </button>
+                        )}
+                    </>
+                }
+            />
         </div>
     )
 }

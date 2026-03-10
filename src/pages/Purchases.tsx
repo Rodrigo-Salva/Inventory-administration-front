@@ -6,8 +6,9 @@ import toast from 'react-hot-toast'
 import { 
     Package, Plus, Calendar, 
     CheckCircle2, Clock, XCircle, 
-    Truck, Eye, FileDown, DollarSign
+    Truck, Eye, FileDown, DollarSign, CheckCircle
 } from 'lucide-react'
+import DetailModal from '@/components/common/DetailModal'
 import clsx from 'clsx'
 import type { Purchase, PaginatedResponse } from '@/types'
 import Pagination from '@/components/common/Pagination'
@@ -19,6 +20,8 @@ export default function Purchases() {
     const navigate = useNavigate()
     const queryClient = useQueryClient()
     const { hasPermission } = usePermissions()
+    const [selectedPurchase, setSelectedPurchase] = useState<Purchase | null>(null)
+    const [isDetailModalOpen, setIsDetailModalOpen] = useState(false)
 
     const { data, isLoading } = useQuery<PaginatedResponse<Purchase>>({
         queryKey: ['purchases', page, statusFilter],
@@ -190,9 +193,16 @@ export default function Purchases() {
                                             >
                                                 <FileDown className="h-5 w-5" />
                                             </button>
-                                            <button className="p-3 bg-white text-gray-400 hover:text-primary-600 hover:bg-primary-50 rounded-xl transition-all border border-transparent hover:border-primary-100">
-                                                <Eye className="h-5 w-5" />
-                                            </button>
+                                             <button 
+                                                 onClick={() => {
+                                                     setSelectedPurchase(purchase)
+                                                     setIsDetailModalOpen(true)
+                                                 }}
+                                                 className="p-3 bg-white text-gray-400 hover:text-primary-600 hover:bg-primary-50 rounded-xl transition-all border border-transparent hover:border-primary-100"
+                                                 title="Ver Detalles"
+                                             >
+                                                 <Eye className="h-5 w-5" />
+                                             </button>
                                         </div>
                                     </div>
                                 </div>
@@ -210,6 +220,73 @@ export default function Purchases() {
                     totalItems={data?.metadata?.total}
                 />
             </div>
+
+            <DetailModal
+                isOpen={isDetailModalOpen}
+                onClose={() => setIsDetailModalOpen(false)}
+                title={`Orden de Compra #${selectedPurchase?.id}`}
+                subtitle={selectedPurchase?.supplier?.name || (selectedPurchase as any)?.supplier_name || "Sin Proveedor"}
+                icon={Package}
+                statusBadge={
+                    selectedPurchase && (
+                        <span className={clsx(
+                            "flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider",
+                            statusMap[selectedPurchase.status as keyof typeof statusMap]?.color
+                        )}>
+                            {selectedPurchase.status === 'received' ? <CheckCircle className="h-3 w-3" /> : <Clock className="h-3 w-3" />}
+                            {statusMap[selectedPurchase.status as keyof typeof statusMap]?.label}
+                        </span>
+                    )
+                }
+                sections={[
+                    {
+                        title: "Información de Compra",
+                        fields: [
+                            { label: "Proveedor", value: selectedPurchase?.supplier?.name || (selectedPurchase as any)?.supplier_name },
+                            { label: "Referencia", value: selectedPurchase?.reference_number || "N/A" },
+                            { label: "Fecha", value: selectedPurchase ? new Date(selectedPurchase.created_at).toLocaleString() : "" },
+                            { label: "Total", value: selectedPurchase ? `$${Number(selectedPurchase.total_amount).toLocaleString()}` : "" },
+                        ]
+                    },
+                    {
+                        title: "Productos en la Orden",
+                        fields: selectedPurchase?.items?.map((item: any) => ({
+                            label: item.product?.name || `Producto #${item.product_id}`,
+                            value: `${item.quantity} x $${item.unit_cost?.toLocaleString()} = $${item.subtotal?.toLocaleString()}`,
+                            fullWidth: true
+                        })) || []
+                    },
+                    {
+                        title: "Notas",
+                        fields: [
+                            { label: "Observaciones", value: selectedPurchase?.notes || "Sin notas", fullWidth: true },
+                        ]
+                    }
+                ]}
+                footerActions={
+                    <>
+                        <button 
+                            onClick={() => selectedPurchase && handleExportPDF(selectedPurchase.id)}
+                            className="flex-[1] h-14 bg-indigo-50 text-indigo-600 rounded-2xl flex items-center justify-center gap-3 font-black uppercase tracking-widest text-[10px] hover:bg-indigo-100 transition-all active:scale-95"
+                        >
+                            <FileDown className="h-5 w-5" />
+                            Descargar PDF
+                        </button>
+                        {selectedPurchase?.status === 'draft' && hasPermission('purchases:receive') && (
+                            <button 
+                                onClick={() => {
+                                    receiveMutation.mutate(selectedPurchase.id)
+                                    setIsDetailModalOpen(false)
+                                }}
+                                className="flex-[1.5] h-14 bg-emerald-600 text-white rounded-2xl flex items-center justify-center gap-3 font-black uppercase tracking-widest text-[10px] hover:bg-emerald-700 transition-all shadow-lg shadow-emerald-100 active:scale-95"
+                            >
+                                <CheckCircle2 className="h-5 w-5" />
+                                Recibir Stock
+                            </button>
+                        )}
+                    </>
+                }
+            />
         </div>
     )
 }

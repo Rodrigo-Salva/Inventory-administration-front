@@ -3,8 +3,9 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import api from "@/api/client";
 import { 
   Plus, Receipt, Trash2, DollarSign, 
-  BarChart3, Filter, X, Search, Download
+  BarChart3, Filter, X, Search, Download, Eye
 } from "lucide-react";
+import DetailModal from "@/components/common/DetailModal";
 import toast from "react-hot-toast";
 import { usePermissions } from "@/hooks/usePermissions";
 import Pagination from "@/components/common/Pagination";
@@ -24,6 +25,8 @@ export default function Expenses() {
   const [tempFilters, setTempFilters] = useState({ category: "", start: "", end: "" });
   const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
   const [timeRange, setTimeRange] = useState<'daily' | 'weekly' | 'monthly'>('daily');
+  const [selectedExpense, setSelectedExpense] = useState<any | null>(null);
+  const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
   const queryClient = useQueryClient();
   const { hasPermission } = usePermissions();
 
@@ -312,18 +315,33 @@ export default function Expenses() {
                       -${Number(expense.amount).toLocaleString(undefined, { minimumFractionDigits: 2 })}
                     </span>
                   </td>
-                  <td className="px-6 py-4 text-center">
-                    {hasPermission('expenses:manage') && (
-                      <button 
-                        onClick={() => {
-                          if(confirm("¿Eliminar este gasto?")) deleteMutation.mutate(expense.id)
-                        }}
-                        className="p-2 text-slate-300  hover:text-red-500 :text-red-400 hover:bg-red-50 :bg-red-500/10 rounded-lg transition-all"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </button>
-                    )}
-                  </td>
+                   <td className="px-6 py-4 whitespace-nowrap text-center">
+                     <div className="flex items-center justify-center gap-1">
+                       <button
+                         onClick={() => {
+                           setSelectedExpense(expense);
+                           setIsDetailModalOpen(true);
+                         }}
+                         className="p-2 text-slate-400 hover:text-primary-600 hover:bg-primary-50 rounded-xl transition-all"
+                         title="Ver Detalles"
+                       >
+                         <Eye className="h-5 w-5" />
+                       </button>
+                       {hasPermission('expenses:manage') && (
+                         <button
+                           onClick={() => {
+                             if (confirm('¿Eliminar este gasto?')) {
+                               deleteMutation.mutate(expense.id);
+                             }
+                           }}
+                           className="p-2 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all"
+                           title="Eliminar"
+                         >
+                           <Trash2 className="h-5 w-5" />
+                         </button>
+                       )}
+                     </div>
+                   </td>
                 </tr>
               ))}
             </tbody>
@@ -425,89 +443,163 @@ export default function Expenses() {
 
       {/* Create Modal */}
       {isModalOpen && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-white/60 backdrop-blur-sm animate-in fade-in duration-300">
-          <div className="bg-white  rounded-[32px] w-full max-w-lg shadow-2xl overflow-hidden animate-in zoom-in-95 duration-300 border border-gray-100 ">
-            <div className="p-8 border-b border-gray-50  flex items-center justify-between bg-white ">
-              <h2 className="text-2xl font-black text-slate-900  tracking-tight flex items-center gap-3">
-                <Receipt className="h-6 w-6 text-primary-600 " />
+        <div className="fixed inset-0 z-50 flex flex-col items-center justify-center p-4 text-center sm:p-0">
+          {/* Backdrop */}
+          <div 
+            className="fixed inset-0 bg-white/60 backdrop-blur-sm animate-in fade-in duration-300" 
+            onClick={() => setIsModalOpen(false)} 
+          />
+          
+          {/* Modal Container */}
+          <div className="relative transform overflow-hidden rounded-[2.5rem] bg-white shadow-2xl transition-all w-full max-w-xl border border-gray-100 animate-in zoom-in-95 duration-300 flex flex-col max-h-[90vh]">
+            {/* Header */}
+            <div className="px-8 py-6 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
+              <h3 className="text-xl font-bold text-gray-900 flex items-center gap-2">
+                <Receipt className="h-6 w-6 text-primary-600" />
                 Registrar Gasto
-              </h2>
-              <button onClick={() => setIsModalOpen(false)} className="p-2 hover:bg-white :bg-white rounded-full transition-colors font-bold text-slate-400 ">
+              </h3>
+              <button 
+                onClick={() => setIsModalOpen(false)} 
+                className="text-gray-400 hover:text-gray-600 p-2 hover:bg-white rounded-xl transition-all"
+              >
                 <X className="h-6 w-6" />
               </button>
             </div>
-            
-            <form onSubmit={handleSubmit} className="p-8 space-y-6">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="col-span-2">
-                  <label className="block text-[10px] font-black text-slate-400  uppercase tracking-widest mb-2">Monto ($)</label>
-                  <input
-                    type="number"
-                    step="0.01"
-                    required
-                    className="input h-14 text-lg font-black bg-white  border-transparent focus:bg-white :bg-white focus:ring-primary-500 rounded-2xl "
-                    value={formData.amount}
-                    onChange={(e) => setFormData({...formData, amount: e.target.value})}
-                    placeholder="0.00"
-                  />
-                </div>
-                
-                <div>
-                  <label className="block text-[10px] font-black text-slate-400  uppercase tracking-widest mb-2">Categoría</label>
-                  <select
-                    className="input h-14 bg-white  border-transparent focus:bg-white :bg-white focus:ring-primary-500 rounded-2xl "
-                    value={formData.category}
-                    onChange={(e) => setFormData({...formData, category: e.target.value})}
-                  >
-                    {categories.map(c => <option key={c} value={c}>{c}</option>)}
-                  </select>
-                </div>
 
-                <div>
-                  <label className="block text-[10px] font-black text-slate-400  uppercase tracking-widest mb-2">Fecha</label>
-                  <input
-                    type="date"
-                    required
-                    className="input h-14 bg-white  border-transparent focus:bg-white :bg-white focus:ring-primary-500 rounded-2xl  [color-scheme:light_dark]"
-                    value={formData.date}
-                    onChange={(e) => setFormData({...formData, date: e.target.value})}
-                  />
-                </div>
+            {/* Content */}
+            <div className="px-8 py-8 overflow-y-auto custom-scrollbar">
+              <form id="expense-form" onSubmit={handleSubmit} className="space-y-6">
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="col-span-2">
+                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Monto ($)</label>
+                    <div className="relative">
+                      <DollarSign className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
+                      <input
+                        type="number"
+                        step="0.01"
+                        required
+                        className="input h-14 pl-12 text-lg font-black bg-white border-transparent focus:bg-white focus:ring-primary-500 rounded-2xl"
+                        value={formData.amount}
+                        onChange={(e) => setFormData({...formData, amount: e.target.value})}
+                        placeholder="0.00"
+                        autoFocus
+                      />
+                    </div>
+                  </div>
+                  
+                  <div>
+                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Categoría</label>
+                    <select
+                      className="input h-14 bg-white border-transparent focus:bg-white focus:ring-primary-500 rounded-2xl"
+                      value={formData.category}
+                      onChange={(e) => setFormData({...formData, category: e.target.value})}
+                    >
+                      {categories.map(c => <option key={c} value={c}>{c}</option>)}
+                    </select>
+                  </div>
 
-                <div className="col-span-2">
-                  <label className="block text-[10px] font-black text-slate-400  uppercase tracking-widest mb-2">Descripción</label>
-                  <textarea
-                    required
-                    className="input min-h-[100px] bg-white  border-transparent focus:bg-white :bg-white focus:ring-primary-500 rounded-2xl p-4 "
-                    value={formData.description}
-                    onChange={(e) => setFormData({...formData, description: e.target.value})}
-                    placeholder="Escribe el motivo del gasto..."
-                  />
-                </div>
+                  <div>
+                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Fecha</label>
+                    <input
+                      type="date"
+                      required
+                      className="input h-14 bg-white border-transparent focus:bg-white focus:ring-primary-500 rounded-2xl [color-scheme:light]"
+                      value={formData.date}
+                      onChange={(e) => setFormData({...formData, date: e.target.value})}
+                    />
+                  </div>
 
-                <div className="col-span-2">
-                  <label className="block text-[10px] font-black text-slate-400  uppercase tracking-widest mb-2">Referencia / Factura #</label>
-                  <input
-                    type="text"
-                    className="input h-14 bg-white  border-transparent focus:bg-white :bg-white focus:ring-primary-500 rounded-2xl "
-                    value={formData.reference}
-                    onChange={(e) => setFormData({...formData, reference: e.target.value})}
-                    placeholder="Opcional"
-                  />
-                </div>
-              </div>
+                  <div className="col-span-2">
+                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Descripción</label>
+                    <textarea
+                      required
+                      className="input min-h-[100px] bg-white border-transparent focus:bg-white focus:ring-primary-500 rounded-2xl p-4"
+                      value={formData.description}
+                      onChange={(e) => setFormData({...formData, description: e.target.value})}
+                      placeholder="Escribe el motivo del gasto..."
+                    />
+                  </div>
 
+                  <div className="col-span-2">
+                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Referencia / Factura #</label>
+                    <input
+                      type="text"
+                      className="input h-14 bg-white border-transparent focus:bg-white focus:ring-primary-500 rounded-2xl"
+                      value={formData.reference}
+                      onChange={(e) => setFormData({...formData, reference: e.target.value})}
+                      placeholder="Opcional"
+                    />
+                  </div>
+                </div>
+              </form>
+            </div>
+
+            {/* Footer */}
+            <div className="px-8 py-6 border-t border-gray-100 flex justify-end gap-3 bg-gray-50/50">
+              <button
+                type="button"
+                onClick={() => setIsModalOpen(false)}
+                className="px-6 h-12 text-gray-700 hover:bg-white rounded-xl border border-gray-200 transition-all shadow-sm font-bold uppercase tracking-widest text-[10px]"
+              >
+                Cancelar
+              </button>
               <button
                 type="submit"
+                form="expense-form"
+                className="px-8 h-12 bg-primary-600 text-white rounded-xl hover:bg-primary-700 transition-all shadow-lg shadow-primary-200 font-bold uppercase tracking-widest text-[10px]"
                 disabled={createMutation.isPending}
-                className="bg-primary-600 text-white hover:bg-primary-700 w-full h-14 rounded-2xl font-black uppercase tracking-widest shadow-xl shadow-primary-200  mt-4 transition-all"
               >
                 {createMutation.isPending ? "Registrando..." : "Confirmar Gasto"}
               </button>
-            </form>
+            </div>
           </div>
         </div>
       )}
-    </div>
-  );
-}
+
+       <DetailModal
+         isOpen={isDetailModalOpen}
+         onClose={() => setIsDetailModalOpen(false)}
+         title="Detalles de Gasto"
+         subtitle={selectedExpense?.description || "Gasto sin descripción"}
+         icon={Receipt}
+         sections={[
+           {
+             title: "Información Financiera",
+             fields: [
+               { label: "Monto", value: selectedExpense ? `$${selectedExpense.amount?.toLocaleString()}` : "" },
+               { label: "Categoría", value: selectedExpense?.category },
+               { label: "Fecha", value: selectedExpense ? new Date(selectedExpense.date).toLocaleDateString() : "" },
+               { label: "Referencia", value: selectedExpense?.reference || "Sin referencia" },
+             ]
+           },
+           {
+             title: "Detalles Adicionales",
+             fields: [
+               { label: "Descripción", value: selectedExpense?.description || "Sin descripción", fullWidth: true },
+               { label: "ID de Registro", value: selectedExpense?.id },
+               { label: "Fecha de Registro", value: selectedExpense?.created_at ? new Date(selectedExpense.created_at).toLocaleString() : "N/A" },
+             ]
+           }
+         ]}
+         footerActions={
+           <>
+             {hasPermission('expenses:manage') && (
+               <button 
+                 onClick={() => {
+                   if (confirm('¿Eliminar este gasto?')) {
+                     deleteMutation.mutate(selectedExpense.id);
+                     setIsDetailModalOpen(false);
+                   }
+                 }}
+                 className="flex-[1] h-14 bg-red-50 text-red-600 rounded-2xl flex items-center justify-center gap-3 font-black uppercase tracking-widest text-[10px] hover:bg-red-100 transition-all active:scale-95"
+               >
+                 <Trash2 className="h-5 w-5" />
+                 Eliminar
+               </button>
+             )}
+           </>
+         }
+       />
+     </div>
+   );
+ }

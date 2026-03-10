@@ -5,12 +5,14 @@ import api from "@/api/client";
 import toast from "react-hot-toast";
 import {
     Plus, Edit, Trash2, Search, X, Package, DollarSign, Layers, History,
-    PlusCircle, MinusCircle, Filter,
+    PlusCircle, MinusCircle, Filter, Eye,
     Barcode, Building2, ArrowUpRight, ArrowDownRight, UploadCloud, FileDown,
-    Printer, Shield
+    Printer, Shield, Store, CheckCircle, XCircle
 } from 'lucide-react'
+import DetailModal from "@/components/common/DetailModal";
 import clsx from "clsx";
 import type { Product, PaginatedResponse, Category, Supplier } from "@/types";
+import { branchApi, Branch } from "@/api/branches";
 import ConfirmationModal from "@/components/common/ConfirmationModal";
 import Pagination from "@/components/common/Pagination";
 import DateRangePicker from "@/components/common/DateRangePicker";
@@ -27,6 +29,7 @@ export default function Products() {
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
   const [quickMoveType, setQuickMoveType] = useState<"entry" | "exit">("entry");
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+  const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
   const [filterCategory, setFilterCategory] = useState("");
   const [filterSupplier, setFilterSupplier] = useState("");
   const [filterStatus, setFilterStatus] = useState<
@@ -51,11 +54,13 @@ export default function Products() {
     min_stock: "5",
     max_stock: "",
     is_active: true,
+    branch_id: "",
   });
   const [quickMoveData, setQuickMoveData] = useState({
     quantity: "",
     reference: "",
     notes: "",
+    branch_id: "",
   });
 
   // Modal de confirmación de eliminación
@@ -130,6 +135,15 @@ export default function Products() {
     },
   });
 
+  // 3.5 Cargar Sucursales para el selector de stock
+  const { data: branches } = useQuery<Branch[]>({
+    queryKey: ["branches-active"],
+    queryFn: async () => {
+      const response = await branchApi.getActive();
+      return response.data || [];
+    },
+  });
+
   // 4. Cargar Historial de un Producto
   const { data: movementsData, isLoading: isLoadingMovements } = useQuery({
     queryKey: ["product-movements", selectedProduct?.id],
@@ -189,7 +203,7 @@ export default function Products() {
         quickMoveType === "entry" ? "Entrada registrada" : "Salida registrada",
       );
       setIsQuickMoveModalOpen(false);
-      setQuickMoveData({ quantity: "", reference: "", notes: "" });
+      setQuickMoveData({ quantity: "", reference: "", notes: "", branch_id: "" });
     },
     onError: (err: any) =>
       toast.error(err.response?.data?.detail || "Error en movimiento"),
@@ -229,6 +243,7 @@ export default function Products() {
         min_stock: product.min_stock.toString(),
         max_stock: product.max_stock?.toString() || "",
         is_active: product.is_active,
+        branch_id: "", // Cuando editamos un producto TODO el stock se maneja en Quick Moves o Inventory Ajustes. 
       });
     } else {
       setEditingProduct(null);
@@ -245,6 +260,7 @@ export default function Products() {
         min_stock: "5",
         max_stock: "",
         is_active: true,
+        branch_id: branches?.[0]?.id?.toString() || "",
       });
     }
     setIsModalOpen(true);
@@ -263,6 +279,7 @@ export default function Products() {
       quantity: parseInt(quickMoveData.quantity),
       reference: quickMoveData.reference,
       notes: quickMoveData.notes,
+      branch_id: parseInt(quickMoveData.branch_id) || branches?.[0]?.id || 0,
     });
   };
 
@@ -318,6 +335,7 @@ export default function Products() {
       ...formData,
       category_id: formData.category_id ? parseInt(formData.category_id) : null,
       supplier_id: formData.supplier_id ? parseInt(formData.supplier_id) : null,
+      branch_id: formData.branch_id ? parseInt(formData.branch_id) : undefined, // Opcional para editar
       price: parseFloat(formData.price),
       cost: formData.cost ? parseFloat(formData.cost) : null,
       stock: parseInt(formData.stock),
@@ -576,13 +594,23 @@ export default function Products() {
                               <Edit className="h-5 w-5" />
                             </button>
                           )}
-                          <button
-                            onClick={() => navigate(`/inventory/kardex/${product.id}`)}
-                            className="p-2 text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
-                            title="Ver Kardex (Historial)"
-                          >
-                            <History className="h-5 w-5" />
-                          </button>
+                            <button
+                                onClick={() => navigate(`/inventory/kardex/${product.id}`)}
+                                className="p-2 text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
+                                title="Ver Kardex (Historial)"
+                              >
+                                <History className="h-5 w-5" />
+                              </button>
+                              <button
+                                onClick={() => {
+                                  setSelectedProduct(product);
+                                  setIsDetailModalOpen(true);
+                                }}
+                                className="p-2 text-slate-600 hover:bg-slate-50 rounded-lg transition-colors"
+                                title="Ver Detalles"
+                              >
+                                <Eye className="h-5 w-5" />
+                              </button>
                           <button
                             onClick={() => handlePrintLabels(product)}
                             className="p-2 text-teal-600 hover:bg-teal-50 rounded-lg transition-colors"
@@ -667,6 +695,12 @@ export default function Products() {
                             onClick={() => {
                               setSelectedProduct(product);
                               setQuickMoveType("entry");
+                              setQuickMoveData({
+                                quantity: "",
+                                reference: "",
+                                notes: "",
+                                branch_id: branches?.[0]?.id?.toString() || "",
+                              });
                               setIsQuickMoveModalOpen(true);
                             }}
                             className="p-2.5 text-emerald-600 bg-emerald-50 rounded-xl"
@@ -678,6 +712,12 @@ export default function Products() {
                             onClick={() => {
                               setSelectedProduct(product);
                               setQuickMoveType("exit");
+                              setQuickMoveData({
+                                quantity: "",
+                                reference: "",
+                                notes: "",
+                                branch_id: branches?.[0]?.id?.toString() || "",
+                              });
                               setIsQuickMoveModalOpen(true);
                             }}
                             className="p-2.5 text-amber-600 bg-amber-50 rounded-xl"
@@ -741,31 +781,29 @@ export default function Products() {
         type="danger"
       />
       {isModalOpen && (
-        <div className="fixed inset-0 z-50 overflow-y-auto">
-          <div className="flex min-h-screen items-center justify-center p-4">
-            <div
-              className="fixed inset-0 bg-white bg-opacity-50 backdrop-blur-sm"
-              onClick={closeModal}
-            />
-            <div className="relative transform overflow-hidden rounded-2xl bg-white shadow-2xl transition-all w-full max-w-2xl">
-              <div className="absolute top-0 right-0 pt-4 pr-4">
-                <button
-                  onClick={closeModal}
-                  className="text-gray-400 hover:text-gray-600 p-1 hover:bg-white rounded-lg"
-                >
-                  <X className="h-6 w-6" />
-                </button>
-              </div>
+        <div className="fixed inset-0 z-50 flex flex-col items-center justify-center p-4 text-center sm:p-0">
+          {/* Backdrop */}
+          <div 
+            className="fixed inset-0 bg-white/60 backdrop-blur-sm animate-in fade-in duration-300" 
+            onClick={closeModal} 
+          />
+          
+          {/* Modal Container */}
+          <div className="relative transform overflow-hidden rounded-[2.5rem] bg-white shadow-2xl transition-all w-full max-w-xl border border-gray-100 animate-in zoom-in-95 duration-300 flex flex-col max-h-[90vh]">
+            {/* Header */}
+            <div className="px-8 py-6 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
+              <h3 className="text-xl font-bold text-gray-900 flex items-center gap-2">
+                <Package className="h-6 w-6 text-primary-600" />
+                {editingProduct ? 'Editar Producto' : 'Nuevo Producto'}
+              </h3>
+              <button onClick={closeModal} className="text-gray-400 hover:text-gray-600 p-2 hover:bg-white rounded-xl transition-all">
+                <X className="h-6 w-6" />
+              </button>
+            </div>
 
-              <div className="p-6">
-                <h3 className="text-xl font-bold text-gray-900 flex items-center gap-2">
-                  <Package className="h-6 w-6 text-primary-600" />
-                  {editingProduct
-                    ? "Editar Producto"
-                    : "Agregar nuevo Producto"}
-                </h3>
-
-                <form onSubmit={handleSubmit} className="mt-8 space-y-8">
+            {/* Content */}
+            <div className="px-8 py-8 overflow-y-auto custom-scrollbar">
+              <form id="product-form" onSubmit={handleSubmit} className="space-y-6">
                   {/* SECCIÓN 1: INFORMACIÓN BÁSICA */}
                   <div className="space-y-4">
                     <div className="flex items-center gap-2 border-b border-gray-100 pb-2">
@@ -894,6 +932,29 @@ export default function Products() {
                           />
                         </div>
                       </div>
+                      {!editingProduct && (
+                        <div className="col-span-2 lg:col-span-4">
+                          <label className="block text-sm font-semibold text-gray-700 mb-1">
+                            Sucursal del Stock Inicial *
+                          </label>
+                          <div className="relative">
+                            <Store className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                            <select
+                                required
+                                className="input pl-9 shadow-sm"
+                                value={formData.branch_id}
+                                onChange={(e) => setFormData({ ...formData, branch_id: e.target.value })}
+                            >
+                                {branches?.map((b) => (
+                                    <option key={b.id} value={b.id}>{b.name}</option>
+                                ))}
+                                {branches?.length === 0 && (
+                                    <option value="" disabled>No hay sucursales disponibles</option>
+                                )}
+                            </select>
+                          </div>
+                        </div>
+                      )}
                       <div>
                         <label className="block text-[11px] font-bold text-gray-500 uppercase mb-1">
                           Stock Inicial
@@ -1039,30 +1100,26 @@ export default function Products() {
                     </div>
                   </div>
 
-                  <div className="flex gap-4 pt-6 border-t border-gray-50">
-                    <button
-                      type="button"
-                      className="btn btn-secondary flex-1 h-12 font-bold text-sm uppercase tracking-wider"
-                      onClick={closeModal}
-                    >
-                      Cancelar
-                    </button>
-                    <button
-                      type="submit"
-                      className="btn btn-primary flex-1 h-12 font-bold text-sm uppercase tracking-wider shadow-xl shadow-primary-100"
-                      disabled={
-                        createMutation.isPending || updateMutation.isPending
-                      }
-                    >
-                      {createMutation.isPending || updateMutation.isPending
-                        ? "Procesando..."
-                        : editingProduct
-                          ? "Actualizar Producto"
-                          : "Crear Producto"}
-                    </button>
-                  </div>
                 </form>
-              </div>
+            </div>
+
+            {/* Footer */}
+            <div className="px-8 py-6 border-t border-gray-100 flex justify-end gap-3 bg-gray-50/50">
+              <button
+                type="button"
+                onClick={closeModal}
+                className="px-6 h-12 text-gray-700 hover:bg-white rounded-xl border border-gray-200 transition-all shadow-sm font-bold uppercase tracking-widest text-[10px]"
+              >
+                Cancelar
+              </button>
+              <button
+                type="submit"
+                form="product-form"
+                className="px-8 h-12 bg-primary-600 text-white rounded-xl hover:bg-primary-700 transition-all shadow-lg shadow-primary-200 font-bold uppercase tracking-widest text-[10px]"
+                disabled={createMutation.isPending || updateMutation.isPending}
+              >
+                {createMutation.isPending || updateMutation.isPending ? 'Procesando...' : (editingProduct ? 'Guardar Cambios' : 'Crear Producto')}
+              </button>
             </div>
           </div>
         </div>
@@ -1233,6 +1290,22 @@ export default function Products() {
                   </div>
                 </div>
                 <form onSubmit={handleQuickMoveSubmit} className="space-y-4">
+                  <div>
+                    <label className="block text-xs font-bold text-gray-500 uppercase mb-1">
+                      Sucursal de Destino/Origen *
+                    </label>
+                    <select
+                        required
+                        className="input"
+                        value={quickMoveData.branch_id}
+                        onChange={(e) => setQuickMoveData({ ...quickMoveData, branch_id: e.target.value })}
+                    >
+                        <option value="" disabled>Seleccione una sucursal</option>
+                        {branches?.map((b) => (
+                            <option key={b.id} value={b.id}>{b.name}</option>
+                        ))}
+                    </select>
+                  </div>
                   <div>
                     <label className="block text-xs font-bold text-gray-500 uppercase mb-1">
                       Cantidad
@@ -1625,6 +1698,76 @@ export default function Products() {
           </div>
         </div>
       )}
+      <DetailModal
+        isOpen={isDetailModalOpen}
+        onClose={() => setIsDetailModalOpen(false)}
+        title={selectedProduct?.name || "Detalles del Producto"}
+        subtitle={selectedProduct ? `SKU: ${selectedProduct.sku}` : ""}
+        icon={Package}
+        statusBadge={
+          selectedProduct && (
+            <span className={clsx(
+              "flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider",
+              selectedProduct.is_active ? "bg-emerald-50 text-emerald-600" : "bg-red-50 text-red-600"
+            )}>
+              {selectedProduct.is_active ? <CheckCircle className="h-3 w-3" /> : <XCircle className="h-3 w-3" />}
+              {selectedProduct.is_active ? "Activo" : "Inactivo"}
+            </span>
+          )
+        }
+        sections={[
+          {
+            title: "Información General",
+            fields: [
+              { label: "Nombre", value: selectedProduct?.name },
+              { label: "SKU", value: selectedProduct?.sku },
+              { label: "Código de Barras", value: selectedProduct?.barcode || "N/A" },
+              { label: "Categoría", value: selectedProduct?.category?.name || "Sin categoría" },
+              { label: "Descripción", value: selectedProduct?.description, fullWidth: true },
+            ]
+          },
+          {
+            title: "Precios y Costos",
+            fields: [
+              { label: "Precio de Venta", value: `$${Number(selectedProduct?.price || 0).toLocaleString()}` },
+              { label: "Costo Unitario", value: `$${Number(selectedProduct?.cost || 0).toLocaleString()}` },
+              { label: "Margen Estimado", value: `${(((Number(selectedProduct?.price || 0) - Number(selectedProduct?.cost || 0)) / Number(selectedProduct?.price || 1)) * 100).toFixed(1)}%` },
+            ]
+          },
+          {
+            title: "Inventario",
+            fields: [
+              { label: "Stock Actual", value: <span className={Number(selectedProduct?.stock || 0) <= Number(selectedProduct?.min_stock || 0) ? "text-red-600" : "text-emerald-600"}>{selectedProduct?.stock} unidades</span> },
+              { label: "Stock Mínimo", value: `${selectedProduct?.min_stock} unidades` },
+              { label: "Stock Máximo", value: selectedProduct?.max_stock ? `${selectedProduct.max_stock} unidades` : "Sin límite" },
+              { label: "Proveedor", value: selectedProduct?.supplier?.name || "Sin proveedor" },
+            ]
+          },
+          {
+            title: "Fechas",
+            fields: [
+              { label: "Fecha de Registro", value: selectedProduct ? new Date(selectedProduct.created_at).toLocaleString() : "" },
+              { label: "Última Actualización", value: selectedProduct ? new Date(selectedProduct.updated_at).toLocaleString() : "" },
+            ]
+          }
+        ]}
+        footerActions={
+          <>
+            {hasPermission('products:edit') && (
+              <button 
+                onClick={() => {
+                  setIsDetailModalOpen(false);
+                  if (selectedProduct) openModal(selectedProduct);
+                }}
+                className="flex-[1.5] h-14 bg-indigo-600 text-white rounded-2xl flex items-center justify-center gap-3 font-black uppercase tracking-widest text-[10px] hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-100 active:scale-95"
+              >
+                <Edit className="h-5 w-5" />
+                Editar Producto
+              </button>
+            )}
+          </>
+        }
+      />
     </div>
   );
 }

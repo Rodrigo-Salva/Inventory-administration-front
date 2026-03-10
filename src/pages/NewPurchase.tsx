@@ -5,9 +5,10 @@ import api from '@/api/client'
 import toast from 'react-hot-toast'
 import { 
     Package, Plus, Trash2, ArrowLeft, 
-    Save, Search, Loader2, Minus, DollarSign
+    Save, Search, Loader2, Minus, DollarSign, Store
 } from 'lucide-react'
 import type { Product, PaginatedResponse } from '@/types'
+import { branchApi, Branch } from "@/api/branches"
 
 interface PurchaseItemForm {
     product_id: number
@@ -21,6 +22,7 @@ interface PurchaseItemForm {
 export default function NewPurchase() {
     const [search, setSearch] = useState('')
     const [supplierId, setSupplierId] = useState<number | ''>('')
+    const [branchId, setBranchId] = useState<number | ''>('')
     const [reference, setReference] = useState('')
     const [notes, setNotes] = useState('')
     const [items, setItems] = useState<PurchaseItemForm[]>([])
@@ -36,6 +38,15 @@ export default function NewPurchase() {
             return response.data
         }
     })
+
+    // 1.5 Cargar sucursales activas
+    const { data: branches } = useQuery<Branch[]>({
+      queryKey: ["branches-active"],
+      queryFn: async () => {
+        const response = await branchApi.getActive();
+        return response.data || [];
+      },
+    });
 
     // 2. Cargar productos para búsqueda
     const { data: productsData, isLoading: isLoadingProducts } = useQuery<PaginatedResponse<Product>>({
@@ -97,10 +108,12 @@ export default function NewPurchase() {
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault()
         if (!supplierId) return toast.error('Selecciona un proveedor')
+        if (!branchId) return toast.error('Selecciona una sucursal destino')
         if (items.length === 0) return toast.error('Agrega al menos un producto')
 
         const data = {
             supplier_id: Number(supplierId),
+            branch_id: Number(branchId),
             reference_number: reference,
             notes,
             items: items.map(i => ({
@@ -143,6 +156,22 @@ export default function NewPurchase() {
                                 <option value="">Seleccionar proveedor...</option>
                                 {suppliers?.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
                             </select>
+                        </div>
+
+                        <div>
+                            <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Sucursal Destino *</label>
+                            <div className="relative">
+                                <select 
+                                    required
+                                    className="input h-12 pl-10 rounded-2xl bg-white border-gray-100 text-sm font-bold"
+                                    value={branchId}
+                                    onChange={(e) => setBranchId(e.target.value === '' ? '' : Number(e.target.value))}
+                                >
+                                    <option value="" disabled>Seleccione una sucursal...</option>
+                                    {branches?.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}
+                                </select>
+                                <Store className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-300 pointer-events-none" />
+                            </div>
                         </div>
 
                         <div>
