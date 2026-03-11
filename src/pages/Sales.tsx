@@ -13,6 +13,8 @@ import { usePermissions } from "@/hooks/usePermissions";
 
 interface CartItem extends Product {
     cartQuantity: number;
+    selectedBatchId?: number;
+    selectedBatchNumber?: string;
 }
 
 export default function Sales() {
@@ -20,8 +22,10 @@ export default function Sales() {
     const [cart, setCart] = useState<CartItem[]>([]);
     const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
     const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false);
+    const [isBatchModalOpen, setIsBatchModalOpen] = useState(false);
     const [lastSaleId, setLastSaleId] = useState<number | null>(null);
     const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
+    const [currentProductForBatch, setCurrentProductForBatch] = useState<Product | null>(null);
     const [paymentMethod, setPaymentMethod] = useState<"cash" | "card" | "transfer">("cash");
     const queryClient = useQueryClient();
     const { hasPermission } = usePermissions();
@@ -94,39 +98,67 @@ export default function Sales() {
     });
 
     // Funciones del Carrito
-    const addToCart = (product: Product) => {
+    const addToCart = (product: Product, batch?: any) => {
         if (product.stock <= 0) {
             toast.error("Producto sin stock");
             return;
         }
 
+        // Si el producto tiene lotes y no se ha seleccionado uno, abrir modal
+        if (product.batches && product.batches.length > 0 && !batch) {
+            setCurrentProductForBatch(product);
+            setIsBatchModalOpen(true);
+            return;
+        }
+
         setCart(prev => {
-            const existing = prev.find(item => item.id === product.id);
+            // Un item en el carrito es único por PRODUCTO + LOTE
+            const existing = prev.find(item => 
+                item.id === product.id && item.selectedBatchId === batch?.id
+            );
+            
             if (existing) {
-                if (existing.cartQuantity >= product.stock) {
-                    toast.error("No hay más stock disponible");
+                const stockLimit = batch ? batch.current_quantity : product.stock;
+                if (existing.cartQuantity >= stockLimit) {
+                    toast.error("No hay más stock disponible en este lote");
                     return prev;
                 }
                 return prev.map(item => 
-                    item.id === product.id 
+                    (item.id === product.id && item.selectedBatchId === batch?.id)
                         ? { ...item, cartQuantity: item.cartQuantity + 1 }
                         : item
                 );
             }
-            return [...prev, { ...product, cartQuantity: 1 }];
+            return [...prev, { 
+                ...product, 
+                cartQuantity: 1, 
+                selectedBatchId: batch?.id,
+                selectedBatchNumber: batch?.batch_number
+            }];
         });
+        
+        if (batch) {
+            setIsBatchModalOpen(false);
+            setCurrentProductForBatch(null);
+        }
     };
 
-    const removeFromCart = (productId: number) => {
-        setCart(prev => prev.filter(item => item.id !== productId));
+    const removeFromCart = (productId: number, batchId?: number) => {
+        setCart(prev => prev.filter(item => !(item.id === productId && item.selectedBatchId === batchId)));
     };
 
-    const updateQuantity = (productId: number, delta: number) => {
+    const updateQuantity = (productId: number, delta: number, batchId?: number) => {
         setCart(prev => prev.map(item => {
-            if (item.id === productId) {
+            if (item.id === productId && item.selectedBatchId === batchId) {
                 const newQty = item.cartQuantity + delta;
                 if (newQty <= 0) return item;
-                if (newQty > item.stock) {
+                
+                // Si tiene lote, el límite es el stock del lote
+                const stockLimit = item.selectedBatchId 
+                    ? item.batches?.find(b => b.id === item.selectedBatchId)?.current_quantity || item.stock
+                    : item.stock;
+
+                if (newQty > stockLimit) {
                     toast.error("Stock máximo alcanzado");
                     return item;
                 }
@@ -153,6 +185,7 @@ export default function Sales() {
             payment_method: paymentMethod,
             items: cart.map(item => ({
                 product_id: item.id,
+                batch_id: item.selectedBatchId || null,
                 quantity: item.cartQuantity,
                 unit_price: item.price
             })),
@@ -182,9 +215,7 @@ export default function Sales() {
         styleTag.textContent = styles;
         document.head.appendChild(styleTag);
         
-        return () => {
-            document.head.removeChild(styleTag);
-        };
+        return () => { document.head.removeChild(styleTag); };
     }, []);
 
     if (!hasPermission('sales:create')) {
@@ -365,10 +396,17 @@ export default function Sales() {
                                     </div>
                                     <div className="flex-1 min-w-0">
                                         <h4 className="text-xs font-bold text-gray-900 uppercase truncate mb-0.5">{item.name}</h4>
+                                        {item.selectedBatchNumber && (
+                                            <div className="flex items-center gap-1 mb-1">
+                                                <span className="px-1.5 py-0.5 bg-indigo-50 text-indigo-600 rounded text-[8px] font-black uppercase tracking-widest">
+                                                    Lote: {item.selectedBatchNumber}
+                                                </span>
+                                            </div>
+                                        )}
                                         <p className="text-[10px] font-bold text-indigo-600">${Number(item.price).toLocaleString()} c/u</p>
                                     </div>
                                     <button 
-                                        onClick={() => removeFromCart(item.id)}
+                                        onClick={() => removeFromCart(item.id, item.selectedBatchId)}
                                         className="p-2 text-gray-300 hover:text-red-500 transition-colors"
                                     >
                                         <Trash2 className="h-4 w-4" />
@@ -377,14 +415,14 @@ export default function Sales() {
                                 <div className="mt-3 flex items-center justify-between">
                                     <div className="flex items-center gap-1 bg-white p-1 rounded-xl border border-gray-100">
                                         <button 
-                                            onClick={() => updateQuantity(item.id, -1)}
+                                            onClick={() => updateQuantity(item.id, -1, item.selectedBatchId)}
                                             className="h-7 w-7 flex items-center justify-center rounded-lg hover:bg-white text-gray-500 hover:text-red-500 hover:shadow-sm transition-all"
                                         >
                                             <Minus className="h-3 w-3" />
                                         </button>
                                         <span className="w-8 text-center text-xs font-black text-gray-900">{item.cartQuantity}</span>
                                         <button 
-                                            onClick={() => updateQuantity(item.id, 1)}
+                                            onClick={() => updateQuantity(item.id, 1, item.selectedBatchId)}
                                             className="h-7 w-7 flex items-center justify-center rounded-lg hover:bg-white text-gray-500 hover:text-emerald-500 hover:shadow-sm transition-all"
                                         >
                                             <Plus className="h-3 w-3" />
@@ -544,6 +582,86 @@ export default function Sales() {
                                 >
                                     Nueva Venta
                                 </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* MODAL DE SELECCIÓN DE LOTE */}
+            {isBatchModalOpen && currentProductForBatch && (
+                <div className="fixed inset-0 z-[65] overflow-y-auto">
+                    <div className="flex min-h-screen items-center justify-center p-4">
+                        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm" onClick={() => setIsBatchModalOpen(false)} />
+                        <div className="relative bg-white rounded-[2.5rem] shadow-2xl w-full max-w-lg overflow-hidden border border-white/20">
+                            <div className="p-8">
+                                <div className="flex justify-between items-center mb-6">
+                                    <div className="flex items-center gap-4">
+                                        <div className="p-3 bg-indigo-50 text-indigo-600 rounded-2xl">
+                                            <Package className="h-6 w-6" />
+                                        </div>
+                                        <div>
+                                            <h3 className="text-xl font-black text-gray-900 uppercase tracking-tight line-clamp-1">{currentProductForBatch.name}</h3>
+                                            <p className="text-[10px] font-black text-indigo-400 uppercase tracking-[0.2em]">Selecciona un lote físico</p>
+                                        </div>
+                                    </div>
+                                    <button onClick={() => setIsBatchModalOpen(false)} className="p-2 hover:bg-gray-50 rounded-xl transition-colors">
+                                        <X className="h-6 w-6 text-gray-300" />
+                                    </button>
+                                </div>
+
+                                <div className="space-y-3 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
+                                    {currentProductForBatch.batches?.filter(b => b.current_quantity > 0).length === 0 ? (
+                                        <div className="p-10 text-center text-gray-400 italic">
+                                            No hay lotes con stock disponible para este producto.
+                                        </div>
+                                    ) : (
+                                        currentProductForBatch.batches?.filter(b => b.current_quantity > 0).map((batch) => {
+                                            const expDate = new Date(batch.expiration_date);
+                                            const isExpiringSoon = expDate.getTime() - new Date().getTime() < 30 * 24 * 60 * 60 * 1000;
+                                            
+                                            return (
+                                                <button
+                                                    key={batch.id}
+                                                    onClick={() => addToCart(currentProductForBatch, batch)}
+                                                    className="w-full flex items-center justify-between p-5 rounded-3xl border border-gray-100 hover:border-indigo-500 hover:bg-indigo-50/30 transition-all text-left group/batch"
+                                                >
+                                                    <div className="flex flex-col">
+                                                        <span className="text-sm font-black text-gray-900 uppercase">Lote: {batch.batch_number}</span>
+                                                        <div className="flex items-center gap-2 mt-1">
+                                                            <span className={clsx(
+                                                                "text-[10px] font-bold uppercase tracking-tight",
+                                                                isExpiringSoon ? "text-red-500" : "text-gray-400"
+                                                            )}>
+                                                                Vence: {new Date(batch.expiration_date).toLocaleDateString()}
+                                                            </span>
+                                                            {isExpiringSoon && (
+                                                                <span className="px-1.5 py-0.5 bg-red-100 text-red-600 rounded text-[8px] font-black uppercase tracking-tighter animate-pulse">
+                                                                    Casi Vencido
+                                                                </span>
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                    <div className="text-right">
+                                                        <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest block leading-none mb-1">Stock Lote</span>
+                                                        <span className="text-xl font-black text-gray-900 tracking-tighter group-hover/batch:text-indigo-600 transition-colors">
+                                                            {batch.current_quantity}
+                                                        </span>
+                                                    </div>
+                                                </button>
+                                            );
+                                        })
+                                    )}
+                                </div>
+                                
+                                <div className="mt-8 pt-6 border-t border-gray-50">
+                                    <button 
+                                        onClick={() => setIsBatchModalOpen(false)}
+                                        className="w-full h-14 bg-gray-50 hover:bg-gray-100 text-gray-400 rounded-2xl font-black uppercase tracking-widest text-[10px] transition-all"
+                                    >
+                                        Cancelar
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     </div>
