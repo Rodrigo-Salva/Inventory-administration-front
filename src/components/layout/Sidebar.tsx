@@ -1,6 +1,6 @@
 import { NavLink } from 'react-router-dom'
 import { LayoutDashboard, Package,    FolderTree, Building2, TrendingUp, ShoppingCart, 
-    History, Users, Settings, LogOut, Truck, Shield, Receipt
+    History, Users, Settings, LogOut, Truck, Shield, Receipt, FileText
 } from 'lucide-react'
 import { useAuthStore } from '@/store/authStore'
 import { usePermissions } from '@/hooks/usePermissions'
@@ -31,6 +31,8 @@ const navigation = [
     {
         title: 'Ventas',
         items: [
+            { name: 'Nueva Cotización', href: '/quotes/new', icon: FileText, permission: 'quotes:create' },
+            { name: 'Cotizaciones', href: '/quotes', icon: FileText, permission: 'quotes:view' },
             { name: 'Clientes', href: '/customers', icon: Users, permission: 'customers:view' },
             { name: 'Ventas (POS)', href: '/sales', icon: ShoppingCart, permission: 'sales:create' },
             { name: 'Historial Ventas', href: '/sales-history', icon: History, permission: 'sales:view' },
