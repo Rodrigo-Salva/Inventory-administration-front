@@ -17,6 +17,7 @@ import ConfirmationModal from "@/components/common/ConfirmationModal";
 import Pagination from "@/components/common/Pagination";
 import DateRangePicker from "@/components/common/DateRangePicker";
 import { usePermissions } from "@/hooks/usePermissions";
+import BatchManagerModal from "@/components/BatchManagerModal";
 
 export default function Products() {
   const navigate = useNavigate();
@@ -41,6 +42,8 @@ export default function Products() {
   const [isPrintModalOpen, setIsPrintModalOpen] = useState(false)
   const [printQuantity, setPrintQuantity] = useState(12)
   const [productToPrint, setProductToPrint] = useState<Product | null>(null)
+  const [isBatchManagerModalOpen, setIsBatchManagerModalOpen] = useState(false);
+  const [productForBatchManagement, setProductForBatchManagement] = useState<Product | null>(null);
   const [formData, setFormData] = useState({
     name: "",
     sku: "",
@@ -611,6 +614,18 @@ export default function Products() {
                               >
                                 <Eye className="h-5 w-5" />
                               </button>
+                              {hasPermission('batches:view') && (
+                                <button
+                                  onClick={() => {
+                                    setProductForBatchManagement(product);
+                                    setIsBatchManagerModalOpen(true);
+                                  }}
+                                  className="p-2 text-primary-600 hover:bg-primary-50 rounded-lg transition-colors"
+                                  title="Gestionar Lotes"
+                                >
+                                  <Layers className="h-5 w-5" />
+                                </button>
+                              )}
                           <button
                             onClick={() => handlePrintLabels(product)}
                             className="p-2 text-teal-600 hover:bg-teal-50 rounded-lg transition-colors"
@@ -756,6 +771,18 @@ export default function Products() {
                           <Trash2 className="h-5 w-5" />
                         </button>
                       )}
+                      {hasPermission('batches:view') && (
+                        <button
+                          onClick={() => {
+                            setProductForBatchManagement(product);
+                            setIsBatchManagerModalOpen(true);
+                          }}
+                          className="p-2.5 text-primary-600 bg-primary-50 rounded-xl"
+                          title="Lotes"
+                        >
+                          <Layers className="h-5 w-5" />
+                        </button>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -780,6 +807,19 @@ export default function Products() {
         message={`¿Estás seguro de que deseas eliminar el producto "${productToDelete?.name}"? Esta acción será permanente.`}
         type="danger"
       />
+
+      {/* MODAL DE GESTIÓN DE LOTES */}
+      {isBatchManagerModalOpen && productForBatchManagement && (
+        <BatchManagerModal 
+          product={productForBatchManagement}
+          onClose={() => {
+            setIsBatchManagerModalOpen(false);
+            setProductForBatchManagement(null);
+            queryClient.invalidateQueries({ queryKey: ["products"] });
+          }}
+        />
+      )}
+
       {isModalOpen && (
         <div className="fixed inset-0 z-50 flex flex-col items-center justify-center p-4 text-center sm:p-0">
           {/* Backdrop */}

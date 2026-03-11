@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import api from '@/api/client'
 import toast from 'react-hot-toast'
-import { Shield, Lock, Plus, X, Trash2, CheckSquare, Square, Edit, LayoutDashboard, Package, Layers, Truck, ClipboardList, ShoppingCart, History, Users as UsersIcon, Settings as SettingsIcon, BarChart3, Contact, ShoppingBag, Receipt, BrainCircuit, Store } from 'lucide-react'
+import { Shield, Lock, Plus, X, Trash2, CheckSquare, Square, Edit, LayoutDashboard, Package, Layers, Truck, ClipboardList, ShoppingCart, History, Users as UsersIcon, Settings as SettingsIcon, BarChart3, Contact, ShoppingBag, Receipt, BrainCircuit, Store, FileText } from 'lucide-react'
 import type { Role, Permission } from '@/types'
 import clsx from 'clsx'
 import { usePermissions } from '@/hooks/usePermissions'
@@ -154,6 +154,7 @@ export default function Roles() {
             case 'customers': return { icon: <Contact className="h-5 w-5" />, name: 'Clientes', color: 'text-teal-600', bg: 'bg-teal-50', border: 'border-teal-100', shadow: 'shadow-teal-50' };
             case 'purchases': return { icon: <ShoppingBag className="h-5 w-5" />, name: 'Compras', color: 'text-cyan-700', bg: 'bg-cyan-50', border: 'border-cyan-100', shadow: 'shadow-cyan-100' };
             case 'expenses': return { icon: <Receipt className="h-5 w-5" />, name: 'Gastos', color: 'text-red-600', bg: 'bg-red-50', border: 'border-red-100', shadow: 'shadow-red-50' };
+            case 'quotes': return { icon: <FileText className="h-5 w-5" />, name: 'Cotizaciones', color: 'text-blue-600', bg: 'bg-blue-50', border: 'border-blue-100', shadow: 'shadow-blue-50' };
             case 'ai': return { icon: <BrainCircuit className="h-5 w-5" />, name: 'Inteligencia IA', color: 'text-violet-600', bg: 'bg-violet-50', border: 'border-violet-100', shadow: 'shadow-violet-50' };
             case 'branches': return { icon: <Store className="h-5 w-5" />, name: 'Sucursales', color: 'text-indigo-600', bg: 'bg-indigo-50', border: 'border-indigo-100', shadow: 'shadow-indigo-50' };
             default: return { icon: <Shield className="h-5 w-5" />, name: module, color: 'text-gray-600', bg: 'bg-white', border: 'border-gray-100', shadow: 'shadow-gray-50' };

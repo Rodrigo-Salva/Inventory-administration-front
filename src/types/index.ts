@@ -15,6 +15,20 @@ export interface Product {
   max_stock?: number;
   barcode?: string;
   is_active: boolean;
+  batches?: ProductBatch[];
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ProductBatch {
+  id: number;
+  product_id: number;
+  tenant_id: number;
+  batch_number: string;
+  expiration_date: string;
+  initial_quantity: number;
+  current_quantity: number;
+  is_active: boolean;
   created_at: string;
   updated_at: string;
 }
@@ -146,6 +160,8 @@ export interface SaleItem {
   sale_id: number;
   product_id: number;
   product?: Product;
+  batch_id?: number;
+  batch_number?: string;
   quantity: number;
   unit_price: number;
   subtotal: number;
@@ -217,5 +233,8 @@ export interface PaginatedResponse<T> {
     page: number;
     size: number;
     pages: number;
+    total_items?: number;
+    total_pages?: number;
+    page_size?: number;
   };
 }
