@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom'
 import api from '@/api/client'
 import toast from 'react-hot-toast'
 import { 
-    Package, Plus, Calendar, 
+    Package, Plus, 
     CheckCircle2, Clock, XCircle, 
     Truck, Eye, FileDown, DollarSign, CheckCircle
 } from 'lucide-react'
@@ -77,6 +77,14 @@ export default function Purchases() {
         }
     }
 
+    const { data: stats } = useQuery({
+        queryKey: ['purchases-stats'],
+        queryFn: async () => {
+            const response = await api.get('/api/v1/purchases/stats')
+            return response.data
+        }
+    })
+
     if (!hasPermission('purchases:view')) {
         return (
             <div className="flex flex-col items-center justify-center min-h-[400px] text-center p-8 bg-white rounded-3xl border border-gray-100">
@@ -117,6 +125,54 @@ export default function Purchases() {
                 </div>
             </div>
 
+            {/* Stats Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm">
+                    <div className="flex items-center gap-4">
+                        <div className="p-3 bg-primary-50 text-primary-600 rounded-2xl">
+                            <Truck className="h-6 w-6" />
+                        </div>
+                        <div>
+                            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Total Compras</p>
+                            <p className="text-2xl font-black text-gray-900">{stats?.total_count || 0}</p>
+                        </div>
+                    </div>
+                </div>
+                <div className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm">
+                    <div className="flex items-center gap-4">
+                        <div className="p-3 bg-emerald-50 text-emerald-600 rounded-2xl">
+                            <DollarSign className="h-6 w-6" />
+                        </div>
+                        <div>
+                            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Monto Recibido</p>
+                            <p className="text-2xl font-black text-gray-900">${(stats?.received_amount || 0).toLocaleString()}</p>
+                        </div>
+                    </div>
+                </div>
+                <div className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm">
+                    <div className="flex items-center gap-4">
+                        <div className="p-3 bg-amber-50 text-amber-600 rounded-2xl">
+                            <Clock className="h-6 w-6" />
+                        </div>
+                        <div>
+                            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Pendientes</p>
+                            <p className="text-2xl font-black text-gray-900">{stats?.draft_count || 0}</p>
+                        </div>
+                    </div>
+                </div>
+                <div className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm">
+                    <div className="flex items-center gap-4">
+                        <div className="p-3 bg-green-50 text-green-600 rounded-2xl">
+                            <CheckCircle className="h-6 w-6" />
+                        </div>
+                        <div>
+                            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Completadas</p>
+                            <p className="text-2xl font-black text-gray-900">{stats?.received_count || 0}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             {isLoading ? (
                 <div className="text-center py-24">
                     <div className="inline-block h-12 w-12 animate-spin rounded-full border-4 border-solid border-primary-600 border-r-transparent"></div>
@@ -131,84 +187,104 @@ export default function Purchases() {
                     </button>
                 </div>
             ) : (
-                <div className="grid grid-cols-1 gap-4">
-                    {data?.items.map((purchase) => {
-                        const status = statusMap[purchase.status as keyof typeof statusMap]
-                        return (
-                            <div key={purchase.id} className="bg-white p-6 rounded-[2rem] border border-gray-100 hover:border-primary-100 hover:shadow-2xl hover:shadow-gray-200/50 transition-all group">
-                                <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-                                    <div className="flex items-center gap-5">
-                                        <div className={clsx("h-14 w-14 rounded-2xl flex items-center justify-center border", status.color)}>
-                                            <status.icon className="h-7 w-7" />
-                                        </div>
-                                        <div>
-                                            <div className="flex items-center gap-3">
-                                                <h3 className="text-lg font-black text-gray-900 leading-tight">Compra #{purchase.id}</h3>
+                <div className="bg-white rounded-[2rem] border border-gray-100 overflow-hidden shadow-sm">
+                    <table className="min-w-full divide-y divide-gray-100">
+                        <thead className="bg-gray-50/50">
+                            <tr>
+                                <th className="px-6 py-4 text-left text-[10px] font-black text-gray-400 uppercase tracking-widest">ID / Referencia</th>
+                                <th className="px-6 py-4 text-left text-[10px] font-black text-gray-400 uppercase tracking-widest">Proveedor</th>
+                                <th className="px-6 py-4 text-left text-[10px] font-black text-gray-400 uppercase tracking-widest">Fecha</th>
+                                <th className="px-6 py-4 text-left text-[10px] font-black text-gray-400 uppercase tracking-widest">Total</th>
+                                <th className="px-6 py-4 text-left text-[10px] font-black text-gray-400 uppercase tracking-widest">Estado</th>
+                                <th className="px-6 py-4 text-left text-[10px] font-black text-gray-400 uppercase tracking-widest">Pago</th>
+                                <th className="px-6 py-4 text-right text-[10px] font-black text-gray-400 uppercase tracking-widest">Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody className="divide-y divide-gray-50 bg-white">
+                            {data?.items.map((purchase) => {
+                                const status = statusMap[purchase.status as keyof typeof statusMap]
+                                return (
+                                    <tr key={purchase.id} className="hover:bg-gray-50/50 transition-colors group">
+                                        <td className="px-6 py-4 whitespace-nowrap">
+                                            <div className="flex flex-col">
+                                                <span className="text-sm font-black text-gray-900">#{purchase.id}</span>
                                                 {purchase.reference_number && (
-                                                    <span className="px-2 py-0.5 bg-white text-[10px] font-mono font-black text-gray-400 rounded-md uppercase tracking-tighter">REF: {purchase.reference_number}</span>
+                                                    <span className="text-[10px] font-mono text-gray-400 uppercase">{purchase.reference_number}</span>
                                                 )}
                                             </div>
-                                            <div className="flex items-center gap-4 mt-1 text-gray-500 text-xs font-bold uppercase tracking-widest">
-                                                <span className="flex items-center gap-1.5"><Truck className="h-3.5 w-3.5" /> {(purchase as any).supplier_name || purchase.supplier?.name}</span>
-                                                <span className="flex items-center gap-1.5"><Calendar className="h-3.5 w-3.5" /> {new Date(purchase.created_at).toLocaleDateString()}</span>
+                                        </td>
+                                        <td className="px-6 py-4 whitespace-nowrap">
+                                            <div className="flex items-center gap-2">
+                                                <div className="h-8 w-8 rounded-lg bg-gray-50 flex items-center justify-center">
+                                                    <Truck className="h-4 w-4 text-gray-400" />
+                                                </div>
+                                                <span className="text-sm font-bold text-gray-700">{(purchase as any).supplier_name || purchase.supplier?.name}</span>
                                             </div>
-                                        </div>
-                                    </div>
-
-                                    <div className="flex items-center justify-between md:justify-end gap-8">
-                                        <div className="flex flex-col items-end gap-2">
-                                            <div className="text-right">
-                                                <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest leading-none mb-1">Total Compra</p>
-                                                <p className="text-2xl font-black text-gray-900 tracking-tighter">${Number(purchase.total_amount).toLocaleString()}</p>
-                                            </div>
-                                            
+                                        </td>
+                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 font-medium">
+                                            {new Date(purchase.created_at).toLocaleDateString()}
+                                        </td>
+                                        <td className="px-6 py-4 whitespace-nowrap">
+                                            <span className="text-sm font-black text-gray-900">${Number(purchase.total_amount).toLocaleString()}</span>
+                                        </td>
+                                        <td className="px-6 py-4 whitespace-nowrap">
+                                            <span className={clsx(
+                                                "inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider",
+                                                status.color
+                                            )}>
+                                                <status.icon className="h-3 w-3" />
+                                                {status.label}
+                                            </span>
+                                        </td>
+                                        <td className="px-6 py-4 whitespace-nowrap">
                                             {(purchase as any).payment_status && (
                                                 <div className={clsx(
-                                                    "flex items-center gap-1.5 px-3 py-1 rounded-lg border text-[10px] font-black uppercase tracking-tighter",
+                                                    "inline-flex items-center gap-1.5 px-2 py-0.5 rounded-lg border text-[10px] font-black uppercase tracking-tighter",
                                                     paymentStatusMap[(purchase as any).payment_status as keyof typeof paymentStatusMap]?.color || "bg-white text-gray-500 border-gray-100"
                                                 )}>
                                                     <span className={clsx(
-                                                        "h-2 w-2 rounded-full",
+                                                        "h-1.5 w-1.5 rounded-full",
                                                         paymentStatusMap[(purchase as any).payment_status as keyof typeof paymentStatusMap]?.dot || "bg-gray-300"
                                                     )} />
                                                     {paymentStatusMap[(purchase as any).payment_status as keyof typeof paymentStatusMap]?.label || (purchase as any).payment_status}
                                                 </div>
                                             )}
-                                        </div>
-
-                                        <div className="flex items-center gap-2">
-                                            {purchase.status === 'draft' && hasPermission('purchases:receive') && (
+                                        </td>
+                                        <td className="px-6 py-4 whitespace-nowrap text-right">
+                                            <div className="flex items-center justify-end gap-2">
+                                                {purchase.status === 'draft' && hasPermission('purchases:receive') && (
+                                                    <button 
+                                                        onClick={() => receiveMutation.mutate(purchase.id)}
+                                                        disabled={receiveMutation.isPending}
+                                                        className="h-8 px-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-[10px] font-black uppercase tracking-widest transition-all shadow-sm active:scale-95"
+                                                    >
+                                                        {receiveMutation.isPending ? '...' : 'Recibir'}
+                                                    </button>
+                                                )}
                                                 <button 
-                                                    onClick={() => receiveMutation.mutate(purchase.id)}
-                                                    disabled={receiveMutation.isPending}
-                                                    className="btn bg-emerald-600 hover:bg-emerald-500 text-white h-11 px-6 rounded-xl text-[10px] font-black uppercase tracking-widest shadow-lg shadow-emerald-100"
+                                                    onClick={() => handleExportPDF(purchase.id)}
+                                                    className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-xl transition-all"
+                                                    title="Descargar PDF"
                                                 >
-                                                    {receiveMutation.isPending ? 'Recibiendo...' : 'Recibir Stock'}
+                                                    <FileDown className="h-5 w-5" />
                                                 </button>
-                                            )}
-                                            <button 
-                                                onClick={() => handleExportPDF(purchase.id)}
-                                                className="p-3 bg-indigo-50 text-indigo-600 hover:text-indigo-700 hover:bg-indigo-100 rounded-xl transition-all border border-indigo-100"
-                                                title="Descargar PDF"
-                                            >
-                                                <FileDown className="h-5 w-5" />
-                                            </button>
-                                             <button 
-                                                 onClick={() => {
-                                                     setSelectedPurchase(purchase)
-                                                     setIsDetailModalOpen(true)
-                                                 }}
-                                                 className="p-3 bg-white text-gray-400 hover:text-primary-600 hover:bg-primary-50 rounded-xl transition-all border border-transparent hover:border-primary-100"
-                                                 title="Ver Detalles"
-                                             >
-                                                 <Eye className="h-5 w-5" />
-                                             </button>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        )
-                    })}
+                                                <button 
+                                                    onClick={() => {
+                                                        setSelectedPurchase(purchase)
+                                                        setIsDetailModalOpen(true)
+                                                    }}
+                                                    className="p-2 text-slate-400 hover:text-primary-600 hover:bg-primary-50 rounded-xl transition-all"
+                                                    title="Ver Detalles"
+                                                >
+                                                    <Eye className="h-5 w-5" />
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                )
+                            })}
+                        </tbody>
+                    </table>
                 </div>
             )}
 

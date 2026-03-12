@@ -18,6 +18,7 @@ import Pagination from "@/components/common/Pagination";
 import DateRangePicker from "@/components/common/DateRangePicker";
 import { usePermissions } from "@/hooks/usePermissions";
 import BatchManagerModal from "@/components/BatchManagerModal";
+import QuickMoveModal from "@/components/products/QuickMoveModal";
 
 export default function Products() {
   const navigate = useNavigate();
@@ -59,13 +60,6 @@ export default function Products() {
     is_active: true,
     branch_id: "",
   });
-  const [quickMoveData, setQuickMoveData] = useState({
-    quantity: "",
-    reference: "",
-    notes: "",
-    branch_id: "",
-  });
-
   // Modal de confirmación de eliminación
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [productToDelete, setProductToDelete] = useState<{
@@ -130,15 +124,26 @@ export default function Products() {
   });
 
   // 3. Cargar Proveedores para el selector
-  const { data: suppliers } = useQuery<PaginatedResponse<Supplier>>({
-    queryKey: ["suppliers-all"],
+  const { data: suppliers } = useQuery<Supplier[]>({
+    queryKey: ["suppliers"],
     queryFn: async () => {
-      const response = await api.get("/api/v1/suppliers/?size=100");
-      return response.data;
+      const response = await api.get("/api/v1/suppliers/");
+      // Si la respuesta es un array, devolverlo directamente, si es paginado devolver .items
+      return Array.isArray(response.data) ? response.data : response.data.items || [];
     },
   });
 
-  // 3.5 Cargar Sucursales para el selector de stock
+  // Cargar todas las sucursales
+  const { data: allBranches } = useQuery<Branch[]>({
+    queryKey: ["branches"],
+    queryFn: async () => {
+      const response = await branchApi.getAll();
+      const data = response as any;
+      return Array.isArray(data) ? data : data.items || [];
+    },
+  });
+
+  // 3.5 Cargar Sucursales activas para el selector de stock
   const { data: branches } = useQuery<Branch[]>({
     queryKey: ["branches-active"],
     queryFn: async () => {
@@ -147,7 +152,7 @@ export default function Products() {
     },
   });
 
-  // 4. Cargar Historial de un Producto
+  // 4. Cargar Historial de un Producto (Kardex)
   const { data: movementsData, isLoading: isLoadingMovements } = useQuery({
     queryKey: ["product-movements", selectedProduct?.id],
     queryFn: async () => {
@@ -192,26 +197,6 @@ export default function Products() {
     onError: () => toast.error("Error al eliminar producto"),
   });
 
-  const quickMoveMutation = useMutation({
-    mutationFn: (data: any) => {
-      const endpoint =
-        quickMoveType === "entry"
-          ? "/api/v1/inventory/add-stock"
-          : "/api/v1/inventory/remove-stock";
-      return api.post(endpoint, data);
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["products"] });
-      toast.success(
-        quickMoveType === "entry" ? "Entrada registrada" : "Salida registrada",
-      );
-      setIsQuickMoveModalOpen(false);
-      setQuickMoveData({ quantity: "", reference: "", notes: "", branch_id: "" });
-    },
-    onError: (err: any) =>
-      toast.error(err.response?.data?.detail || "Error en movimiento"),
-  });
-
   const bulkImportMutation = useMutation({
     mutationFn: (data: any) => api.post("/api/v1/products/bulk", data),
     onSuccess: (res) => {
@@ -246,7 +231,7 @@ export default function Products() {
         min_stock: product.min_stock.toString(),
         max_stock: product.max_stock?.toString() || "",
         is_active: product.is_active,
-        branch_id: "", // Cuando editamos un producto TODO el stock se maneja en Quick Moves o Inventory Ajustes. 
+        branch_id: "",
       });
     } else {
       setEditingProduct(null);
@@ -272,18 +257,6 @@ export default function Products() {
   const closeModal = () => {
     setIsModalOpen(false);
     setEditingProduct(null);
-  };
-
-  const handleQuickMoveSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!selectedProduct) return;
-    quickMoveMutation.mutate({
-      product_id: selectedProduct.id,
-      quantity: parseInt(quickMoveData.quantity),
-      reference: quickMoveData.reference,
-      notes: quickMoveData.notes,
-      branch_id: parseInt(quickMoveData.branch_id) || branches?.[0]?.id || 0,
-    });
   };
 
   const handleImportCSV = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -338,7 +311,7 @@ export default function Products() {
       ...formData,
       category_id: formData.category_id ? parseInt(formData.category_id) : null,
       supplier_id: formData.supplier_id ? parseInt(formData.supplier_id) : null,
-      branch_id: formData.branch_id ? parseInt(formData.branch_id) : undefined, // Opcional para editar
+      branch_id: formData.branch_id ? parseInt(formData.branch_id) : undefined,
       price: parseFloat(formData.price),
       cost: formData.cost ? parseFloat(formData.cost) : null,
       stock: parseInt(formData.stock),
@@ -351,6 +324,12 @@ export default function Products() {
     } else {
       createMutation.mutate(payload);
     }
+  };
+
+  const handleQuickMoveSubmit = () => {
+    queryClient.invalidateQueries({ queryKey: ["products"] });
+    setIsQuickMoveModalOpen(false);
+    setSelectedProduct(null);
   };
 
   const confirmDelete = () => {
@@ -562,19 +541,30 @@ export default function Products() {
                         </div>
                       </td>
                       <td className="px-6 py-5 whitespace-nowrap text-right text-sm font-medium">
-                        <div className="flex justify-end gap-2">
+                        <div className="flex justify-end gap-1 items-center">
+                          <button
+                            onClick={() => {
+                              setSelectedProduct(product);
+                              setIsDetailModalOpen(true);
+                            }}
+                            className="p-2 text-slate-400 hover:text-primary-600 hover:bg-primary-50 rounded-xl transition-all"
+                            title="Ver Detalle"
+                          >
+                            <Eye className="h-5 w-5" />
+                          </button>
+
                           {hasPermission('inventory:adjust') && (
-                            <>
+                            <div className="flex bg-gray-50/50 p-1 rounded-xl border border-gray-100">
                               <button
                                 onClick={() => {
                                   setSelectedProduct(product);
                                   setQuickMoveType("entry");
                                   setIsQuickMoveModalOpen(true);
                                 }}
-                                className="p-2 text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors"
-                                title="Entrada"
+                                className="p-1.5 text-emerald-600 hover:bg-white rounded-lg transition-all shadow-sm hover:shadow"
+                                title="Entrada rápida"
                               >
-                                <PlusCircle className="h-5 w-5" />
+                                <PlusCircle className="h-4 w-4" />
                               </button>
                               <button
                                 onClick={() => {
@@ -582,67 +572,53 @@ export default function Products() {
                                   setQuickMoveType("exit");
                                   setIsQuickMoveModalOpen(true);
                                 }}
-                                className="p-2 text-amber-600 hover:bg-amber-50 rounded-lg transition-colors"
-                                title="Salida"
+                                className="p-1.5 text-amber-600 hover:bg-white rounded-lg transition-all shadow-sm hover:shadow"
+                                title="Salida rápida"
                               >
-                                <MinusCircle className="h-5 w-5" />
+                                <MinusCircle className="h-4 w-4" />
                               </button>
-                            </>
+                            </div>
                           )}
-                          {hasPermission('products:edit') && (
-                            <button
-                              onClick={() => openModal(product)}
-                              className="p-2 text-primary-600 hover:bg-primary-50 rounded-lg transition-colors"
-                            >
-                              <Edit className="h-5 w-5" />
-                            </button>
-                          )}
-                            <button
-                                onClick={() => navigate(`/inventory/kardex/${product.id}`)}
-                                className="p-2 text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
-                                title="Ver Kardex (Historial)"
-                              >
-                                <History className="h-5 w-5" />
-                              </button>
-                              <button
-                                onClick={() => {
-                                  setSelectedProduct(product);
-                                  setIsDetailModalOpen(true);
-                                }}
-                                className="p-2 text-slate-600 hover:bg-slate-50 rounded-lg transition-colors"
-                                title="Ver Detalles"
-                              >
-                                <Eye className="h-5 w-5" />
-                              </button>
-                              {hasPermission('batches:view') && (
-                                <button
-                                  onClick={() => {
-                                    setProductForBatchManagement(product);
-                                    setIsBatchManagerModalOpen(true);
-                                  }}
-                                  className="p-2 text-primary-600 hover:bg-primary-50 rounded-lg transition-colors"
-                                  title="Gestionar Lotes"
-                                >
-                                  <Layers className="h-5 w-5" />
-                                </button>
-                              )}
+
                           <button
                             onClick={() => handlePrintLabels(product)}
-                            className="p-2 text-teal-600 hover:bg-teal-50 rounded-lg transition-colors"
+                            className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-xl transition-all"
                             title="Imprimir Etiquetas"
                           >
                             <Printer className="h-5 w-5" />
                           </button>
+
+                          {hasPermission('batches:view') && (
+                            <button
+                              onClick={() => {
+                                setProductForBatchManagement(product);
+                                setIsBatchManagerModalOpen(true);
+                              }}
+                              className="p-2 text-slate-400 hover:text-purple-600 hover:bg-purple-50 rounded-xl transition-all"
+                              title="Gestionar Lotes"
+                            >
+                              <Layers className="h-5 w-5" />
+                            </button>
+                          )}
+
+                          {hasPermission('products:edit') && (
+                            <button
+                              onClick={() => openModal(product)}
+                              className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition-all"
+                              title="Editar"
+                            >
+                              <Edit className="h-5 w-5" />
+                            </button>
+                          )}
+
                           {hasPermission('products:delete') && (
                             <button
                               onClick={() => {
-                                setProductToDelete({
-                                  id: product.id,
-                                  name: product.name,
-                                });
+                                setProductToDelete({ id: product.id, name: product.name });
                                 setIsDeleteModalOpen(true);
                               }}
-                              className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                              className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-xl transition-all"
+                              title="Eliminar"
                             >
                               <Trash2 className="h-5 w-5" />
                             </button>
@@ -703,22 +679,27 @@ export default function Products() {
                       </span>
                     </div>
 
-                    <div className="flex gap-1">
+                    <div className="flex flex-wrap gap-1.5">
+                      <button
+                        onClick={() => {
+                          setSelectedProduct(product);
+                          setIsDetailModalOpen(true);
+                        }}
+                        className="p-3 text-slate-400 bg-gray-50 rounded-xl transition-all border border-gray-100"
+                        title="Ver Detalles"
+                      >
+                        <Eye className="h-5 w-5" />
+                      </button>
+
                       {hasPermission('inventory:adjust') && (
-                        <>
+                        <div className="flex bg-gray-100/50 p-1 rounded-xl">
                           <button
                             onClick={() => {
                               setSelectedProduct(product);
                               setQuickMoveType("entry");
-                              setQuickMoveData({
-                                quantity: "",
-                                reference: "",
-                                notes: "",
-                                branch_id: branches?.[0]?.id?.toString() || "",
-                              });
                               setIsQuickMoveModalOpen(true);
                             }}
-                            className="p-2.5 text-emerald-600 bg-emerald-50 rounded-xl"
+                            className="p-2.5 text-emerald-600 bg-white rounded-lg shadow-sm"
                             title="Entrada"
                           >
                             <PlusCircle className="h-5 w-5" />
@@ -727,60 +708,45 @@ export default function Products() {
                             onClick={() => {
                               setSelectedProduct(product);
                               setQuickMoveType("exit");
-                              setQuickMoveData({
-                                quantity: "",
-                                reference: "",
-                                notes: "",
-                                branch_id: branches?.[0]?.id?.toString() || "",
-                              });
                               setIsQuickMoveModalOpen(true);
                             }}
-                            className="p-2.5 text-amber-600 bg-amber-50 rounded-xl"
+                            className="p-2.5 text-amber-600 bg-white rounded-lg shadow-sm"
                             title="Salida"
                           >
                             <MinusCircle className="h-5 w-5" />
                           </button>
-                        </>
+                        </div>
                       )}
-                      <button
-                        onClick={() => handlePrintLabels(product)}
-                        className="p-2.5 text-indigo-600 bg-indigo-50 rounded-xl"
-                        title="Etiquetas"
-                      >
+
+                      <button onClick={() => handlePrintLabels(product)} className="p-3 text-indigo-600 bg-indigo-50 rounded-xl shadow-sm">
                         <Printer className="h-5 w-5" />
                       </button>
-                      {hasPermission('products:edit') && (
-                        <button
-                          onClick={() => openModal(product)}
-                          className="p-2.5 text-primary-600 bg-primary-50 rounded-xl"
-                        >
-                          <Edit className="h-5 w-5" />
-                        </button>
-                      )}
-                      {hasPermission('products:delete') && (
-                        <button
-                          onClick={() => {
-                            setProductToDelete({
-                              id: product.id,
-                              name: product.name,
-                            });
-                            setIsDeleteModalOpen(true);
-                          }}
-                          className="p-2.5 text-red-600 bg-red-50 rounded-xl"
-                        >
-                          <Trash2 className="h-5 w-5" />
-                        </button>
-                      )}
+
                       {hasPermission('batches:view') && (
                         <button
                           onClick={() => {
                             setProductForBatchManagement(product);
                             setIsBatchManagerModalOpen(true);
                           }}
-                          className="p-2.5 text-primary-600 bg-primary-50 rounded-xl"
+                          className="p-3 text-purple-600 bg-purple-50 rounded-xl shadow-sm"
                           title="Lotes"
                         >
                           <Layers className="h-5 w-5" />
+                        </button>
+                      )}
+
+                      {hasPermission('products:edit') && (
+                        <button onClick={() => openModal(product)} className="p-3 text-blue-600 bg-blue-50 rounded-xl shadow-sm">
+                          <Edit className="h-5 w-5" />
+                        </button>
+                      )}
+
+                      {hasPermission('products:delete') && (
+                        <button onClick={() => {
+                            setProductToDelete({ id: product.id, name: product.name });
+                            setIsDeleteModalOpen(true);
+                        }} className="p-3 text-red-600 bg-red-50 rounded-xl shadow-sm">
+                          <Trash2 className="h-5 w-5" />
                         </button>
                       )}
                     </div>
@@ -1103,7 +1069,7 @@ export default function Products() {
                             }
                           >
                             <option value="">Sin Proveedor</option>
-                            {suppliers?.items.map((s) => (
+                            {suppliers?.map((s: any) => (
                               <option key={s.id} value={s.id}>
                                 {s.name}
                               </option>
@@ -1301,118 +1267,14 @@ export default function Products() {
         </div>
       )}
 
-      {/* Modal de Movimiento Rápido */}
       {isQuickMoveModalOpen && selectedProduct && (
-        <div className="fixed inset-0 z-[60] overflow-y-auto">
-          <div className="flex min-h-screen items-center justify-center p-4">
-            <div
-              className="fixed inset-0 bg-white bg-opacity-70 backdrop-blur-sm"
-              onClick={() => setIsQuickMoveModalOpen(false)}
-            />
-            <div className="relative transform overflow-hidden rounded-2xl bg-white shadow-2xl transition-all w-full max-w-md">
-              <div className="p-6">
-                <h3 className="text-lg font-bold text-gray-900 mb-4">
-                  {quickMoveType === "entry"
-                    ? "Entrada de Stock"
-                    : "Salida de Stock"}
-                </h3>
-                <div className="p-3 bg-white rounded-xl mb-4 flex items-center gap-3">
-                  <div className="p-2 bg-white rounded-lg shadow-sm">
-                    <Package className="h-5 w-5 text-primary-600" />
-                  </div>
-                  <div>
-                    <div className="text-xs text-gray-500 font-bold uppercase">
-                      {selectedProduct.sku}
-                    </div>
-                    <div className="text-sm font-bold text-gray-900">
-                      {selectedProduct.name}
-                    </div>
-                  </div>
-                </div>
-                <form onSubmit={handleQuickMoveSubmit} className="space-y-4">
-                  <div>
-                    <label className="block text-xs font-bold text-gray-500 uppercase mb-1">
-                      Sucursal de Destino/Origen *
-                    </label>
-                    <select
-                        required
-                        className="input"
-                        value={quickMoveData.branch_id}
-                        onChange={(e) => setQuickMoveData({ ...quickMoveData, branch_id: e.target.value })}
-                    >
-                        <option value="" disabled>Seleccione una sucursal</option>
-                        {branches?.map((b) => (
-                            <option key={b.id} value={b.id}>{b.name}</option>
-                        ))}
-                    </select>
-                  </div>
-                  <div>
-                    <label className="block text-xs font-bold text-gray-500 uppercase mb-1">
-                      Cantidad
-                    </label>
-                    <input
-                      type="number"
-                      required
-                      min="1"
-                      className="input"
-                      value={quickMoveData.quantity}
-                      onChange={(e) =>
-                        setQuickMoveData({
-                          ...quickMoveData,
-                          quantity: e.target.value,
-                        })
-                      }
-                      placeholder="0"
-                      autoFocus
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-xs font-bold text-gray-500 uppercase mb-1">
-                      Referencia / Folio
-                    </label>
-                    <input
-                      type="text"
-                      className="input"
-                      value={quickMoveData.reference}
-                      onChange={(e) =>
-                        setQuickMoveData({
-                          ...quickMoveData,
-                          reference: e.target.value,
-                        })
-                      }
-                      placeholder="Ej: Factura #123"
-                    />
-                  </div>
-                  <div className="flex gap-3 pt-2">
-                    <button
-                      type="button"
-                      onClick={() => setIsQuickMoveModalOpen(false)}
-                      className="btn btn-secondary flex-1"
-                    >
-                      Cancelar
-                    </button>
-                    <button
-                      type="submit"
-                      className={clsx(
-                        "btn flex-1 text-white font-bold",
-                        quickMoveType === "entry"
-                          ? "bg-green-600 hover:bg-green-700"
-                          : "bg-red-600 hover:bg-red-700",
-                      )}
-                      disabled={quickMoveMutation.isPending}
-                    >
-                      {quickMoveMutation.isPending
-                        ? "Procesando..."
-                        : quickMoveType === "entry"
-                          ? "Cargar Entrada"
-                          : "Registrar Salida"}
-                    </button>
-                  </div>
-                </form>
-              </div>
-            </div>
-          </div>
-        </div>
+        <QuickMoveModal
+          isOpen={isQuickMoveModalOpen}
+          onClose={() => setIsQuickMoveModalOpen(false)}
+          product={selectedProduct}
+          type={quickMoveType}
+          onSuccess={handleQuickMoveSubmit}
+        />
       )}
 
       {/* Modal de Importación CSV */}
@@ -1556,7 +1418,7 @@ export default function Products() {
                       onChange={(e) => setFilterSupplier(e.target.value)}
                     >
                       <option value="">Todos los proveedores</option>
-                      {suppliers?.items.map((sup) => (
+                      {suppliers?.map((sup: any) => (
                         <option key={sup.id} value={sup.id}>
                           {sup.name}
                         </option>
@@ -1770,7 +1632,6 @@ export default function Products() {
             title: "Precios y Costos",
             fields: [
               { label: "Precio de Venta", value: `$${Number(selectedProduct?.price || 0).toLocaleString()}` },
-              { label: "Costo Unitario", value: `$${Number(selectedProduct?.cost || 0).toLocaleString()}` },
               { label: "Margen Estimado", value: `${(((Number(selectedProduct?.price || 0) - Number(selectedProduct?.cost || 0)) / Number(selectedProduct?.price || 1)) * 100).toFixed(1)}%` },
             ]
           },
@@ -1792,20 +1653,18 @@ export default function Products() {
           }
         ]}
         footerActions={
-          <>
-            {hasPermission('products:edit') && (
-              <button 
-                onClick={() => {
-                  setIsDetailModalOpen(false);
-                  if (selectedProduct) openModal(selectedProduct);
-                }}
-                className="flex-[1.5] h-14 bg-indigo-600 text-white rounded-2xl flex items-center justify-center gap-3 font-black uppercase tracking-widest text-[10px] hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-100 active:scale-95"
-              >
-                <Edit className="h-5 w-5" />
-                Editar Producto
-              </button>
-            )}
-          </>
+          hasPermission('products:edit') ? (
+            <button 
+              onClick={() => {
+                setIsDetailModalOpen(false);
+                if (selectedProduct) openModal(selectedProduct);
+              }}
+              className="flex-1 min-w-[150px] h-14 bg-indigo-600 text-white rounded-2xl flex items-center justify-center gap-3 font-black uppercase tracking-widest text-[10px] hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-100 active:scale-95"
+            >
+              <Edit className="h-5 w-5" />
+              Editar Producto
+            </button>
+          ) : null
         }
       />
     </div>

@@ -24,6 +24,7 @@ import Expenses from './pages/Expenses'
 import AIInsights from './pages/AIInsights'
 import AuditLogs from './pages/AuditLogs'
 import { Branches } from './pages/Branches'
+import StockTransfers from './pages/StockTransfers'
 import Layout from './components/layout/Layout'
 
 function PrivateRoute({ children }: { children: React.ReactNode }) {
@@ -52,6 +53,7 @@ function App() {
                 <Route path="inventory" element={<Inventory />} />
                 <Route path="inventory/kardex/:id" element={<Kardex />} />
                 <Route path="inventory/adjustments" element={<Adjustments />} />
+                <Route path="inventory/transfers" element={<StockTransfers />} />
                 <Route path="profitability" element={<Profitability />} />
                 <Route path="ai-analysis" element={<AIInsights />} />
                 <Route path="expenses" element={<Expenses />} />

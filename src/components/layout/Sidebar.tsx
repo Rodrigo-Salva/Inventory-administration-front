@@ -1,6 +1,6 @@
-import { NavLink } from 'react-router-dom'
-import { LayoutDashboard, Package,    FolderTree, Building2, TrendingUp, ShoppingCart, 
-    History, Users, Settings, LogOut, Truck, Shield, Receipt, FileText
+import { NavLink, useLocation } from 'react-router-dom'
+import { LayoutDashboard, Package, FolderTree, Building2, TrendingUp, ShoppingCart, 
+    History, Users, Settings, LogOut, Truck, Shield, Receipt, FileText, ArrowRightLeft, ClipboardList
 } from 'lucide-react'
 import { useAuthStore } from '@/store/authStore'
 import { usePermissions } from '@/hooks/usePermissions'
@@ -17,32 +17,43 @@ const navigation = [
         ]
     },
     {
-        title: 'Inventario',
+        title: 'Catálogo',
         items: [
             { name: 'Productos', href: '/products', icon: Package, permission: 'products:view' },
             { name: 'Categorías', href: '/categories', icon: FolderTree, permission: 'categories:view' },
+        ]
+    },
+    {
+        title: 'Compras & Proveedores',
+        items: [
             { name: 'Proveedores', href: '/suppliers', icon: Building2, permission: 'suppliers:view' },
             { name: 'Compras', href: '/purchases', icon: Truck, permission: 'purchases:view' },
-            { name: 'Inventario', href: '/inventory', icon: History, permission: 'inventory:view' },
             { name: 'Gastos / Costos', href: '/expenses', icon: Receipt, permission: 'expenses:view' },
-            { name: 'Ajustes Stock', href: '/inventory/adjustments', icon: History, permission: 'adjustments:view' },
+        ]
+    },
+    {
+        title: 'Inventario',
+        items: [
+            { name: 'Existencias (Stock)', href: '/inventory?tab=stock', icon: Package, permission: 'inventory:view' },
+            { name: 'Kardex (Historial)', href: '/inventory?tab=movements', icon: History, permission: 'inventory:view' },
+            { name: 'Traslados', href: '/inventory/transfers', icon: ArrowRightLeft, permission: 'transfers:view' },
+            { name: 'Ajustes de Inventario', href: '/inventory/adjustments', icon: ClipboardList, permission: 'adjustments:view' },
         ]
     },
     {
         title: 'Ventas',
         items: [
-            { name: 'Nueva Cotización', href: '/quotes/new', icon: FileText, permission: 'quotes:create' },
-            { name: 'Cotizaciones', href: '/quotes', icon: FileText, permission: 'quotes:view' },
-            { name: 'Clientes', href: '/customers', icon: Users, permission: 'customers:view' },
             { name: 'Ventas (POS)', href: '/sales', icon: ShoppingCart, permission: 'sales:create' },
             { name: 'Historial Ventas', href: '/sales-history', icon: History, permission: 'sales:view' },
+            { name: 'Clientes', href: '/customers', icon: Users, permission: 'customers:view' },
+            { name: 'Nueva Cotización', href: '/quotes/new', icon: FileText, permission: 'quotes:create' },
+            { name: 'Cotizaciones', href: '/quotes', icon: FileText, permission: 'quotes:view' },
         ]
     },
     {
         title: 'Análisis',
         items: [
             { name: 'Rentabilidad', href: '/profitability', icon: TrendingUp, permission: 'reports:view' },
-            // { name: 'AI Demand Insights', href: '/ai-analysis', icon: Sparkles, permission: 'reports:view' },
         ]
     },
     {
@@ -51,7 +62,7 @@ const navigation = [
             { name: 'Sucursales', href: '/branches', icon: Building2, permission: 'branches:view' },
             { name: 'Usuarios', href: '/users', icon: Users, permission: 'users:view' },
             { name: 'Roles y Permisos', href: '/roles', icon: Shield, permission: 'roles:manage' },
-            { name: 'Logs Auditoría', href: '/audit-logs', icon: History, permission: 'settings:manage' },
+            { name: 'Logs Auditoría', href: '/audit-logs', icon: History, permission: 'settings:manage' },
             { name: 'Configuración', href: '/settings', icon: Settings, permission: 'settings:manage' },
         ]
     }
@@ -64,6 +75,7 @@ export interface SidebarProps {
 
 export default function Sidebar({ isCollapsed, isMobileOpen }: SidebarProps) {
     const logout = useAuthStore((state) => state.logout)
+    const location = useLocation()
     
     const { data: tenant } = useQuery<Tenant>({
         queryKey: ['tenant-me'],
@@ -114,14 +126,36 @@ export default function Sidebar({ isCollapsed, isMobileOpen }: SidebarProps) {
                                             <NavLink
                                                 to={item.href}
                                                 end={item.href === '/'}
-                                                className={({ isActive }) =>
-                                                    clsx(
-                                                        isActive
+                                                className={() => {
+                                                    const currentPath = location.pathname + location.search;
+                                                    const targetPath = item.href;
+                                                    
+                                                    // Lógica de activación estricta
+                                                    let isReallyActive = false;
+                                                    
+                                                    if (targetPath.includes('?')) {
+                                                        // Si tiene query params, match exacto
+                                                        isReallyActive = currentPath === targetPath;
+                                                    } else {
+                                                        // Si no tiene query params
+                                                        if (item.href === '/') {
+                                                            isReallyActive = location.pathname === '/';
+                                                        } else {
+                                                            // Para /quotes vs /quotes/new
+                                                            // Si hay un enlace más específico (como /quotes/new) que coincide
+                                                            // este enlace (/quotes) solo debe activarse si es match exacto
+                                                            // o si estamos en una sub-ruta que NO es otro enlace del menú
+                                                            isReallyActive = location.pathname === targetPath;
+                                                        }
+                                                    }
+
+                                                    return clsx(
+                                                        isReallyActive
                                                             ? 'bg-primary-600/10 text-primary-400 border-l-4 border-primary-600 rounded-none'
                                                             : 'text-slate-400 hover:text-white hover:bg-white/5',
                                                         'group flex items-center gap-x-3 p-3 text-sm leading-6 font-semibold transition-all overflow-hidden'
                                                     )
-                                                }
+                                                }}
                                                 title={isCollapsed ? item.name : ''}
                                             >
                                                 <item.icon className="h-5 w-5 shrink-0" />
