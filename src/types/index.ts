@@ -222,7 +222,49 @@ export interface Adjustment {
   created_at: string;
 }
 
+export interface StockTransferItem {
+    id: number;
+    transfer_id: number;
+    product_id: number;
+    product?: Product;
+    batch_id?: number;
+    quantity: number;
+}
+
+export type StockTransferStatus = 'pending' | 'completed' | 'cancelled';
+
+export interface StockTransfer {
+    id: number;
+    tenant_id: number;
+    from_branch_id: number;
+    from_branch?: Branch;
+    to_branch_id: number;
+    to_branch?: Branch;
+    user_id: number;
+    user?: User;
+    status: StockTransferStatus;
+    notes?: string;
+    reference?: string;
+    completed_at?: string;
+    cancelled_at?: string;
+    created_at: string;
+    updated_at: string;
+    items: StockTransferItem[];
+}
+
+export interface Branch {
+    id: number;
+    tenant_id: number;
+    name: string;
+    address?: string;
+    phone?: string;
+    is_active: boolean;
+    created_at: string;
+    updated_at: string;
+}
+
 export interface PaginatedResponse<T> {
+// ... existing lines ...
   items: T[];
   total: number;
   page: number;

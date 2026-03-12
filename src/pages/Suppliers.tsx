@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import api from '@/api/client'
 import toast from 'react-hot-toast'
-import { Building2, Mail, Phone, MapPin, Plus, Edit, Trash2, X, Globe, User, Package, FileDown, Filter, Eye, CheckCircle, XCircle } from 'lucide-react'
+import { Building2, Mail, Phone, MapPin, Plus, Edit, Trash2, X, Globe, FileDown, Filter, Eye, CheckCircle, XCircle } from 'lucide-react'
 import DetailModal from '@/components/common/DetailModal'
 import clsx from 'clsx'
 import type { Supplier, PaginatedResponse } from '@/types'
@@ -227,106 +227,108 @@ export default function Suppliers() {
         }
 
         return (
-            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-                {data.items.map((supplier) => (
-                    <div key={supplier.id} className="card group hover:border-primary-200 hover:shadow-xl transition-all border-none shadow-lg shadow-gray-200/50 flex flex-col">
-                        <div className="flex items-start justify-between p-1">
-                            <div className="flex items-center gap-4">
-                                <div className="h-12 w-12 flex-shrink-0 rounded-2xl bg-white flex items-center justify-center text-primary-500 group-hover:bg-primary-50 transition-colors border border-transparent group-hover:border-primary-100">
-                                    <Building2 className="h-6 w-6" />
-                                </div>
-                                <div>
-                                    <h3 className="text-lg font-black text-gray-900 leading-tight group-hover:text-primary-700 transition-colors line-clamp-1">{supplier.name}</h3>
-                                    <span className="text-[10px] font-mono font-black text-gray-400 uppercase tracking-widest">{supplier.code}</span>
-                                </div>
-                            </div>
-                            <span
-                                className={clsx(
-                                    "px-2.5 py-1 text-[10px] uppercase font-black tracking-widest rounded-md",
-                                    supplier.is_active ? 'bg-emerald-50 text-emerald-700' : 'bg-white text-gray-500'
-                                )}
-                            >
-                                {supplier.is_active ? 'Activo' : 'Inactivo'}
-                            </span>
-                        </div>
-
-                        <div className="mt-6 space-y-3.5 flex-1">
-                            {supplier.contact_name && (
-                                <div className="flex items-center gap-3 text-sm group/item">
-                                    <div className="h-7 w-7 rounded-lg bg-white flex items-center justify-center text-gray-400 group-hover/item:bg-primary-50 group-hover/item:text-primary-500 transition-colors">
-                                        <User className="h-3.5 w-3.5" />
+            <div className="bg-white rounded-[2rem] border border-gray-100 overflow-hidden shadow-sm shadow-gray-200/50">
+                <table className="min-w-full divide-y divide-gray-100">
+                    <thead className="bg-gray-50/50">
+                        <tr>
+                            <th className="px-6 py-4 text-left text-[10px] font-black text-gray-400 uppercase tracking-widest">Proveedor</th>
+                            <th className="px-6 py-4 text-left text-[10px] font-black text-gray-400 uppercase tracking-widest">Contacto Directo</th>
+                            <th className="px-6 py-4 text-left text-[10px] font-black text-gray-400 uppercase tracking-widest">Información</th>
+                            <th className="px-6 py-4 text-left text-[10px] font-black text-gray-400 uppercase tracking-widest">Ubicación</th>
+                            <th className="px-6 py-4 text-left text-[10px] font-black text-gray-400 uppercase tracking-widest">Estado</th>
+                            <th className="px-6 py-4 text-right text-[10px] font-black text-gray-400 uppercase tracking-widest">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-50 bg-white">
+                        {data.items.map((supplier) => (
+                            <tr key={supplier.id} className="hover:bg-gray-50/50 transition-colors group">
+                                <td className="px-6 py-4 whitespace-nowrap">
+                                    <div className="flex items-center gap-3">
+                                        <div className="h-10 w-10 rounded-xl bg-primary-50 text-primary-600 flex items-center justify-center border border-primary-100/50 shrink-0">
+                                            <Building2 className="h-5 w-5" />
+                                        </div>
+                                        <div className="flex flex-col">
+                                            <span className="text-sm font-black text-gray-900 line-clamp-1">{supplier.name}</span>
+                                            <span className="text-[10px] font-mono text-gray-400 uppercase font-black tracking-tighter">REF: {supplier.code}</span>
+                                        </div>
                                     </div>
-                                    <span className="font-bold text-gray-700">{supplier.contact_name}</span>
-                                </div>
-                            )}
-                            {supplier.email && (
-                                <div className="flex items-center gap-3 text-sm group/item">
-                                    <div className="h-7 w-7 rounded-lg bg-white flex items-center justify-center text-gray-400 group-hover/item:bg-primary-50 group-hover/item:text-primary-500 transition-colors">
-                                        <Mail className="h-3.5 w-3.5" />
+                                </td>
+                                <td className="px-6 py-4 whitespace-nowrap">
+                                    <div className="flex flex-col">
+                                        <span className="text-sm font-bold text-gray-700">{supplier.contact_name || 'N/A'}</span>
+                                        {supplier.payment_terms && (
+                                            <span className="text-[10px] font-black text-gray-400 uppercase tracking-tighter">Condición: {supplier.payment_terms}</span>
+                                        )}
                                     </div>
-                                    <a href={`mailto:${supplier.email}`} className="font-medium text-gray-500 hover:text-primary-600 transition-colors truncate">{supplier.email}</a>
-                                </div>
-                            )}
-                            {supplier.phone && (
-                                <div className="flex items-center gap-3 text-sm group/item">
-                                    <div className="h-7 w-7 rounded-lg bg-white flex items-center justify-center text-gray-400 group-hover/item:bg-primary-50 group-hover/item:text-primary-500 transition-colors">
-                                        <Phone className="h-3.5 w-3.5" />
+                                </td>
+                                <td className="px-6 py-4 whitespace-nowrap">
+                                    <div className="flex flex-col gap-0.5">
+                                        <div className="flex items-center gap-1.5 text-xs text-gray-500 font-medium">
+                                            <Mail className="h-3 w-3 text-gray-300" />
+                                            {supplier.email || 'Sin correo'}
+                                        </div>
+                                        <div className="flex items-center gap-1.5 text-xs text-gray-500 font-medium">
+                                            <Phone className="h-3 w-3 text-gray-300" />
+                                            {supplier.phone || supplier.mobile || 'Sin teléfono'}
+                                        </div>
                                     </div>
-                                    <span className="font-medium text-gray-500">{supplier.phone}</span>
-                                </div>
-                            )}
-                            {supplier.city && (
-                                <div className="flex items-center gap-3 text-sm group/item">
-                                    <div className="h-7 w-7 rounded-lg bg-white flex items-center justify-center text-gray-400 group-hover/item:bg-primary-50 group-hover/item:text-primary-500 transition-colors">
-                                        <MapPin className="h-3.5 w-3.5" />
+                                </td>
+                                <td className="px-6 py-4 whitespace-nowrap">
+                                    <div className="flex items-center gap-2">
+                                        <div className="h-8 w-8 rounded-lg bg-gray-50 flex items-center justify-center text-gray-400">
+                                            <MapPin className="h-4 w-4" />
+                                        </div>
+                                        <div className="flex flex-col">
+                                            <span className="text-xs font-bold text-gray-700">{supplier.city || 'Desconocida'}</span>
+                                            <span className="text-[10px] font-bold text-gray-400 uppercase tracking-tighter">{supplier.country}</span>
+                                        </div>
                                     </div>
-                                    <span className="font-medium text-gray-500 truncate">{supplier.city}, {supplier.country}</span>
-                                </div>
-                            )}
-                        </div>
-
-                        <div className="mt-8 pt-6 border-t border-gray-50 flex items-center justify-between">
-                            <div className="flex items-center gap-1.5 opacity-0 group-hover:opacity-100 transition-all transform translate-y-1 group-hover:translate-y-0 text-[11px] font-bold text-gray-400 uppercase tracking-tighter">
-                                {supplier.payment_terms && (
-                                    <>
-                                        <Package className="h-3 w-3" />
-                                        <span>{supplier.payment_terms}</span>
-                                    </>
-                                )}
-                            </div>
-                            <div className="flex items-center gap-1">
-                                <button 
-                                    onClick={() => {
-                                        setSelectedSupplier(supplier)
-                                        setIsDetailModalOpen(true)
-                                    }}
-                                    className="p-2.5 text-slate-600 hover:bg-slate-50 rounded-xl transition-all"
-                                    title="Ver Detalles"
-                                >
-                                    <Eye className="h-4.5 w-4.5" />
-                                </button>
-                                {hasPermission('suppliers:edit') && (
-                                    <button 
-                                        onClick={() => openModal(supplier)}
-                                        className="p-2.5 text-blue-600 hover:bg-blue-50 rounded-xl transition-all"
-                                        title="Editar"
-                                    >
-                                        <Edit className="h-4.5 w-4.5" />
-                                    </button>
-                                )}
-                                {hasPermission('suppliers:delete') && (
-                                    <button 
-                                        onClick={() => handleDeleteClick(supplier.id, supplier.name)}
-                                        className="p-2.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-xl transition-all"
-                                        title="Eliminar"
-                                    >
-                                        <Trash2 className="h-4.5 w-4.5" />
-                                    </button>
-                                )}
-                            </div>
-                        </div>
-                    </div>
-                ))}
+                                </td>
+                                <td className="px-6 py-4 whitespace-nowrap">
+                                    <span className={clsx(
+                                        "inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider",
+                                        supplier.is_active ? 'bg-emerald-50 text-emerald-700' : 'bg-gray-50 text-gray-400 border border-gray-100'
+                                    )}>
+                                        <div className={clsx("h-1.5 w-1.5 rounded-full", supplier.is_active ? 'bg-emerald-500' : 'bg-gray-300')} />
+                                        {supplier.is_active ? 'Activo' : 'Inactivo'}
+                                    </span>
+                                </td>
+                                <td className="px-6 py-4 whitespace-nowrap text-right">
+                                    <div className="flex items-center justify-end gap-1">
+                                        <button 
+                                            onClick={() => {
+                                                setSelectedSupplier(supplier)
+                                                setIsDetailModalOpen(true)
+                                            }}
+                                            className="p-2 text-slate-400 hover:text-primary-600 hover:bg-primary-50 rounded-xl transition-all"
+                                            title="Ver Detalles"
+                                        >
+                                            <Eye className="h-5 w-5" />
+                                        </button>
+                                        {hasPermission('suppliers:edit') && (
+                                            <button 
+                                                onClick={() => openModal(supplier)}
+                                                className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition-all"
+                                                title="Editar"
+                                            >
+                                                <Edit className="h-5 w-5" />
+                                            </button>
+                                        )}
+                                        {hasPermission('suppliers:delete') && (
+                                            <button 
+                                                onClick={() => handleDeleteClick(supplier.id, supplier.name)}
+                                                className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-xl transition-all"
+                                                title="Eliminar"
+                                            >
+                                                <Trash2 className="h-5 w-5" />
+                                            </button>
+                                        )}
+                                    </div>
+                                </td>
+                            </tr>
+                        ))}
+                    </tbody>
+                </table>
             </div>
         )
     }
