@@ -101,6 +101,14 @@ export default function Adjustments() {
     setAdjustmentType("OUT");
   };
 
+  const { data: stats } = useQuery<any>({
+    queryKey: ["adjustment-stats"],
+    queryFn: async () => {
+      const response = await api.get("/api/v1/adjustments/stats");
+      return response.data;
+    },
+  });
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedProduct || quantity <= 0 || !branchId) {
@@ -150,92 +158,134 @@ export default function Adjustments() {
           )}
         </div>
 
-        {/* Adjustments Table */}
-        <div className="card bg-white border border-gray-100/50 rounded-[3rem] shadow-sm p-10 flex flex-col overflow-hidden min-w-0">
-          <div className="overflow-x-auto -mx-2">
-            <table className="w-full text-left">
-              <thead>
-                <tr className="border-b border-gray-50 text-[10px] font-black text-gray-400 uppercase tracking-widest">
-                  <th className="pb-4 pt-2">TIPO</th>
-                  <th className="pb-4 pt-2">PRODUCTO</th>
-                  <th className="pb-4 pt-2">MOTIVO</th>
-                  <th className="pb-4 pt-2">CANTIDAD</th>
-                   <th className="pb-4 pt-2">FECHA</th>
-                   <th className="pb-4 pt-2">NOTAS</th>
-                   <th className="pb-4 pt-2 text-right">ACCIONES</th>
-                 </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-50">
-                {adjustments?.map((adj) => (
-                  <tr
-                    key={adj.id}
-                    className="group hover:bg-white/50 transition-all"
-                  >
-                    <td className="py-5">
-                      <div
-                        className={clsx(
-                          "h-10 w-10 rounded-xl flex items-center justify-center font-black text-[10px]",
-                          adj.adjustment_type === "IN"
-                            ? "bg-emerald-50 text-emerald-600"
-                            : "bg-rose-50 text-rose-600",
-                        )}
-                      >
-                        {adj.adjustment_type}
-                      </div>
-                    </td>
-                    <td className="py-5">
-                      <p className="text-sm font-black text-gray-900 truncate">
-                        ID: {adj.product_id}
-                      </p>
-                    </td>
-                    <td className="py-5">
-                      <span className="px-3 py-1 bg-white text-slate-600 rounded-lg text-[10px] font-black uppercase tracking-widest">
-                        {adj.reason}
-                      </span>
-                    </td>
-                    <td className="py-5">
-                      <span
-                        className={clsx(
-                          "text-sm font-black tracking-tighter",
-                          adj.adjustment_type === "IN"
-                            ? "text-emerald-600"
-                            : "text-rose-600",
-                        )}
-                      >
-                        {adj.adjustment_type === "IN" ? "+" : "-"}
-                        {adj.quantity}
-                      </span>
-                    </td>
-                    <td className="py-5 text-xs font-bold text-gray-500">
-                      {new Date(adj.created_at).toLocaleString()}
-                    </td>
-                     <td className="py-5 text-xs text-gray-400 max-w-xs truncate font-medium">
-                       {adj.notes || "-"}
-                     </td>
-                     <td className="py-5 text-right">
-                       <button
-                         onClick={() => {
-                           setSelectedAdjustment(adj);
-                           setIsDetailModalOpen(true);
-                         }}
-                         className="p-2 text-slate-400 hover:text-primary-600 hover:bg-primary-50 rounded-xl transition-all"
-                         title="Ver Detalles"
-                       >
-                         <Eye className="h-5 w-5" />
-                       </button>
-                     </td>
-                   </tr>
-                ))}
-              </tbody>
-            </table>
-            {(isLoading || adjustments?.length === 0) && (
-              <div className="py-20 text-center text-gray-300 font-bold uppercase text-[10px] tracking-[0.2em]">
-                {isLoading
-                  ? "Cargando historial..."
-                  : "Sin ajustes registrados"}
+        {/* Stats Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="p-2 bg-blue-50 text-blue-600 rounded-xl">
+                <History className="h-5 w-5" />
               </div>
-            )}
+              <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Total Ajustes</span>
+            </div>
+            <div className="text-2xl font-black text-gray-900">{stats?.total_count || 0}</div>
+            <div className="text-[10px] text-gray-400 font-bold mt-1 uppercase">Histórico General</div>
           </div>
+
+          <div className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="p-2 bg-emerald-50 text-emerald-600 rounded-xl">
+                <ArrowUpRight className="h-5 w-5" />
+              </div>
+              <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Entradas</span>
+            </div>
+            <div className="text-2xl font-black text-emerald-600">+{stats?.in_count || 0}</div>
+            <div className="text-[10px] text-gray-400 font-bold mt-1 uppercase">Correcciones Positivas</div>
+          </div>
+
+          <div className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="p-2 bg-rose-50 text-rose-600 rounded-xl">
+                <ArrowDownRight className="h-5 w-5" />
+              </div>
+              <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Salidas</span>
+            </div>
+            <div className="text-2xl font-black text-rose-600">-{stats?.out_count || 0}</div>
+            <div className="text-[10px] text-gray-400 font-bold mt-1 uppercase">Mermas y Daños</div>
+          </div>
+
+          <div className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="p-2 bg-amber-50 text-amber-600 rounded-xl">
+                <Package className="h-5 w-5" />
+              </div>
+              <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Principal Motivo</span>
+            </div>
+            <div className="text-sm font-black text-gray-900 truncate uppercase tracking-tight">{stats?.most_common_reason || 'N/A'}</div>
+            <div className="text-[10px] text-gray-400 font-bold mt-1 uppercase">Causa Recurrente</div>
+          </div>
+        </div>
+
+        <div className="bg-white rounded-[2rem] border border-gray-100 overflow-hidden shadow-sm shadow-gray-200/50">
+          <table className="min-w-full divide-y divide-gray-100">
+            <thead className="bg-gray-50/50">
+              <tr>
+                <th className="px-6 py-4 text-left text-[10px] font-black text-gray-400 uppercase tracking-widest">Tipo</th>
+                <th className="px-6 py-4 text-left text-[10px] font-black text-gray-400 uppercase tracking-widest">Producto</th>
+                <th className="px-6 py-4 text-left text-[10px] font-black text-gray-400 uppercase tracking-widest">Motivo</th>
+                <th className="px-6 py-4 text-left text-[10px] font-black text-gray-400 uppercase tracking-widest">Cantidad</th>
+                <th className="px-6 py-4 text-left text-[10px] font-black text-gray-400 uppercase tracking-widest">Fecha</th>
+                <th className="px-6 py-4 text-right text-[10px] font-black text-gray-400 uppercase tracking-widest">Acciones</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-50 bg-white">
+              {adjustments?.map((adj) => (
+                <tr key={adj.id} className="hover:bg-gray-50/50 transition-colors group">
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <span className={clsx(
+                      "inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider",
+                      adj.adjustment_type === "IN" ? "bg-emerald-50 text-emerald-700" : "bg-rose-50 text-rose-700"
+                    )}>
+                      <div className={clsx("h-1.5 w-1.5 rounded-full", adj.adjustment_type === "IN" ? "bg-emerald-500" : "bg-rose-500")} />
+                      {adj.adjustment_type === "IN" ? "Entrada" : "Salida"}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="flex items-center gap-3">
+                      <div className="h-10 w-10 rounded-xl bg-gray-50 text-gray-400 flex items-center justify-center border border-gray-100/50 shrink-0 group-hover:bg-primary-50 group-hover:text-primary-600 transition-colors">
+                        <Package className="h-5 w-5" />
+                      </div>
+                      <div className="flex flex-col">
+                        <span className="text-sm font-black text-gray-900 line-clamp-1">{adj.product_name || `Producto ID: ${adj.product_id}`}</span>
+                        <span className="text-[10px] font-mono text-gray-400 uppercase font-black tracking-tighter">ID: {adj.id}</span>
+                      </div>
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm font-bold text-gray-600">
+                    <span className="px-2.5 py-1 bg-gray-50 text-gray-500 rounded-lg text-[10px] font-black uppercase tracking-widest border border-gray-100 group-hover:bg-white group-hover:border-gray-200 transition-all">
+                      {adj.reason}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <span className={clsx(
+                      "text-sm font-black tracking-tighter",
+                      adj.adjustment_type === "IN" ? "text-emerald-600" : "text-rose-600"
+                    )}>
+                      {adj.adjustment_type === "IN" ? "+" : "-"}
+                      {adj.quantity}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="flex flex-col">
+                      <span className="text-xs font-bold text-gray-700">{new Date(adj.created_at).toLocaleDateString()}</span>
+                      <span className="text-[10px] font-bold text-gray-400 uppercase tracking-tighter">{new Date(adj.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-right">
+                    <div className="flex items-center justify-end gap-1">
+                      <button 
+                        onClick={() => {
+                          setSelectedAdjustment(adj)
+                          setIsDetailModalOpen(true)
+                        }}
+                        className="p-2 text-slate-400 hover:text-primary-600 hover:bg-primary-50 rounded-xl transition-all"
+                        title="Ver Detalles"
+                      >
+                        <Eye className="h-5 w-5" />
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          {(isLoading || adjustments?.length === 0) && (
+            <div className="py-20 text-center">
+              <History className="h-12 w-12 text-gray-200 mx-auto mb-3" />
+              <p className="text-gray-400 font-bold uppercase tracking-widest text-[10px]">
+                {isLoading ? "Cargando historial..." : "Sin ajustes registrados"}
+              </p>
+            </div>
+          )}
         </div>
 
         {/* Modal */}

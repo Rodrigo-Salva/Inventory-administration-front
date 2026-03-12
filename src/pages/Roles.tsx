@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import api from '@/api/client'
 import toast from 'react-hot-toast'
-import { Shield, Lock, Plus, X, Trash2, CheckSquare, Square, Edit, LayoutDashboard, Package, Layers, Truck, ClipboardList, ShoppingCart, History, Users as UsersIcon, Settings as SettingsIcon, BarChart3, Contact, ShoppingBag, Receipt, BrainCircuit, Store, FileText } from 'lucide-react'
+import { Shield, Lock, Plus, X, Trash2, CheckSquare, Square, Edit, LayoutDashboard, Package, Layers, Truck, ClipboardList, ShoppingCart, History, Users as UsersIcon, Settings as SettingsIcon, BarChart3, Contact, ShoppingBag, Receipt, BrainCircuit, Store, FileText, ShieldCheck, DollarSign } from 'lucide-react'
 import type { Role, Permission } from '@/types'
 import clsx from 'clsx'
 import { usePermissions } from '@/hooks/usePermissions'
@@ -144,7 +144,10 @@ export default function Roles() {
             case 'products': return { icon: <Package className="h-5 w-5" />, name: 'Productos', color: 'text-orange-600', bg: 'bg-orange-50', border: 'border-orange-100', shadow: 'shadow-orange-50' };
             case 'categories': return { icon: <Layers className="h-5 w-5" />, name: 'Categorías', color: 'text-amber-600', bg: 'bg-amber-50', border: 'border-amber-100', shadow: 'shadow-amber-50' };
             case 'suppliers': return { icon: <Truck className="h-5 w-5" />, name: 'Proveedores', color: 'text-indigo-600', bg: 'bg-indigo-50', border: 'border-indigo-100', shadow: 'shadow-indigo-50' };
-            case 'inventory': return { icon: <ClipboardList className="h-5 w-5" />, name: 'Inventario', color: 'text-rose-600', bg: 'bg-rose-50', border: 'border-rose-100', shadow: 'shadow-rose-50' };
+            case 'inventory': return { icon: <ClipboardList className="h-5 w-5" />, name: 'Logística & Stock', color: 'text-rose-600', bg: 'bg-rose-50', border: 'border-rose-100', shadow: 'shadow-rose-50' };
+            case 'transfers': return { icon: <Truck className="h-5 w-5" />, name: 'Traslados', color: 'text-blue-600', bg: 'bg-blue-50', border: 'border-blue-100', shadow: 'shadow-blue-50' };
+            case 'adjustments': return { icon: <Edit className="h-5 w-5" />, name: 'Ajustes', color: 'text-rose-600', bg: 'bg-rose-50', border: 'border-rose-100', shadow: 'shadow-rose-50' };
+            case 'batches': return { icon: <Layers className="h-5 w-5" />, name: 'Lotes / Fecha Venc.', color: 'text-amber-600', bg: 'bg-amber-50', border: 'border-amber-100', shadow: 'shadow-amber-50' };
             case 'sales': return { icon: <ShoppingCart className="h-5 w-5" />, name: 'Ventas (POS)', color: 'text-emerald-600', bg: 'bg-emerald-50', border: 'border-emerald-100', shadow: 'shadow-emerald-50' };
             case 'sales_history': return { icon: <History className="h-5 w-5" />, name: 'Historial Ventas', color: 'text-cyan-600', bg: 'bg-cyan-50', border: 'border-cyan-100', shadow: 'shadow-cyan-50' };
             case 'users': return { icon: <UsersIcon className="h-5 w-5" />, name: 'Usuarios', color: 'text-purple-600', bg: 'bg-purple-50', border: 'border-purple-100', shadow: 'shadow-purple-50' };
@@ -157,15 +160,53 @@ export default function Roles() {
             case 'quotes': return { icon: <FileText className="h-5 w-5" />, name: 'Cotizaciones', color: 'text-blue-600', bg: 'bg-blue-50', border: 'border-blue-100', shadow: 'shadow-blue-50' };
             case 'ai': return { icon: <BrainCircuit className="h-5 w-5" />, name: 'Inteligencia IA', color: 'text-violet-600', bg: 'bg-violet-50', border: 'border-violet-100', shadow: 'shadow-violet-50' };
             case 'branches': return { icon: <Store className="h-5 w-5" />, name: 'Sucursales', color: 'text-indigo-600', bg: 'bg-indigo-50', border: 'border-indigo-100', shadow: 'shadow-indigo-50' };
+            case 'admin': return { icon: <ShieldCheck className="h-5 w-5" />, name: 'Administración', color: 'text-violet-600', bg: 'bg-violet-50', border: 'border-violet-100', shadow: 'shadow-violet-50' };
+            case 'finance': return { icon: <DollarSign className="h-5 w-5" />, name: 'Finanzas', color: 'text-emerald-600', bg: 'bg-emerald-50', border: 'border-emerald-100', shadow: 'shadow-emerald-50' };
             default: return { icon: <Shield className="h-5 w-5" />, name: module, color: 'text-gray-600', bg: 'bg-white', border: 'border-gray-100', shadow: 'shadow-gray-50' };
         }
     }
+
+    const moduleOrder = [
+        'dashboard',
+        'products',
+        'categories',
+        'inventory',
+        'branches',
+        'transfers',
+        'adjustments',
+        'batches',
+        'sales',
+        'sales_history',
+        'quotes',
+        'customers',
+        'purchases',
+        'suppliers',
+        'expenses',
+        'reports',
+        'ai',
+        'users',
+        'roles_permissions',
+        'admin',
+        'finance',
+        'settings'
+    ]
 
     const groupedPermissions = permissions?.reduce((acc, perm) => {
         if (!acc[perm.module]) acc[perm.module] = []
         acc[perm.module].push(perm)
         return acc
     }, {} as Record<string, Permission[]>)
+
+    const sortedModules = groupedPermissions 
+        ? Object.keys(groupedPermissions).sort((a, b) => {
+            const indexA = moduleOrder.indexOf(a)
+            const indexB = moduleOrder.indexOf(b)
+            if (indexA === -1 && indexB === -1) return a.localeCompare(b)
+            if (indexA === -1) return 1
+            if (indexB === -1) return -1
+            return indexA - indexB
+        })
+        : []
 
     if (isLoadingRoles || isLoadingPermissions) {
         return <div className="flex h-96 items-center justify-center">Cargando...</div>
@@ -310,8 +351,9 @@ export default function Roles() {
                                 </div>
                             </div>
 
-                            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-                                {groupedPermissions && Object.entries(groupedPermissions).map(([module, perms]) => {
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-2 gap-6">
+                                {sortedModules.map((module) => {
+                                    const perms = groupedPermissions![module]
                                     const config = getModuleConfig(module)
                                     const currentPermIds = selectedRole.permissions.map(p => p.id)
                                     const allChecked = perms.every(p => currentPermIds.includes(p.id))
@@ -320,13 +362,13 @@ export default function Roles() {
                                         <div 
                                             key={module} 
                                             className={clsx(
-                                                "group border rounded-[2rem] overflow-hidden transition-all duration-300 hover:shadow-xl hover:-translate-y-1 bg-white",
+                                                "group border rounded-[2rem] overflow-hidden transition-all duration-300 hover:shadow-xl bg-white flex flex-col h-full",
                                                 allChecked ? config.border : "border-gray-100",
                                                 allChecked && config.shadow
                                             )}
                                         >
                                             <div className={clsx(
-                                                "px-5 py-4 border-b border-gray-100 flex items-center justify-between",
+                                                "px-5 py-4 border-b border-gray-100 flex items-center justify-between shrink-0",
                                                 config.bg
                                             )}>
                                                 <div className="flex items-center gap-3">
@@ -352,10 +394,13 @@ export default function Roles() {
                                                     )}
                                                 </div>
                                             </div>
-                                            <div className="p-5 space-y-3 bg-white">
+                                            <div className={clsx(
+                                                "p-5 grow",
+                                                perms.length > 5 ? "grid grid-cols-1 sm:grid-cols-2 gap-3" : "space-y-3"
+                                            )}>
                                                 {perms.sort((a, b) => {
                                                     // Ordenar: Ver > Crear > Editar > Eliminar > Otros
-                                                    const order = { 'view': 1, 'create': 2, 'edit': 3, 'manage': 4, 'delete': 5 };
+                                                    const order = { 'view': 1, 'create': 2, 'edit': 3, 'manage': 4, 'delete': 5, 'print': 6, 'download': 7 };
                                                     const getOrder = (codename: string) => {
                                                         const suffix = codename.split(':')[1];
                                                         return order[suffix as keyof typeof order] || 99;
@@ -371,30 +416,29 @@ export default function Roles() {
                                                                 "flex items-center justify-between p-3 rounded-xl transition-all cursor-pointer group/item",
                                                                 isChecked 
                                                                     ? "bg-primary-50/50" 
-                                                                    : "hover:bg-white bg-white/20 shadow-inner border border-gray-100/50"
+                                                                    : "hover:bg-gray-50 bg-white shadow-sm border border-gray-100/50"
                                                             )}
                                                         >
-                                                            <div className="flex flex-col">
+                                                            <div className="flex flex-col max-w-[70%]">
                                                                 <span className={clsx(
-                                                                    "text-sm font-bold transition-colors",
+                                                                    "text-[11px] font-bold transition-colors leading-tight",
                                                                     isChecked ? "text-primary-700" : "text-gray-500"
                                                                 )}>
                                                                     {perm.name}
                                                                 </span>
-                                                                <span className="text-[10px] text-gray-400 font-mono uppercase">
+                                                                <span className="text-[9px] text-gray-400 font-mono uppercase tracking-tighter truncate">
                                                                     {perm.codename.split(':')[1]}
                                                                 </span>
                                                             </div>
                                                             
-                                                            {/* Switch de Prender/Apagar */}
                                                             <div className={clsx(
-                                                                "relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-200 focus:outline-none",
+                                                                "relative inline-flex h-5 w-9 shrink-0 items-center rounded-full transition-colors duration-200 focus:outline-none",
                                                                 isChecked ? "bg-primary-600" : "bg-gray-200"
                                                             )}>
                                                                 <span
                                                                     className={clsx(
-                                                                        "inline-block h-4 w-4 transform rounded-full bg-white transition-transform duration-200",
-                                                                        isChecked ? "translate-x-6" : "translate-x-1"
+                                                                        "inline-block h-3.5 w-3.5 transform rounded-full bg-white transition-transform duration-200",
+                                                                        isChecked ? "translate-x-5" : "translate-x-1"
                                                                     )}
                                                                 />
                                                             </div>

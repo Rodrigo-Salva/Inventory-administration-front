@@ -173,92 +173,110 @@ export default function Customers() {
         }
 
         return (
-            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-                {data.items.map((customer) => (
-                    <div key={customer.id} className="card group hover:border-primary-200 hover:shadow-xl transition-all border-none shadow-lg shadow-gray-200/50 flex flex-col p-5">
-                        <div className="flex items-start justify-between">
-                            <div className="flex items-center gap-4">
-                                <div className="h-12 w-12 flex-shrink-0 rounded-2xl bg-white flex items-center justify-center text-primary-500 group-hover:bg-primary-50 transition-colors border border-transparent group-hover:border-primary-100">
-                                    <User className="h-6 w-6" />
-                                </div>
-                                <div>
-                                    <h3 className="text-lg font-black text-gray-900 leading-tight group-hover:text-primary-700 transition-colors line-clamp-1">{customer.name}</h3>
-                                    {customer.document_number && (
-                                        <span className="text-[10px] font-mono font-black text-gray-400 uppercase tracking-widest">{customer.document_type}: {customer.document_number}</span>
+            <div className="bg-white rounded-[2rem] border border-gray-100 overflow-hidden shadow-sm shadow-gray-200/50">
+                <table className="min-w-full divide-y divide-gray-100">
+                    <thead className="bg-gray-50/50">
+                        <tr>
+                            <th className="px-6 py-4 text-left text-[10px] font-black text-gray-400 uppercase tracking-widest">Cliente</th>
+                            <th className="px-6 py-4 text-left text-[10px] font-black text-gray-400 uppercase tracking-widest">Identificación</th>
+                            <th className="px-6 py-4 text-left text-[10px] font-black text-gray-400 uppercase tracking-widest">Contacto</th>
+                            <th className="px-6 py-4 text-left text-[10px] font-black text-gray-400 uppercase tracking-widest">Ubicación</th>
+                            <th className="px-6 py-4 text-left text-[10px] font-black text-gray-400 uppercase tracking-widest">Estado</th>
+                            <th className="px-6 py-4 text-right text-[10px] font-black text-gray-400 uppercase tracking-widest">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-50 bg-white">
+                        {data.items.map((customer) => (
+                            <tr key={customer.id} className="hover:bg-gray-50/50 transition-colors group">
+                                <td className="px-6 py-4 whitespace-nowrap">
+                                    <div className="flex items-center gap-3">
+                                        <div className="h-10 w-10 rounded-xl bg-primary-50 text-primary-600 flex items-center justify-center border border-primary-100/50 shrink-0">
+                                            <User className="h-5 w-5" />
+                                        </div>
+                                        <div className="flex flex-col">
+                                            <span className="text-sm font-black text-gray-900 line-clamp-1">{customer.name}</span>
+                                            <span className="text-[10px] font-mono text-gray-400 uppercase font-black tracking-tighter">ID: {customer.id}</span>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td className="px-6 py-4 whitespace-nowrap text-sm font-bold text-gray-600">
+                                    {customer.document_number ? (
+                                        <div className="flex flex-col">
+                                            <span>{customer.document_number}</span>
+                                            <span className="text-[10px] font-black text-gray-400 uppercase tracking-tighter">{customer.document_type}</span>
+                                        </div>
+                                    ) : (
+                                        <span className="text-gray-300 italic font-medium text-xs">Sin documento</span>
                                     )}
-                                </div>
-                            </div>
-                            <span
-                                className={clsx(
-                                    "px-2.5 py-1 text-[10px] uppercase font-black tracking-widest rounded-md",
-                                    customer.is_active ? 'bg-emerald-50 text-emerald-700' : 'bg-white text-gray-500'
-                                )}
-                            >
-                                {customer.is_active ? 'Activo' : 'Inactivo'}
-                            </span>
-                        </div>
-
-                        <div className="mt-6 space-y-3.5 flex-1">
-                            {customer.email && (
-                                <div className="flex items-center gap-3 text-sm group/item">
-                                    <div className="h-7 w-7 rounded-lg bg-white flex items-center justify-center text-gray-400 group-hover/item:bg-primary-50 group-hover/item:text-primary-500 transition-colors">
-                                        <Mail className="h-3.5 w-3.5" />
+                                </td>
+                                <td className="px-6 py-4 whitespace-nowrap">
+                                    <div className="flex flex-col gap-0.5">
+                                        <div className="flex items-center gap-1.5 text-xs text-gray-500 font-medium">
+                                            <Mail className="h-3 w-3 text-gray-300" />
+                                            {customer.email || 'Sin correo'}
+                                        </div>
+                                        <div className="flex items-center gap-1.5 text-xs text-gray-500 font-medium">
+                                            <Phone className="h-3 w-3 text-gray-300" />
+                                            {customer.phone || 'Sin teléfono'}
+                                        </div>
                                     </div>
-                                    <a href={`mailto:${customer.email}`} className="font-medium text-gray-500 hover:text-primary-600 transition-colors truncate">{customer.email}</a>
-                                </div>
-                            )}
-                            {customer.phone && (
-                                <div className="flex items-center gap-3 text-sm group/item">
-                                    <div className="h-7 w-7 rounded-lg bg-white flex items-center justify-center text-gray-400 group-hover/item:bg-primary-50 group-hover/item:text-primary-500 transition-colors">
-                                        <Phone className="h-3.5 w-3.5" />
+                                </td>
+                                <td className="px-6 py-4 whitespace-nowrap">
+                                    <div className="flex items-center gap-2">
+                                        <div className="h-8 w-8 rounded-lg bg-gray-50 flex items-center justify-center text-gray-400">
+                                            <MapPin className="h-4 w-4" />
+                                        </div>
+                                        <div className="flex flex-col">
+                                            <span className="text-xs font-bold text-gray-700">{customer.city || 'Desconocida'}</span>
+                                            <span className="text-[10px] font-bold text-gray-400 uppercase tracking-tighter">{customer.country}</span>
+                                        </div>
                                     </div>
-                                    <span className="font-medium text-gray-500">{customer.phone}</span>
-                                </div>
-                            )}
-                            {customer.city && (
-                                <div className="flex items-center gap-3 text-sm group/item">
-                                    <div className="h-7 w-7 rounded-lg bg-white flex items-center justify-center text-gray-400 group-hover/item:bg-primary-50 group-hover/item:text-primary-500 transition-colors">
-                                        <MapPin className="h-3.5 w-3.5" />
+                                </td>
+                                <td className="px-6 py-4 whitespace-nowrap">
+                                    <span className={clsx(
+                                        "inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider",
+                                        customer.is_active ? 'bg-emerald-50 text-emerald-700' : 'bg-gray-50 text-gray-400 border border-gray-100'
+                                    )}>
+                                        <div className={clsx("h-1.5 w-1.5 rounded-full", customer.is_active ? 'bg-emerald-500' : 'bg-gray-300')} />
+                                        {customer.is_active ? 'Activo' : 'Inactivo'}
+                                    </span>
+                                </td>
+                                <td className="px-6 py-4 whitespace-nowrap text-right">
+                                    <div className="flex items-center justify-end gap-1">
+                                        <button 
+                                            onClick={() => {
+                                                setSelectedCustomer(customer)
+                                                setIsDetailModalOpen(true)
+                                            }}
+                                            className="p-2 text-slate-400 hover:text-primary-600 hover:bg-primary-50 rounded-xl transition-all"
+                                            title="Ver Detalles"
+                                        >
+                                            <Eye className="h-5 w-5" />
+                                        </button>
+                                        {hasPermission('customers:edit') && (
+                                            <button 
+                                                onClick={() => openModal(customer)}
+                                                className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition-all"
+                                                title="Editar"
+                                            >
+                                                <Edit className="h-5 w-5" />
+                                            </button>
+                                        )}
+                                        {hasPermission('customers:delete') && (
+                                            <button 
+                                                onClick={() => handleDeleteClick(customer.id, customer.name)}
+                                                className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-xl transition-all"
+                                                title="Eliminar"
+                                            >
+                                                <Trash2 className="h-5 w-5" />
+                                            </button>
+                                        )}
                                     </div>
-                                    <span className="font-medium text-gray-500 truncate">{customer.city}, {customer.country}</span>
-                                </div>
-                            )}
-                        </div>
-
-                        <div className="mt-8 pt-6 border-t border-gray-50 flex items-center justify-between">
-                            <div className="flex items-center gap-1">
-                                <button 
-                                    onClick={() => {
-                                        setSelectedCustomer(customer)
-                                        setIsDetailModalOpen(true)
-                                    }}
-                                    className="p-2.5 text-slate-600 hover:bg-slate-50 rounded-xl transition-all"
-                                    title="Ver Detalles"
-                                >
-                                    <Eye className="h-4.5 w-4.5" />
-                                </button>
-                                {hasPermission('customers:edit') && (
-                                    <button 
-                                        onClick={() => openModal(customer)}
-                                        className="p-2.5 text-blue-600 hover:bg-blue-50 rounded-xl transition-all"
-                                        title="Editar"
-                                    >
-                                        <Edit className="h-4.5 w-4.5" />
-                                    </button>
-                                )}
-                                {hasPermission('customers:delete') && (
-                                    <button 
-                                        onClick={() => handleDeleteClick(customer.id, customer.name)}
-                                        className="p-2.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-xl transition-all"
-                                        title="Eliminar"
-                                    >
-                                        <Trash2 className="h-4.5 w-4.5" />
-                                    </button>
-                                )}
-                            </div>
-                        </div>
-                    </div>
-                ))}
+                                </td>
+                            </tr>
+                        ))}
+                    </tbody>
+                </table>
             </div>
         )
     }
