@@ -1,605 +1,195 @@
-import { useState } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import api from "@/api/client";
+import { useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { 
-  Plus, Receipt, Trash2, DollarSign, 
-  BarChart3, Filter, X, Search, Download, Eye
-} from "lucide-react";
-import DetailModal from "@/components/common/DetailModal";
-import toast from "react-hot-toast";
-import { usePermissions } from "@/hooks/usePermissions";
-import Pagination from "@/components/common/Pagination";
-import { 
-  ResponsiveContainer, AreaChart, Area 
-} from 'recharts';
-import DateRangePicker from "@/components/common/DateRangePicker";
-import clsx from "clsx";
+    Plus, Receipt, Search, Filter, Calendar, 
+    ChevronLeft, ChevronRight, Loader2,
+    User as UserIcon, Clock
+} from 'lucide-react';
+import api from '@/api/client';
+import { Expense, ExpenseSummary } from '@/types';
+import { format } from 'date-fns';
+import { es } from 'date-fns/locale';
+import ExpenseModal from '@/components/pos/ExpenseModal';
+import { usePermissions } from '@/hooks/usePermissions';
 
 export default function Expenses() {
-  const [page, setPage] = useState(1);
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [filterCategory, setFilterCategory] = useState("");
-  const [search, setSearch] = useState("");
-  const [startDate, setStartDate] = useState("");
-  const [endDate, setEndDate] = useState("");
-  const [tempFilters, setTempFilters] = useState({ category: "", start: "", end: "" });
-  const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
-  const [timeRange, setTimeRange] = useState<'daily' | 'weekly' | 'monthly'>('daily');
-  const [selectedExpense, setSelectedExpense] = useState<any | null>(null);
-  const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
-  const queryClient = useQueryClient();
-  const { hasPermission } = usePermissions();
+    const { hasPermission } = usePermissions();
+    const [page, setPage] = useState(1);
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [search, setSearch] = useState('');
 
-  const [formData, setFormData] = useState({
-    amount: "",
-    category: "General",
-    description: "",
-    date: new Date().toISOString().split('T')[0],
-    reference: ""
-  });
-
-  const { data: expensesData } = useQuery({
-    queryKey: ["expenses", page, filterCategory, search, startDate, endDate],
-    queryFn: async () => {
-      const params = new URLSearchParams({
-        page: page.toString(),
-        size: "10",
-        ...(filterCategory && { category: filterCategory }),
-        ...(search && { search }),
-        ...(startDate && { start_date: startDate }),
-        ...(endDate && { end_date: endDate })
-      });
-      const response = await api.get(`/api/v1/expenses?${params}`);
-      return response.data;
-    }
-  });
-
-  const { data: statsData } = useQuery({
-    queryKey: ["expense-stats"],
-    queryFn: async () => {
-      const response = await api.get("/api/v1/expenses/stats");
-      return response.data;
-    }
-  });
-
-  const createMutation = useMutation({
-    mutationFn: async (data: any) => {
-      const response = await api.post("/api/v1/expenses", data);
-      return response.data;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["expenses"] });
-      queryClient.invalidateQueries({ queryKey: ["expense-stats"] });
-      toast.success("Gasto registrado");
-      setIsModalOpen(false);
-      setFormData({
-        amount: "",
-        category: "General",
-        description: "",
-        date: new Date().toISOString().split('T')[0],
-        reference: ""
-      });
-    },
-    onError: () => toast.error("Error al registrar el gasto")
-  });
-
-  const deleteMutation = useMutation({
-    mutationFn: async (id: number) => {
-      await api.delete(`/api/v1/expenses/${id}`);
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["expenses"] });
-      queryClient.invalidateQueries({ queryKey: ["expense-stats"] });
-      toast.success("Gasto eliminado");
-    }
-  });
-
-  const handleExport = async (formatType: 'pdf' | 'excel' | 'csv') => {
-    const params = new URLSearchParams({
-      ...(filterCategory && { category: filterCategory }),
-      ...(search && { search }),
-      ...(startDate && { start_date: startDate }),
-      ...(endDate && { end_date: endDate })
+    const { data, isLoading } = useQuery<ExpenseSummary>({
+        queryKey: ['expenses', page],
+        queryFn: async () => {
+            const response = await api.get('/api/v1/expenses/', {
+                params: { page, page_size: 15 }
+            });
+            return response.data;
+        }
     });
-    
-    try {
-      toast.loading(`Generando reporte ${formatType.toUpperCase()}...`, { id: "export-loading" });
-      const response = await api.get(`/api/v1/reports/expenses-${formatType}?${params}`, {
-        responseType: 'blob'
-      });
-      
-      const extensions = { pdf: 'pdf', excel: 'xlsx', csv: 'csv' };
-      const extension = extensions[formatType as keyof typeof extensions];
-      
-      const url = window.URL.createObjectURL(new Blob([response.data]));
-      const link = document.createElement('a');
-      link.href = url;
-      link.setAttribute('download', `reporte_gastos_${new Date().toISOString().split('T')[0]}.${extension}`);
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-      toast.success("Reporte descargado", { id: "export-loading" });
-    } catch (err) {
-      console.error("Export error:", err);
-      toast.error("Error al generar el reporte", { id: "export-loading" });
+
+    if (!hasPermission('expenses:view')) {
+        return (
+            <div className="flex flex-col items-center justify-center min-h-[400px] text-center p-8 bg-white rounded-3xl border border-gray-100 shadow-sm">
+                <Receipt className="h-16 w-16 text-gray-200 mb-4" />
+                <h2 className="text-xl font-bold text-gray-900">Acceso Denegado</h2>
+                <p className="text-gray-500 mt-2">No tienes permisos para ver los gastos.</p>
+            </div>
+        );
     }
-  };
 
-  const applyFilters = () => {
-    setFilterCategory(tempFilters.category);
-    setStartDate(tempFilters.start);
-    setEndDate(tempFilters.end);
-    setIsFilterModalOpen(false);
-    setPage(1);
-  };
-
-  const clearFilters = () => {
-    setTempFilters({ category: "", start: "", end: "" });
-    setFilterCategory("");
-    setStartDate("");
-    setEndDate("");
-    setIsFilterModalOpen(false);
-    setPage(1);
-  };
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    createMutation.mutate({
-      ...formData,
-      amount: parseFloat(formData.amount)
-    });
-  };
-
-  const categories = ["General", "Alquiler", "Salarios", "Marketing", "Servicios", "Suministros", "Otros"];
-
-  return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900 ">Gastos</h1>
-          <p className="mt-1 text-sm text-gray-600 ">
-            Seguimiento de egresos y reportes financieros
-          </p>
-        </div>
-        <div className="flex flex-wrap gap-2 lg:gap-3">
-          <button
-            onClick={() => {
-              setTempFilters({ category: filterCategory, start: startDate, end: endDate });
-              setIsFilterModalOpen(true);
-            }}
-            className={clsx(
-              "btn flex items-center gap-2 h-10 px-4 transition-all border shadow-sm rounded-xl text-xs uppercase tracking-widest font-bold",
-              filterCategory || startDate || endDate
-                ? "bg-primary-50  border-primary-200  text-primary-700  font-bold"
-                : "bg-white border-gray-200 text-gray-600 hover:bg-gray-50",
-            )}
-          >
-            <Filter className="h-4 w-4" />
-            Filtrar
-            {(filterCategory || startDate || endDate) && (
-              <span className="flex h-2 w-2 rounded-full bg-primary-600 animate-pulse" />
-            )}
-          </button>
-          {hasPermission('expenses:export') && (
-            <button
-                onClick={() => handleExport('pdf')}
-                className="btn btn-secondary flex items-center gap-2 h-10 rounded-xl px-4 text-xs font-bold uppercase tracking-widest"
-            >
-                <Download className="h-5 w-5 text-gray-400 " />
-                <span className="hidden sm:inline">PDF</span>
-            </button>
-          )}
-          {hasPermission('expenses:manage') && (
-            <button
-                onClick={() => setIsModalOpen(true)}
-                className="bg-primary-600 text-white hover:bg-primary-700 flex items-center gap-2 h-10 rounded-xl px-4 text-xs font-bold uppercase tracking-widest shadow-lg shadow-primary-200  transition-all"
-            >
-                <Plus className="h-5 w-5" />
-                <span className="hidden sm:inline">Registrar Gasto</span>
-            </button>
-          )}
-        </div>
-      </div>
-
-      <div className="relative">
-        <Search className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400 " />
-        <input
-          type="text"
-          placeholder="Buscar por descripción o referencia..."
-          className="input pl-12 h-12 text-base bg-white  border-gray-100  shadow-xl shadow-gray-200/50  rounded-2xl focus:ring-primary-500 "
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-        />
-      </div>
-
-      {/* Stats Board */}
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-        <div className="lg:col-span-3 grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="p-6 bg-white  rounded-3xl border border-slate-100  shadow-sm flex items-center gap-4">
-            <div className="h-12 w-12 bg-red-50  rounded-2xl flex items-center justify-center text-red-600">
-              <DollarSign className="h-6 w-6" />
-            </div>
-            <div>
-              <p className="text-xs font-bold text-slate-400  uppercase tracking-widest">Total Gastos</p>
-              <p className="text-2xl font-black text-slate-900 ">${statsData?.total_amount?.toLocaleString() || '0'}</p>
-            </div>
-          </div>
-          
-          <div className="p-6 bg-white  rounded-3xl border border-slate-100  shadow-sm flex items-center gap-4">
-            <div className="h-12 w-12 bg-amber-50  rounded-2xl flex items-center justify-center text-amber-600">
-              <BarChart3 className="h-6 w-6" />
-            </div>
-            <div>
-              <p className="text-xs font-bold text-slate-400  uppercase tracking-widest">Categoría Top</p>
-              <p className="text-xl font-bold text-slate-900  capitalize">
-                {Object.entries(statsData?.category_totals || {}).sort((a: any, b: any) => b[1] - a[1])[0]?.[0] || 'N/A'}
-              </p>
-            </div>
-          </div>
-
-          <div className="p-6 bg-white rounded-3xl border border-slate-100 shadow-sm flex items-center gap-4">
-            <div className="h-12 w-12 bg-slate-50 rounded-2xl flex items-center justify-center text-slate-500">
-              <Receipt className="h-6 w-6" />
-            </div>
-            <div>
-              <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">Registros</p>
-              <p className="text-2xl font-black text-slate-900">{expensesData?.total || '0'}</p>
-            </div>
-          </div>
-        </div>
-
-        <div className="p-6 bg-white  rounded-3xl border border-slate-100  shadow-sm">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-xs font-black text-slate-400  uppercase tracking-widest">Tendencia</h3>
-            <div className="flex bg-white  p-1 rounded-xl">
-              {(['daily', 'weekly', 'monthly'] as const).map((r) => (
-                <button
-                  key={r}
-                  onClick={() => setTimeRange(r)}
-                  className={`px-3 py-1 text-[10px] font-bold rounded-lg transition-all ${
-                    timeRange === r 
-                    ? 'bg-white  text-slate-900  shadow-sm' 
-                    : 'text-slate-400  hover:text-slate-600 :text-zinc-300'
-                  }`}
-                >
-                  {r === 'daily' ? 'D' : r === 'weekly' ? 'S' : 'M'}
-                </button>
-              ))}
-            </div>
-          </div>
-          <div className="h-24 w-full">
-            <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={statsData?.[`${timeRange}_stats`] || []}>
-                <defs>
-                  <linearGradient id="colorAmount" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#ef4444" stopOpacity={0.1}/>
-                    <stop offset="95%" stopColor="#ef4444" stopOpacity={0}/>
-                  </linearGradient>
-                </defs>
-                <Area type="monotone" dataKey="amount" stroke="#ef4444" fillOpacity={1} fill="url(#colorAmount)" />
-              </AreaChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
-      </div>
-
-      <div className="card border-none shadow-sm overflow-hidden bg-white ">
-        <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-100 ">
-            <thead className="bg-white ">
-              <tr>
-                <th className="px-6 py-4 text-left text-[10px] font-black text-slate-400  uppercase tracking-widest">Fecha</th>
-                <th className="px-6 py-4 text-left text-[10px] font-black text-slate-400  uppercase tracking-widest">Descripción</th>
-                <th className="px-6 py-4 text-left text-[10px] font-black text-slate-400  uppercase tracking-widest">Categoría</th>
-                <th className="px-6 py-4 text-right text-[10px] font-black text-slate-400  uppercase tracking-widest">Monto</th>
-                <th className="px-6 py-4 text-center text-[10px] font-black text-slate-400  uppercase tracking-widest">Acciones</th>
-              </tr>
-            </thead>
-            <tbody className="bg-white  divide-y divide-gray-50 ">
-              {expensesData?.items?.map((expense: any) => (
-                <tr key={expense.id} className="hover:bg-white :bg-white/50 transition-colors">
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-600 ">
-                    {new Date(expense.date).toLocaleDateString()}
-                  </td>
-                  <td className="px-6 py-4">
-                    <div className="text-sm font-bold text-slate-900 ">{expense.description}</div>
-                    {expense.reference && <div className="text-[10px] text-slate-400  font-mono">REF: {expense.reference}</div>}
-                  </td>
-                  <td className="px-6 py-4">
-                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-white  text-slate-600 ">
-                      {expense.category}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 text-right">
-                    <span className="text-sm font-black text-red-600 ">
-                      -${Number(expense.amount).toLocaleString(undefined, { minimumFractionDigits: 2 })}
-                    </span>
-                  </td>
-                   <td className="px-6 py-4 whitespace-nowrap text-center">
-                     <div className="flex items-center justify-center gap-1">
-                       <button
-                         onClick={() => {
-                           setSelectedExpense(expense);
-                           setIsDetailModalOpen(true);
-                         }}
-                         className="p-2 text-slate-400 hover:text-primary-600 hover:bg-primary-50 rounded-xl transition-all"
-                         title="Ver Detalles"
-                       >
-                         <Eye className="h-5 w-5" />
-                       </button>
-                       {hasPermission('expenses:manage') && (
-                         <button
-                           onClick={() => {
-                             if (confirm('¿Eliminar este gasto?')) {
-                               deleteMutation.mutate(expense.id);
-                             }
-                           }}
-                           className="p-2 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all"
-                           title="Eliminar"
-                         >
-                           <Trash2 className="h-5 w-5" />
-                         </button>
-                       )}
-                     </div>
-                   </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-
-        {expensesData && (
-          <div className="p-4 border-t border-gray-50  bg-white ">
-             <Pagination
-                currentPage={page}
-                totalPages={Math.ceil(expensesData.total / 10)}
-                onPageChange={setPage}
-              />
-          </div>
-        )}
-      </div>
-
-      {/* Filter Modal (Floating Window) */}
-      {isFilterModalOpen && (
-        <div className="fixed inset-0 z-[100] overflow-y-auto">
-          <div className="flex min-h-screen items-center justify-center p-4 text-center sm:p-0">
-            <div
-              className="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity backdrop-blur-sm"
-              onClick={() => setIsFilterModalOpen(false)}
-            />
-
-            <div className="relative transform overflow-hidden rounded-2xl bg-white text-left shadow-2xl transition-all sm:my-8 sm:w-full sm:max-w-2xl">
-              <div className="bg-white  px-6 py-6 border-b border-gray-50  flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="p-2 bg-primary-50  text-primary-600  rounded-xl">
-                    <Filter className="h-5 w-5" />
-                  </div>
-                  <h3 className="text-xl font-bold text-gray-900  tracking-tight">
-                    Filtros Avanzados
-                  </h3>
-                </div>
-                <button
-                  onClick={() => setIsFilterModalOpen(false)}
-                  className="text-gray-400 hover:text-gray-500 :text-zinc-300 p-1 hover:bg-white :bg-white rounded-lg"
-                >
-                  <X className="h-6 w-6" />
-                </button>
-              </div>
-
-              <div className="px-6 py-8 space-y-6 bg-white ">
-                <div>
-                  <label className="block text-[10px] font-black text-gray-400  uppercase tracking-[0.2em] mb-2">
-                    Categoría
-                  </label>
-                  <select
-                    className="input h-12 bg-white  border-gray-100  rounded-xl text-sm font-medium focus:bg-white :bg-white transition-all shadow-sm "
-                    value={tempFilters.category}
-                    onChange={(e) => setTempFilters({ ...tempFilters, category: e.target.value })}
-                  >
-                    <option value="">Todas las categorías</option>
-                    {categories.map(c => <option key={c} value={c}>{c}</option>)}
-                  </select>
-                </div>
-
-                <div className="bg-white  p-6 rounded-2xl border border-gray-100 ">
-                  <DateRangePicker
-                    startDate={tempFilters.start}
-                    endDate={tempFilters.end}
-                    onChange={({ start, end }) => setTempFilters({ ...tempFilters, start, end })}
-                  />
-                </div>
-
-                <div className="pt-6 border-t border-gray-50  flex flex-col gap-3">
-                  {hasPermission('expenses:export') && (
-                    <button
-                      onClick={() => handleExport('excel')}
-                      className="btn bg-emerald-600 hover:bg-emerald-700 text-white flex items-center justify-center gap-2 h-12 rounded-xl font-bold uppercase tracking-widest text-xs shadow-lg shadow-emerald-200 "
-                    >
-                      <Download className="h-5 w-5" />
-                      Exportar a Excel
-                    </button>
-                  )}
-
-                  <div className="grid grid-cols-2 gap-3">
-                    <button
-                      onClick={clearFilters}
-                      className="btn border border-gray-200  text-gray-500  h-11 rounded-xl text-xs font-bold uppercase tracking-widest hover:bg-white :bg-white shadow-sm"
-                    >
-                      Limpiar Filtros
-                    </button>
-                    <button
-                      onClick={applyFilters}
-                      className="bg-primary-600 text-white hover:bg-primary-700 flex items-center justify-center h-11 rounded-xl text-xs font-bold uppercase tracking-widest shadow-lg shadow-primary-200  transition-all"
-                    >
-                      Aplicar Filtros
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Create Modal */}
-      {isModalOpen && (
-        <div className="fixed inset-0 z-50 flex flex-col items-center justify-center p-4 text-center sm:p-0">
-          {/* Backdrop */}
-          <div 
-            className="fixed inset-0 bg-white/60 backdrop-blur-sm animate-in fade-in duration-300" 
-            onClick={() => setIsModalOpen(false)} 
-          />
-          
-          {/* Modal Container */}
-          <div className="relative transform overflow-hidden rounded-[2.5rem] bg-white shadow-2xl transition-all w-full max-w-xl border border-gray-100 animate-in zoom-in-95 duration-300 flex flex-col max-h-[90vh]">
+    return (
+        <div className="space-y-8 pb-10">
             {/* Header */}
-            <div className="px-8 py-6 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
-              <h3 className="text-xl font-bold text-gray-900 flex items-center gap-2">
-                <Receipt className="h-6 w-6 text-primary-600" />
-                Registrar Gasto
-              </h3>
-              <button 
-                onClick={() => setIsModalOpen(false)} 
-                className="text-gray-400 hover:text-gray-600 p-2 hover:bg-white rounded-xl transition-all"
-              >
-                <X className="h-6 w-6" />
-              </button>
-            </div>
-
-            {/* Content */}
-            <div className="px-8 py-8 overflow-y-auto custom-scrollbar">
-              <form id="expense-form" onSubmit={handleSubmit} className="space-y-6">
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="col-span-2">
-                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Monto ($)</label>
-                    <div className="relative">
-                      <DollarSign className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
-                      <input
-                        type="number"
-                        step="0.01"
-                        required
-                        className="input h-14 pl-12 text-lg font-black bg-white border-transparent focus:bg-white focus:ring-primary-500 rounded-2xl"
-                        value={formData.amount}
-                        onChange={(e) => setFormData({...formData, amount: e.target.value})}
-                        placeholder="0.00"
-                        autoFocus
-                      />
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 bg-white p-8 rounded-[2.5rem] border border-gray-100 shadow-sm">
+                <div>
+                    <div className="flex items-center gap-3 mb-2">
+                        <div className="p-2 bg-red-50 rounded-xl">
+                            <Receipt className="h-6 w-6 text-red-600" />
+                        </div>
+                        <h1 className="text-3xl font-black text-gray-900 uppercase tracking-tight">Gastos y Egresos</h1>
                     </div>
-                  </div>
-                  
-                  <div>
-                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Categoría</label>
-                    <select
-                      className="input h-14 bg-white border-transparent focus:bg-white focus:ring-primary-500 rounded-2xl"
-                      value={formData.category}
-                      onChange={(e) => setFormData({...formData, category: e.target.value})}
-                    >
-                      {categories.map(c => <option key={c} value={c}>{c}</option>)}
-                    </select>
-                  </div>
-
-                  <div>
-                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Fecha</label>
-                    <input
-                      type="date"
-                      required
-                      className="input h-14 bg-white border-transparent focus:bg-white focus:ring-primary-500 rounded-2xl [color-scheme:light]"
-                      value={formData.date}
-                      onChange={(e) => setFormData({...formData, date: e.target.value})}
-                    />
-                  </div>
-
-                  <div className="col-span-2">
-                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Descripción</label>
-                    <textarea
-                      required
-                      className="input min-h-[100px] bg-white border-transparent focus:bg-white focus:ring-primary-500 rounded-2xl p-4"
-                      value={formData.description}
-                      onChange={(e) => setFormData({...formData, description: e.target.value})}
-                      placeholder="Escribe el motivo del gasto..."
-                    />
-                  </div>
-
-                  <div className="col-span-2">
-                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Referencia / Factura #</label>
-                    <input
-                      type="text"
-                      className="input h-14 bg-white border-transparent focus:bg-white focus:ring-primary-500 rounded-2xl"
-                      value={formData.reference}
-                      onChange={(e) => setFormData({...formData, reference: e.target.value})}
-                      placeholder="Opcional"
-                    />
-                  </div>
+                    <p className="text-sm font-bold text-gray-400 uppercase tracking-widest pl-11">Control de salidas de dinero del negocio</p>
                 </div>
-              </form>
+
+                <button
+                    onClick={() => setIsModalOpen(true)}
+                    className="h-14 px-8 bg-slate-900 hover:bg-slate-800 text-white rounded-2xl flex items-center justify-center gap-3 font-black uppercase tracking-[0.2em] text-xs transition-all active:scale-[0.98] shadow-xl shadow-slate-200"
+                >
+                    <Plus className="h-5 w-5" />
+                    Registrar Nuevo Gasto
+                </button>
             </div>
 
-            {/* Footer */}
-            <div className="px-8 py-6 border-t border-gray-100 flex justify-end gap-3 bg-gray-50/50">
-              <button
-                type="button"
-                onClick={() => setIsModalOpen(false)}
-                className="px-6 h-12 text-gray-700 hover:bg-white rounded-xl border border-gray-200 transition-all shadow-sm font-bold uppercase tracking-widest text-[10px]"
-              >
-                Cancelar
-              </button>
-              <button
-                type="submit"
-                form="expense-form"
-                className="px-8 h-12 bg-primary-600 text-white rounded-xl hover:bg-primary-700 transition-all shadow-lg shadow-primary-200 font-bold uppercase tracking-widest text-[10px]"
-                disabled={createMutation.isPending}
-              >
-                {createMutation.isPending ? "Registrando..." : "Confirmar Gasto"}
-              </button>
+            {/* Filters & Content */}
+            <div className="bg-white rounded-[2.5rem] border border-gray-100 shadow-sm overflow-hidden">
+                <div className="p-6 border-b border-gray-100 bg-gray-50/50 flex flex-col md:flex-row gap-4 justify-between items-center">
+                    <div className="relative w-full md:w-96">
+                        <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
+                        <input
+                            type="text"
+                            placeholder="Buscar por descripción..."
+                            value={search}
+                            onChange={(e) => setSearch(e.target.value)}
+                            className="w-full bg-white border border-gray-200 rounded-2xl pl-12 pr-4 py-3 text-sm font-bold text-gray-900 focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all outline-none"
+                        />
+                    </div>
+                    
+                    <div className="flex gap-2">
+                        <button className="p-3 bg-white border border-gray-200 rounded-xl text-gray-400 hover:text-gray-600 transition-colors">
+                            <Filter className="h-5 w-5" />
+                        </button>
+                        <button className="p-3 bg-white border border-gray-200 rounded-xl text-gray-400 hover:text-gray-600 transition-colors">
+                            <Calendar className="h-5 w-5" />
+                        </button>
+                    </div>
+                </div>
+
+                {isLoading ? (
+                    <div className="flex flex-col items-center justify-center py-20">
+                        <Loader2 className="h-12 w-12 animate-spin text-primary-500" />
+                        <p className="text-xs font-black text-gray-400 uppercase tracking-[0.2em] mt-4">Cargando registros...</p>
+                    </div>
+                ) : data?.items.length === 0 ? (
+                    <div className="flex flex-col items-center justify-center py-20 text-center">
+                        <div className="p-6 bg-gray-50 rounded-full mb-4">
+                            <Receipt className="h-12 w-12 text-gray-300" />
+                        </div>
+                        <h3 className="text-lg font-bold text-gray-900">No hay gastos registrados</h3>
+                        <p className="text-sm text-gray-500 mt-1">Empieza registrando una salida de dinero.</p>
+                    </div>
+                ) : (
+                    <div className="overflow-x-auto">
+                        <table className="w-full text-left border-collapse">
+                            <thead>
+                                <tr className="bg-gray-50/50 border-b border-gray-100">
+                                    <th className="px-8 py-5 text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Fecha</th>
+                                    <th className="px-8 py-5 text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Categoría</th>
+                                    <th className="px-8 py-5 text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Descripción</th>
+                                    <th className="px-8 py-5 text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Monto</th>
+                                    <th className="px-8 py-5 text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Usuario</th>
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y divide-gray-50">
+                                {data?.items.map((expense: Expense) => (
+                                    <tr key={expense.id} className="hover:bg-gray-50/50 transition-colors group">
+                                        <td className="px-8 py-5">
+                                            <div className="flex items-center gap-3">
+                                                <div className="p-2 bg-slate-50 text-slate-400 rounded-lg">
+                                                    <Clock className="h-4 w-4" />
+                                                </div>
+                                                <div className="flex flex-col">
+                                                    <span className="text-sm font-bold text-gray-900">
+                                                        {format(new Date(expense.expense_date), 'dd MMM, yyyy', { locale: es })}
+                                                    </span>
+                                                    <span className="text-[10px] font-bold text-gray-400">
+                                                        {format(new Date(expense.expense_date), 'hh:mm a')}
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td className="px-8 py-5">
+                                            <div className="flex items-center gap-2">
+                                                <span className="px-3 py-1 bg-red-50 text-red-600 text-[10px] font-black uppercase rounded-lg tracking-wider">
+                                                    {expense.category?.name || 'General'}
+                                                </span>
+                                            </div>
+                                        </td>
+                                        <td className="px-8 py-5">
+                                            <span className="text-sm font-medium text-gray-600 italic">
+                                                "{expense.description}"
+                                            </span>
+                                        </td>
+                                        <td className="px-8 py-5">
+                                            <span className="text-lg font-black text-red-600 tracking-tight">
+                                                - ${Number(expense.amount || 0).toFixed(2)}
+                                            </span>
+                                        </td>
+                                        <td className="px-8 py-5">
+                                            <div className="flex items-center gap-2 text-gray-500">
+                                                <UserIcon className="h-4 w-4" />
+                                                <span className="text-[10px] font-black uppercase tracking-widest leading-none">
+                                                    {expense.user_id ? `ID: ${expense.user_id}` : 'Sistema'}
+                                                </span>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                )}
+
+                {/* Pagination */}
+                {data && data.total > 15 && (
+                    <div className="p-8 bg-gray-50 border-t border-gray-100 flex items-center justify-between">
+                        <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">
+                            Mostrando {data.items.length} de {data.total} gastos
+                        </p>
+                        <div className="flex gap-2">
+                            <button
+                                onClick={() => setPage(p => Math.max(1, p - 1))}
+                                disabled={page === 1}
+                                className="p-2 bg-white border border-gray-200 rounded-xl text-gray-400 hover:text-gray-600 disabled:opacity-50 transition-all"
+                            >
+                                <ChevronLeft className="h-5 w-5" />
+                            </button>
+                            <button
+                                onClick={() => setPage(p => p + 1)}
+                                disabled={data.items.length < 15}
+                                className="p-2 bg-white border border-gray-200 rounded-xl text-gray-400 hover:text-gray-600 disabled:opacity-50 transition-all"
+                            >
+                                <ChevronRight className="h-5 w-5" />
+                            </button>
+                        </div>
+                    </div>
+                )}
             </div>
-          </div>
+
+            <ExpenseModal 
+                isOpen={isModalOpen} 
+                onClose={() => setIsModalOpen(false)} 
+            />
         </div>
-      )}
-
-       <DetailModal
-         isOpen={isDetailModalOpen}
-         onClose={() => setIsDetailModalOpen(false)}
-         title="Detalles de Gasto"
-         subtitle={selectedExpense?.description || "Gasto sin descripción"}
-         icon={Receipt}
-         sections={[
-           {
-             title: "Información Financiera",
-             fields: [
-               { label: "Monto", value: selectedExpense ? `$${selectedExpense.amount?.toLocaleString()}` : "" },
-               { label: "Categoría", value: selectedExpense?.category },
-               { label: "Fecha", value: selectedExpense ? new Date(selectedExpense.date).toLocaleDateString() : "" },
-               { label: "Referencia", value: selectedExpense?.reference || "Sin referencia" },
-             ]
-           },
-           {
-             title: "Detalles Adicionales",
-             fields: [
-               { label: "Descripción", value: selectedExpense?.description || "Sin descripción", fullWidth: true },
-               { label: "ID de Registro", value: selectedExpense?.id },
-               { label: "Fecha de Registro", value: selectedExpense?.created_at ? new Date(selectedExpense.created_at).toLocaleString() : "N/A" },
-             ]
-           }
-         ]}
-         footerActions={
-           <>
-             {hasPermission('expenses:manage') && (
-               <button 
-                 onClick={() => {
-                   if (confirm('¿Eliminar este gasto?')) {
-                     deleteMutation.mutate(selectedExpense.id);
-                     setIsDetailModalOpen(false);
-                   }
-                 }}
-                 className="flex-[1] h-14 bg-red-50 text-red-600 rounded-2xl flex items-center justify-center gap-3 font-black uppercase tracking-widest text-[10px] hover:bg-red-100 transition-all active:scale-95"
-               >
-                 <Trash2 className="h-5 w-5" />
-                 Eliminar
-               </button>
-             )}
-           </>
-         }
-       />
-     </div>
-   );
- }
+    );
+}
