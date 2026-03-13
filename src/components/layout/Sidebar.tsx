@@ -44,6 +44,7 @@ const navigation = [
         title: 'Ventas',
         items: [
             { name: 'Ventas (POS)', href: '/sales', icon: ShoppingCart, permission: 'sales:create' },
+            { name: 'Gastos (Egresos)', href: '/expenses', icon: Receipt, permission: 'expenses:view' },
             { name: 'Historial Ventas', href: '/sales-history', icon: History, permission: 'sales:view' },
             { name: 'Clientes', href: '/customers', icon: Users, permission: 'customers:view' },
             { name: 'Nueva Cotización', href: '/quotes/new', icon: FileText, permission: 'quotes:create' },
