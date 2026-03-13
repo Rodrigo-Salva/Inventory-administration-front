@@ -264,7 +264,6 @@ export interface Branch {
 }
 
 export interface PaginatedResponse<T> {
-// ... existing lines ...
   items: T[];
   total: number;
   page: number;
@@ -275,8 +274,49 @@ export interface PaginatedResponse<T> {
     page: number;
     size: number;
     pages: number;
-    total_items?: number;
-    total_pages?: number;
-    page_size?: number;
   };
+}
+
+export type CashSessionStatus = "open" | "closed";
+
+export interface CashSession {
+  id: number;
+  tenant_id: number;
+  user_id: number;
+  status: CashSessionStatus;
+  opening_balance: number;
+  expected_balance?: number;
+  closing_balance?: number;
+  opened_at: string;
+  closed_at?: string;
+  notes?: string;
+}
+
+export interface ExpenseCategory {
+  id: number;
+  tenant_id: number;
+  name: string;
+  description?: string;
+  is_active: boolean;
+  created_at: string;
+}
+
+export interface Expense {
+  id: number;
+  tenant_id: number;
+  user_id?: number;
+  category_id?: number;
+  category?: ExpenseCategory;
+  cash_session_id?: number;
+  amount: number | string;
+  description: string;
+  expense_date: string;
+  created_at: string;
+}
+
+export interface ExpenseSummary {
+  items: Expense[];
+  total: number;
+  page: number;
+  size: number;
 }

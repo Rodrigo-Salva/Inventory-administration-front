@@ -10,6 +10,9 @@ import {
 import clsx from "clsx";
 import type { Product, Customer, PaginatedResponse } from "@/types";
 import { usePermissions } from "@/hooks/usePermissions";
+import { usePOSStore } from "@/store/posStore";
+import CashSessionModal from "@/components/pos/CashSessionModal";
+import ExpenseModal from "@/components/pos/ExpenseModal";
 
 interface CartItem extends Product {
     cartQuantity: number;
@@ -23,12 +26,21 @@ export default function Sales() {
     const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
     const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false);
     const [isBatchModalOpen, setIsBatchModalOpen] = useState(false);
+    const [isSessionModalOpen, setIsSessionModalOpen] = useState(false);
+    const [isExpenseModalOpen, setIsExpenseModalOpen] = useState(false);
+    const [sessionModalType, setSessionModalType] = useState<'open' | 'close'>('open');
     const [lastSaleId, setLastSaleId] = useState<number | null>(null);
     const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
     const [currentProductForBatch, setCurrentProductForBatch] = useState<Product | null>(null);
     const [paymentMethod, setPaymentMethod] = useState<"cash" | "card" | "transfer">("cash");
+    
     const queryClient = useQueryClient();
     const { hasPermission } = usePermissions();
+    const { activeSession, checkActiveSession, isLoading: isSessionLoading } = usePOSStore();
+
+    useEffect(() => {
+        checkActiveSession();
+    }, []);
 
     // 1. Cargar Productos
     const { data: productData, isLoading } = useQuery<PaginatedResponse<Product>>({
@@ -189,7 +201,8 @@ export default function Sales() {
                 quantity: item.cartQuantity,
                 unit_price: item.price
             })),
-            customer_id: selectedCustomer?.id || null
+            customer_id: selectedCustomer?.id || null,
+            cash_session_id: activeSession?.id || null
         };
         createSaleMutation.mutate(saleData);
     };
@@ -224,6 +237,44 @@ export default function Sales() {
                 <Shield className="h-16 w-16 text-gray-200 mb-4" />
                 <h2 className="text-xl font-bold text-gray-900">Acceso Denegado</h2>
                 <p className="text-gray-500 mt-2">No tienes permisos para acceder al Punto de Venta (POS).</p>
+            </div>
+        )
+    }
+
+    if (isSessionLoading) {
+        return (
+            <div className="flex flex-col items-center justify-center min-h-[400px] text-center p-8">
+                <Loader2 className="h-12 w-12 animate-spin text-primary-500" />
+                <p className="text-gray-500 mt-4 uppercase tracking-widest font-black text-xs">Verificando estado de la caja...</p>
+            </div>
+        )
+    }
+
+    if (!activeSession) {
+        return (
+            <div className="flex flex-col items-center justify-center min-h-[calc(100vh-200px)] text-center p-8 bg-white rounded-[3rem] border border-dashed border-gray-200 shadow-sm">
+                <div className="p-8 bg-amber-50 rounded-full mb-6">
+                    <Banknote className="h-20 w-20 text-amber-500" />
+                </div>
+                <h2 className="text-3xl font-black text-gray-900 uppercase tracking-tight">Caja Cerrada</h2>
+                <p className="text-gray-500 mt-4 max-w-md mx-auto font-medium">
+                    Para realizar ventas, primero debes abrir un turno de caja con un saldo inicial. Esto permite llevar un control exacto del efectivo.
+                </p>
+                <button 
+                    onClick={() => {
+                        setSessionModalType('open');
+                        setIsSessionModalOpen(true);
+                    }}
+                    className="mt-10 h-16 px-10 bg-emerald-600 hover:bg-emerald-500 text-white rounded-2xl flex items-center justify-center gap-3 font-black uppercase tracking-[0.2em] text-sm transition-all active:scale-[0.98] shadow-2xl shadow-emerald-200"
+                >
+                    <Plus className="h-5 w-5" />
+                    Abrir Caja para Empezar
+                </button>
+                <CashSessionModal 
+                    isOpen={isSessionModalOpen} 
+                    onClose={() => setIsSessionModalOpen(false)} 
+                    type={sessionModalType} 
+                />
             </div>
         )
     }
@@ -667,6 +718,44 @@ export default function Sales() {
                     </div>
                 </div>
             )}
+
+            <CashSessionModal 
+                isOpen={isSessionModalOpen} 
+                onClose={() => setIsSessionModalOpen(false)} 
+                type={sessionModalType} 
+            />
+
+            {/* BOTONES FLOTANTES */}
+            <div className="fixed bottom-10 right-10 z-50 flex flex-col gap-4">
+                <button
+                    onClick={() => setIsExpenseModalOpen(true)}
+                    className="p-4 bg-orange-600 text-white rounded-full shadow-2xl shadow-orange-200 hover:bg-orange-500 transition-all group flex items-center gap-0 hover:gap-3 px-4"
+                >
+                    <Receipt className="h-6 w-6" />
+                    <span className="max-w-0 overflow-hidden group-hover:max-w-[200px] transition-all font-black uppercase text-[10px] tracking-widest">
+                        Registrar Gasto
+                    </span>
+                </button>
+                
+                <button
+                    onClick={() => {
+                        setSessionModalType('close');
+                        setIsSessionModalOpen(true);
+                    }}
+                    className="p-4 bg-red-600 text-white rounded-full shadow-2xl shadow-red-200 hover:bg-red-500 transition-all group flex items-center gap-0 hover:gap-3 px-4"
+                >
+                    <X className="h-6 w-6" />
+                    <span className="max-w-0 overflow-hidden group-hover:max-w-[200px] transition-all font-black uppercase text-[10px] tracking-widest">
+                        Cerrar Turno / Caja
+                    </span>
+                </button>
+            </div>
+
+            <ExpenseModal 
+                isOpen={isExpenseModalOpen} 
+                onClose={() => setIsExpenseModalOpen(false)} 
+                cashSessionId={activeSession?.id}
+            />
         </div>
     );
 }
