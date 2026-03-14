@@ -49,7 +49,7 @@ export const usePOSStore = create<POSState>((set) => ({
     closeSession: async (closingBalance) => {
         set({ isLoading: true })
         try {
-            const response = await api.post('/api/v1/pos/close-session', {
+            await api.post('/api/v1/pos/close-session', {
                 closing_balance: closingBalance
             })
             set({ activeSession: null })
