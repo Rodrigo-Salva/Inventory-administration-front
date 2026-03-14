@@ -8,7 +8,7 @@ import {
     ArrowRight, Loader2, ScanLine, Users, Shield
 } from 'lucide-react'
 import clsx from "clsx";
-import type { Product, Customer, PaginatedResponse } from "@/types";
+import type { Product, Customer, PaginatedResponse, LoyaltyConfig } from "@/types";
 import { usePermissions } from "@/hooks/usePermissions";
 import { usePOSStore } from "@/store/posStore";
 import CashSessionModal from "@/components/pos/CashSessionModal";
@@ -32,7 +32,8 @@ export default function Sales() {
     const [lastSaleId, setLastSaleId] = useState<number | null>(null);
     const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
     const [currentProductForBatch, setCurrentProductForBatch] = useState<Product | null>(null);
-    const [paymentMethod, setPaymentMethod] = useState<"cash" | "card" | "transfer">("cash");
+    const [paymentMethod, setPaymentMethod] = useState<"cash" | "card" | "transfer" | "credit">("cash");
+    const [redeemedPoints, setRedeemedPoints] = useState(0);
     
     const queryClient = useQueryClient();
     const { hasPermission } = usePermissions();
@@ -41,6 +42,20 @@ export default function Sales() {
     useEffect(() => {
         checkActiveSession();
     }, []);
+
+    // 2.1 Cargar Configuración de Lealtad
+    const { data: loyaltyConfig } = useQuery<LoyaltyConfig>({
+        queryKey: ["loyalty-config"],
+        queryFn: async () => {
+            const res = await api.get("/api/v1/loyalty/config");
+            return res.data;
+        }
+    });
+
+    const pointsDiscount = useMemo(() => {
+        if (!loyaltyConfig || !redeemedPoints) return 0;
+        return redeemedPoints * loyaltyConfig.amount_per_point;
+    }, [loyaltyConfig, redeemedPoints]);
 
     // 1. Cargar Productos
     const { data: productData, isLoading } = useQuery<PaginatedResponse<Product>>({
@@ -93,14 +108,15 @@ export default function Sales() {
         },
         onSuccess: (data: any) => {
             setLastSaleId(data.id);
+            setCart([]);
+            setSelectedCustomer(null);
+            setRedeemedPoints(0);
             setIsPaymentModalOpen(false);
             setIsSuccessModalOpen(true);
             
-            setSelectedCustomer(null);
             // Opcional: Descarga automática inmediata
             downloadTicket(data.id);
 
-            setCart([]);
             queryClient.invalidateQueries({ queryKey: ["products"] });
             queryClient.invalidateQueries({ queryKey: ["products-pos"] });
         },
@@ -184,6 +200,10 @@ export default function Sales() {
         return cart.reduce((acc, item) => acc + (Number(item.price) * item.cartQuantity), 0);
     }, [cart]);
 
+    const finalTotal = useMemo(() => {
+        return Math.max(0, total - pointsDiscount);
+    }, [total, pointsDiscount]);
+
     const handleCheckout = () => {
         if (cart.length === 0) {
             toast.error("El carrito está vacío");
@@ -202,7 +222,9 @@ export default function Sales() {
                 unit_price: item.price
             })),
             customer_id: selectedCustomer?.id || null,
-            cash_session_id: activeSession?.id || null
+            cash_session_id: activeSession?.id || null,
+            redeemed_points: redeemedPoints,
+            notes: ""
         };
         createSaleMutation.mutate(saleData);
     };
@@ -400,14 +422,44 @@ export default function Sales() {
                     </div>
                     
                     {selectedCustomer ? (
-                        <div className="flex items-center gap-3 p-3 bg-white rounded-2xl border border-primary-100 shadow-sm">
-                            <div className="h-10 w-10 rounded-xl bg-primary-50 flex items-center justify-center text-primary-600">
-                                <Users className="h-5 w-5" />
+                        <div className="flex flex-col gap-2">
+                            <div className="flex items-center gap-3 p-3 bg-white rounded-2xl border border-primary-100 shadow-sm">
+                                <div className="h-10 w-10 rounded-xl bg-primary-50 flex items-center justify-center text-primary-600">
+                                    <Users className="h-5 w-5" />
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                    <h4 className="text-xs font-bold text-gray-900 truncate uppercase">{selectedCustomer.name}</h4>
+                                    <p className="text-[10px] font-medium text-gray-400 truncate">{selectedCustomer.document_number || 'Sin documento'}</p>
+                                </div>
                             </div>
-                            <div className="flex-1 min-w-0">
-                                <h4 className="text-xs font-bold text-gray-900 truncate uppercase">{selectedCustomer.name}</h4>
-                                <p className="text-[10px] font-medium text-gray-400 truncate">{selectedCustomer.document_number || 'Sin documento'}</p>
-                            </div>
+                                          {/* Información de Crédito del Cliente */}
+                            {selectedCustomer.credit_limit > 0 && (
+                                <div className="px-3 py-2 bg-indigo-50/50 rounded-xl border border-indigo-100 flex flex-col gap-1">
+                                    <div className="flex justify-between items-center text-[9px] font-black uppercase tracking-tighter">
+                                        <span className="text-indigo-400">Cupo Disponible:</span>
+                                        <span className="text-indigo-600">
+                                            ${(Number(selectedCustomer.credit_limit) - Number(selectedCustomer.current_balance)).toLocaleString()}
+                                        </span>
+                                    </div>
+                                    <div className="w-full h-1 bg-indigo-200 rounded-full overflow-hidden">
+                                        <div 
+                                            className="h-full bg-indigo-600 transition-all" 
+                                            style={{ width: `${Math.min(100, (Number(selectedCustomer.current_balance) / Number(selectedCustomer.credit_limit)) * 100)}%` }}
+                                        />
+                                    </div>
+                                </div>
+                            )}
+                            
+                            {/* Puntos de Lealtad */}
+                            {loyaltyConfig?.is_active && (
+                                <div className="px-3 py-2 bg-emerald-50/50 rounded-xl border border-emerald-100 flex items-center justify-between">
+                                    <div className="flex items-center gap-2">
+                                        <div className="h-4 w-4 rounded-full bg-emerald-500 flex items-center justify-center text-[8px] text-white font-black">P</div>
+                                        <span className="text-[9px] font-black uppercase tracking-tighter text-emerald-600">Puntos Disponibles:</span>
+                                    </div>
+                                    <span className="text-xs font-black text-emerald-700">{selectedCustomer.loyalty_points || 0}</span>
+                                </div>
+                            )}
                         </div>
                     ) : (
                         <div className="relative group/select">
@@ -502,9 +554,15 @@ export default function Sales() {
                             <span className="text-[10px] font-black uppercase tracking-widest">Impuestos (Incl.)</span>
                             <span className="text-sm font-bold">$0.00</span>
                         </div>
+                        {pointsDiscount > 0 && (
+                            <div className="flex justify-between items-center text-emerald-500 bg-emerald-50 p-2 rounded-lg border border-emerald-100">
+                                <span className="text-[10px] font-black uppercase tracking-widest">Descuento Puntos ({redeemedPoints})</span>
+                                <span className="text-sm font-bold">-${pointsDiscount.toLocaleString()}</span>
+                            </div>
+                        )}
                         <div className="pt-3 border-t border-slate-100 flex justify-between items-center">
                             <span className="text-[10px] font-black text-primary-400 uppercase tracking-[0.2em]">Total a Pagar</span>
-                            <span className="text-3xl font-black text-slate-900 tracking-tighter">${total.toLocaleString()}</span>
+                            <span className="text-3xl font-black text-slate-900 tracking-tighter">${finalTotal.toLocaleString()}</span>
                         </div>
                     </div>
 
@@ -546,30 +604,81 @@ export default function Sales() {
                                     </button>
                                 </div>
 
+                                {/* Redención de Puntos */}
+                                {loyaltyConfig?.is_active && selectedCustomer && selectedCustomer.loyalty_points >= (loyaltyConfig.min_redemption_points || 0) && (
+                                    <div className="mb-8 p-6 bg-emerald-50/50 rounded-[2rem] border-2 border-emerald-100 border-dashed">
+                                        <div className="flex items-center justify-between mb-4">
+                                            <div className="flex items-center gap-2">
+                                                <div className="p-2 bg-emerald-500 rounded-lg text-white">
+                                                    <ShoppingCart className="h-4 w-4" />
+                                                </div>
+                                                <span className="text-xs font-black uppercase tracking-widest text-emerald-700">Usar mis puntos</span>
+                                            </div>
+                                            <span className="text-xs font-bold text-emerald-600">{selectedCustomer.loyalty_points} disp.</span>
+                                        </div>
+                                        <div className="flex items-center gap-4">
+                                            <input 
+                                                type="number" 
+                                                className="flex-1 bg-white border-none rounded-xl px-4 py-3 text-sm font-black text-emerald-600 focus:ring-2 focus:ring-emerald-500/20"
+                                                placeholder="Puntos a redimir..."
+                                                value={redeemedPoints || ''}
+                                                onChange={(e) => {
+                                                    const val = Math.min(selectedCustomer.loyalty_points, Math.max(0, parseInt(e.target.value) || 0));
+                                                    setRedeemedPoints(val);
+                                                }}
+                                            />
+                                            <div className="text-right">
+                                                <p className="text-[8px] font-black text-emerald-400 uppercase tracking-widest">Ahorro</p>
+                                                <p className="text-sm font-black text-emerald-700">-${pointsDiscount.toLocaleString()}</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
+
                                 <div className="grid grid-cols-2 gap-4 mb-8">
                                     {[
                                         { id: 'cash', name: 'Efectivo', icon: Banknote, color: 'emerald' },
                                         { id: 'card', name: 'Tarjeta', icon: CreditCard, color: 'blue' },
                                         { id: 'transfer', name: 'Transferencia', icon: ArrowRight, color: 'indigo' },
-                                        { id: 'other', name: 'Otros', icon: Plus, color: 'gray' },
-                                    ].map((method) => (
-                                        <button
-                                            key={method.id}
-                                            onClick={() => setPaymentMethod(method.id as any)}
-                                            className={clsx(
-                                                "p-6 rounded-[2rem] border-2 transition-all flex flex-col items-center gap-3 active:scale-95",
-                                                paymentMethod === method.id 
-                                                    ? `bg-${method.color}-50/50 border-${method.color}-500 text-${method.color}-600 shadow-xl shadow-${method.color}-100` 
-                                                    : "bg-white border-gray-50 text-gray-400 hover:border-gray-100"
-                                            )}
-                                        >
-                                            <method.icon className="h-8 w-8" />
-                                            <span className="text-xs font-black uppercase tracking-widest">{method.name}</span>
-                                            {paymentMethod === method.id && (
-                                                <div className={clsx("h-2 w-2 rounded-full bg-current animate-pulse")} />
-                                            )}
-                                        </button>
-                                    ))}
+                                        { id: 'credit', name: 'Crédito', icon: Shield, color: 'purple' },
+                                    ].map((method) => {
+                                        const isCredit = method.id === 'credit';
+                                        const hasNoCustomer = isCredit && !selectedCustomer;
+                                        const noCreditLimit = isCredit && selectedCustomer && Number(selectedCustomer.credit_limit) <= 0;
+                                        const insufficientCredit = isCredit && selectedCustomer && (Number(selectedCustomer.current_balance) + total > Number(selectedCustomer.credit_limit));
+                                        
+                                        const isDisabled = hasNoCustomer || noCreditLimit || insufficientCredit;
+
+                                        return (
+                                            <button
+                                                key={method.id}
+                                                onClick={() => setPaymentMethod(method.id as any)}
+                                                disabled={Boolean(isDisabled)}
+                                                className={clsx(
+                                                    "p-6 rounded-[2rem] border-2 transition-all flex flex-col items-center gap-3 active:scale-95 group relative",
+                                                    paymentMethod === method.id 
+                                                        ? `bg-${method.color}-50/50 border-${method.color}-500 text-${method.color}-600 shadow-xl shadow-${method.color}-100` 
+                                                        : isDisabled
+                                                            ? "bg-gray-50 border-gray-100 text-gray-300 cursor-not-allowed opacity-50"
+                                                            : "bg-white border-gray-50 text-gray-400 hover:border-gray-100"
+                                                )}
+                                            >
+                                                <method.icon className="h-8 w-8" />
+                                                <span className="text-xs font-black uppercase tracking-widest">{method.name}</span>
+                                                {paymentMethod === method.id && (
+                                                    <div className={clsx("h-2 w-2 rounded-full bg-current animate-pulse")} />
+                                                )}
+                                                
+                                                {isDisabled && (
+                                                    <div className="absolute inset-x-0 -bottom-2 flex justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                                                        <span className="bg-red-500 text-white text-[8px] px-2 py-0.5 rounded-full font-black uppercase whitespace-nowrap">
+                                                            {hasNoCustomer ? "Sin Cliente" : noCreditLimit ? "Sin Cupo" : "Cupo Insuficiente"}
+                                                        </span>
+                                                    </div>
+                                                )}
+                                            </button>
+                                        );
+                                    })}
                                 </div>
 
                                 <div className="bg-white p-6 rounded-[2rem] border border-gray-100 mb-8 flex justify-between items-center">

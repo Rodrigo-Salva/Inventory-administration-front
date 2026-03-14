@@ -210,9 +210,9 @@ export default function QuotesList() {
 
             <Pagination
                 currentPage={page}
-                totalPages={quotesData?.metadata?.total_pages || quotesData?.metadata?.pages || 0}
+                totalPages={quotesData?.metadata?.pages || quotesData?.pages || 0}
                 onPageChange={setPage}
-                totalItems={quotesData?.metadata?.total_items || quotesData?.metadata?.total}
+                totalItems={quotesData?.metadata?.total || quotesData?.total}
             />
 
             {/* MODAL DE CONVERSIÓN (PAGO) */}

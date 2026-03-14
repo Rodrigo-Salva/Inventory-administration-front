@@ -82,6 +82,9 @@ export interface Customer {
   city?: string;
   state?: string;
   country?: string;
+  credit_limit: number;
+  current_balance: number;
+  loyalty_points: number;
   is_active: boolean;
   notes?: string;
   created_at: string;
@@ -319,4 +322,26 @@ export interface ExpenseSummary {
   total: number;
   page: number;
   size: number;
+}
+
+export interface LoyaltyConfig {
+  id: number;
+  tenant_id: number;
+  points_per_amount: number;
+  amount_per_point: number;
+  is_active: boolean;
+  min_redemption_points: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface LoyaltyTransaction {
+  id: number;
+  tenant_id: number;
+  customer_id: number;
+  sale_id?: number;
+  points: number;
+  description?: string;
+  transaction_type: "earn" | "redeem" | "adjust";
+  created_at: string;
 }
