@@ -39,8 +39,8 @@ export default function BarcodeScanner({ onScan, onClose, isOpen }: BarcodeScann
             });
           }
         },
-        (errorMessage) => {
-          // console.log(errorMessage);
+        () => {
+          // Error handler
         }
       );
     }

@@ -3,7 +3,7 @@ import { useMutation, useQueryClient, useQuery } from '@tanstack/react-query'
 import api from '@/api/client'
 import { branchApi, Branch } from '@/api/branches'
 import toast from 'react-hot-toast'
-import { Package, X } from 'lucide-react'
+import { Package } from 'lucide-react'
 import clsx from 'clsx'
 
 interface QuickMoveModalProps {
