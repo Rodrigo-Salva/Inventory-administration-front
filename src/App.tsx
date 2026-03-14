@@ -11,6 +11,7 @@ import Settings from './pages/Settings'
 import Profile from './pages/Profile'
 import Sales from './pages/Sales'
 import SalesList from './pages/SalesList'
+import Credits from './pages/Credits'
 import QuotesList from './pages/QuotesList'
 import NewQuote from './pages/NewQuote'
 import Roles from './pages/Roles'
@@ -59,6 +60,7 @@ function App() {
                 <Route path="expenses" element={<Expenses />} />
                 <Route path="sales" element={<Sales />} />
                 <Route path="sales-history" element={<SalesList />} />
+                <Route path="credits" element={<Credits />} />
                 <Route path="quotes" element={<QuotesList />} />
                 <Route path="quotes/new" element={<NewQuote />} />
                 <Route path="users" element={<Users />} />

@@ -1,5 +1,4 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import api from "@/api/client";
 import toast from "react-hot-toast";
@@ -21,7 +20,6 @@ import BatchManagerModal from "@/components/BatchManagerModal";
 import QuickMoveModal from "@/components/products/QuickMoveModal";
 
 export default function Products() {
-  const navigate = useNavigate();
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -134,7 +132,7 @@ export default function Products() {
   });
 
   // Cargar todas las sucursales
-  const { data: allBranches } = useQuery<Branch[]>({
+  useQuery<Branch[]>({
     queryKey: ["branches"],
     queryFn: async () => {
       const response = await branchApi.getAll();
