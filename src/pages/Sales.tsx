@@ -13,11 +13,13 @@ import { usePermissions } from "@/hooks/usePermissions";
 import { usePOSStore } from "@/store/posStore";
 import CashSessionModal from "@/components/pos/CashSessionModal";
 import ExpenseModal from "@/components/pos/ExpenseModal";
+import BarcodeScanner from "../components/pos/BarcodeScanner";
 
 interface CartItem extends Product {
     cartQuantity: number;
     selectedBatchId?: number;
     selectedBatchNumber?: string;
+    discount?: number; // Porcentaje
 }
 
 export default function Sales() {
@@ -34,6 +36,9 @@ export default function Sales() {
     const [currentProductForBatch, setCurrentProductForBatch] = useState<Product | null>(null);
     const [paymentMethod, setPaymentMethod] = useState<"cash" | "card" | "transfer" | "credit">("cash");
     const [redeemedPoints, setRedeemedPoints] = useState(0);
+    const [isScannerOpen, setIsScannerOpen] = useState(false);
+    const [continuousMode, setContinuousMode] = useState(true);
+    const [globalDiscount, setGlobalDiscount] = useState(0);
     
     const queryClient = useQueryClient();
     const { hasPermission } = usePermissions();
@@ -70,6 +75,18 @@ export default function Sales() {
             return response.data;
         },
     });
+
+    // Auto-agregar si hay coincidencia exacta de SKU o Barcode (para lectores físicos)
+    useEffect(() => {
+        if (search && productData?.items.length === 1) {
+            const product = productData.items[0];
+            if (product.sku === search || product.barcode === search) {
+                addToCart(product);
+                setSearch(""); // Limpiar para el siguiente escaneo
+                toast.success(`Agregado: ${product.name}`, { duration: 1000, position: 'bottom-center' });
+            }
+        }
+    }, [productData, search]);
 
     // 1.1 Cargar Clientes Activos
     const { data: activeCustomers } = useQuery<Customer[]>({
@@ -161,7 +178,8 @@ export default function Sales() {
                 ...product, 
                 cartQuantity: 1, 
                 selectedBatchId: batch?.id,
-                selectedBatchNumber: batch?.batch_number
+                selectedBatchNumber: batch?.batch_number,
+                discount: 0
             }];
         });
         
@@ -196,13 +214,30 @@ export default function Sales() {
         }));
     };
 
+    const updateItemDiscount = (productId: number, discount: number, batchId?: number) => {
+        setCart(prev => prev.map(item => {
+            if (item.id === productId && item.selectedBatchId === batchId) {
+                return { ...item, discount: Math.min(100, Math.max(0, discount)) };
+            }
+            return item;
+        }));
+    };
+
     const total = useMemo(() => {
-        return cart.reduce((acc, item) => acc + (Number(item.price) * item.cartQuantity), 0);
+        return cart.reduce((acc, item) => {
+            const itemSubtotal = (Number(item.price) * item.cartQuantity);
+            const itemDiscount = itemSubtotal * ((item.discount || 0) / 100);
+            return acc + (itemSubtotal - itemDiscount);
+        }, 0);
     }, [cart]);
 
+    const totalAfterGlobalDiscount = useMemo(() => {
+        return total * (1 - globalDiscount / 100);
+    }, [total, globalDiscount]);
+
     const finalTotal = useMemo(() => {
-        return Math.max(0, total - pointsDiscount);
-    }, [total, pointsDiscount]);
+        return Math.max(0, totalAfterGlobalDiscount - pointsDiscount);
+    }, [totalAfterGlobalDiscount, pointsDiscount]);
 
     const handleCheckout = () => {
         if (cart.length === 0) {
@@ -219,7 +254,7 @@ export default function Sales() {
                 product_id: item.id,
                 batch_id: item.selectedBatchId || null,
                 quantity: item.cartQuantity,
-                unit_price: item.price
+                unit_price: Number(item.price) * (1 - (item.discount || 0) / 100) * (1 - globalDiscount / 100)
             })),
             customer_id: selectedCustomer?.id || null,
             cash_session_id: activeSession?.id || null,
@@ -252,6 +287,22 @@ export default function Sales() {
         
         return () => { document.head.removeChild(styleTag); };
     }, []);
+
+    const handleScan = (data: string) => {
+        setSearch(data);
+        // El useEffect de auto-agregar se encargará si hay coincidencia exacta.
+        // Pero para el scanner de cámara, queremos que sea proactivo:
+        const found = productData?.items.find(p => p.sku === data || p.barcode === data);
+        if (found) {
+            addToCart(found);
+            setSearch("");
+            toast.success(`Agregado: ${found.name}`, { duration: 1000, position: 'bottom-center' });
+        }
+        
+        if (!continuousMode) {
+            setIsScannerOpen(false);
+        }
+    };
 
     if (!hasPermission('sales:create')) {
         return (
@@ -303,6 +354,13 @@ export default function Sales() {
 
     return (
         <div className="flex h-[calc(100vh-140px)] gap-6 antialiased">
+            {isScannerOpen && (
+                <BarcodeScanner 
+                    onScan={handleScan}
+                    onClose={() => setIsScannerOpen(false)} 
+                    keepOpen={continuousMode}
+                />
+            )}
             {/* SECCIÓN IZQUIERDA: BÚSQUEDA Y PRODUCTOS */}
             <div className="flex-1 flex flex-col gap-6 min-w-0">
                 {/* Barra de Búsqueda Premium */}
@@ -321,9 +379,30 @@ export default function Sales() {
                             autoFocus
                         />
                         <div className="flex items-center gap-2 px-4 border-l border-gray-100">
-                            <ScanLine className="h-5 w-5 text-gray-300" />
                             <span className="text-[10px] font-black text-gray-300 uppercase tracking-widest hidden sm:block">Scanner Activo</span>
                         </div>
+                        <button 
+                            onClick={() => setIsScannerOpen(true)}
+                            className="mr-2 p-3 bg-primary-50 hover:bg-primary-100 text-primary-600 rounded-2xl transition-all shadow-sm active:scale-95 flex items-center gap-2 group/scan"
+                            title="Abrir Escáner de Cámara"
+                        >
+                            <ScanLine className="h-6 w-6" />
+                            <div className="flex flex-col items-start pr-1 hidden sm:flex">
+                                <span className="text-[8px] font-black uppercase tracking-tighter leading-none mb-1">Cámara</span>
+                                <div 
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        setContinuousMode(!continuousMode);
+                                    }}
+                                    className={clsx(
+                                        "px-1.5 py-0.5 rounded-full text-[7px] font-black uppercase tracking-widest transition-colors",
+                                        continuousMode ? "bg-emerald-500 text-white" : "bg-gray-200 text-gray-500"
+                                    )}
+                                >
+                                    {continuousMode ? "Continuo" : "Simple"}
+                                </div>
+                            </div>
+                        </button>
                     </div>
                 </div>
 
@@ -532,9 +611,19 @@ export default function Sales() {
                                         </button>
                                     </div>
                                     <div className="text-right">
+                                        <div className="flex items-center justify-end gap-2 mb-1">
+                                            <span className="text-[9px] font-black text-primary-500 uppercase tracking-tighter self-center">DTO %:</span>
+                                            <input 
+                                                type="number"
+                                                className="w-12 h-6 text-[10px] font-black p-1 border border-gray-100 rounded bg-gray-50 text-center focus:ring-1 focus:ring-primary-500"
+                                                value={item.discount || 0}
+                                                onChange={(e) => updateItemDiscount(item.id, parseInt(e.target.value) || 0, item.selectedBatchId)}
+                                                onClick={(e) => e.stopPropagation()}
+                                            />
+                                        </div>
                                         <span className="text-[10px] font-bold text-gray-400 uppercase tracking-tighter block leading-none">Subtotal</span>
                                         <span className="text-sm font-black text-gray-900 tracking-tight">
-                                            ${(Number(item.price) * item.cartQuantity).toLocaleString()}
+                                            ${((Number(item.price) * item.cartQuantity) * (1 - (item.discount || 0) / 100)).toLocaleString()}
                                         </span>
                                     </div>
                                 </div>
@@ -547,8 +636,20 @@ export default function Sales() {
                 <div className="p-6 bg-white">
                     <div className="space-y-3 mb-6">
                         <div className="flex justify-between items-center text-slate-400">
-                            <span className="text-[10px] font-black uppercase tracking-widest">Subtotal</span>
-                            <span className="text-sm font-bold">${total.toLocaleString()}</span>
+                            <span className="text-[10px] font-black uppercase tracking-widest">Subtotal Bruto</span>
+                            <span className="text-sm font-bold">${cart.reduce((acc, item) => acc + (Number(item.price) * item.cartQuantity), 0).toLocaleString()}</span>
+                        </div>
+                        <div className="flex justify-between items-center text-emerald-500 font-bold">
+                            <div className="flex items-center gap-2">
+                                <span className="text-[10px] font-black uppercase tracking-widest">Desc. Global %</span>
+                                <input 
+                                    type="number"
+                                    className="w-14 h-7 text-xs p-1 border border-emerald-100 rounded bg-emerald-50 text-center focus:ring-1 focus:ring-emerald-500"
+                                    value={globalDiscount}
+                                    onChange={(e) => setGlobalDiscount(Math.min(100, Math.max(0, parseInt(e.target.value) || 0)))}
+                                />
+                            </div>
+                            <span className="text-sm font-bold">-${(total * (globalDiscount / 100)).toLocaleString()}</span>
                         </div>
                         <div className="flex justify-between items-center text-slate-400">
                             <span className="text-[10px] font-black uppercase tracking-widest">Impuestos (Incl.)</span>

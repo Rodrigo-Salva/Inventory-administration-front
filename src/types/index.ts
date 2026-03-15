@@ -345,3 +345,32 @@ export interface LoyaltyTransaction {
   transaction_type: "earn" | "redeem" | "adjust";
   created_at: string;
 }
+
+export interface InventoryAuditItem {
+  id: number;
+  audit_id: number;
+  product_id: number;
+  product?: Product;
+  expected_stock: number;
+  counted_stock: number;
+  discrepancy: number;
+  notes?: string;
+  created_at: string;
+}
+
+export type AuditStatus = "IN_PROGRESS" | "COMPLETED" | "CANCELLED";
+
+export interface InventoryAudit {
+  id: number;
+  tenant_id: number;
+  branch_id: number;
+  branch?: Branch;
+  user_id: number;
+  user?: User;
+  status: AuditStatus;
+  notes?: string;
+  started_at: string;
+  completed_at?: string;
+  created_at: string;
+  items?: InventoryAuditItem[];
+}
