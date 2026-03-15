@@ -6,8 +6,9 @@ import {
     Receipt, Trash2, Eye, FileDown, 
     CheckCircle2, XCircle, ShoppingBag,
     Filter, RefreshCcw, MoreHorizontal, X,
-    Search, FileText, AlertTriangle
+    Search, FileText, AlertTriangle, MapPin
 } from 'lucide-react'
+import PickingListModal from "@/components/sales/PickingListModal";
 import type { Sale, PaginatedResponse } from "@/types";
 import Pagination from "@/components/common/Pagination";
 import DateRangePicker from "@/components/common/DateRangePicker";
@@ -32,6 +33,8 @@ export default function SalesList() {
     
     const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
     const [selectedSale, setSelectedSale] = useState<Sale | null>(null);
+    const [isPickingModalOpen, setIsPickingModalOpen] = useState(false);
+    const [selectedPickingSaleId, setSelectedPickingSaleId] = useState<number | null>(null);
     const queryClient = useQueryClient();
     const { hasPermission } = usePermissions();
 
@@ -821,6 +824,16 @@ export default function SalesList() {
                                             >
                                                 <Receipt className="h-4 w-4" />
                                             </button>
+                                            <button 
+                                                onClick={() => {
+                                                    setSelectedPickingSaleId(sale.id);
+                                                    setIsPickingModalOpen(true);
+                                                }}
+                                                className="p-2.5 bg-white border border-gray-100 text-gray-400 hover:text-orange-600 hover:border-orange-100 rounded-xl shadow-sm transition-all"
+                                                title="Lista de Surtido (Picking)"
+                                            >
+                                                <MapPin className="h-4 w-4" />
+                                            </button>
                                         </div>
                                         <button className="md:hidden p-2 text-gray-400">
                                             <MoreHorizontal className="h-5 w-5" />
@@ -951,6 +964,13 @@ export default function SalesList() {
                     </div>
                 </div>
             )}
+            {/* MODAL DE PICKING */}
+            {isPickingModalOpen && selectedPickingSaleId && (
+                <PickingListModal 
+                    saleId={selectedPickingSaleId} 
+                    onClose={() => setIsPickingModalOpen(false)} 
+                />
+            )}
         </div>
     );
-}
+}
