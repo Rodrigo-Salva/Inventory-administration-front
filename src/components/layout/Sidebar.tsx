@@ -36,8 +36,9 @@ const navigation = [
         items: [
             { name: 'Existencias (Stock)', href: '/inventory?tab=stock', icon: Package, permission: 'inventory:view' },
             { name: 'Kardex (Historial)', href: '/inventory?tab=movements', icon: History, permission: 'inventory:view' },
-            { name: 'Traslados', href: '/inventory/transfers', icon: ArrowRightLeft, permission: 'transfers:view' },
+            { name: 'Traslados', href: '/inventory/transfers', icon: ArrowRightLeft, permission: 'inventory:view' },
             { name: 'Ajustes de Inventario', href: '/inventory/adjustments', icon: ClipboardList, permission: 'adjustments:view' },
+            { name: 'Toma Física (Auditoría)', href: '/inventory/audits', icon: ClipboardList, permission: 'inventory:adjust' },
         ]
     },
     {
