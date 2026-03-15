@@ -18,6 +18,7 @@ import DateRangePicker from "@/components/common/DateRangePicker";
 import { usePermissions } from "@/hooks/usePermissions";
 import BatchManagerModal from "@/components/BatchManagerModal";
 import QuickMoveModal from "@/components/products/QuickMoveModal";
+import BarcodeDisplay from "@/components/products/BarcodeDisplay";
 
 export default function Products() {
   const [page, setPage] = useState(1);
@@ -43,6 +44,9 @@ export default function Products() {
   const [productToPrint, setProductToPrint] = useState<Product | null>(null)
   const [isBatchManagerModalOpen, setIsBatchManagerModalOpen] = useState(false);
   const [productForBatchManagement, setProductForBatchManagement] = useState<Product | null>(null);
+  const [isBarcodeModalOpen, setIsBarcodeModalOpen] = useState(false);
+  const [selectedBarcodeProduct, setSelectedBarcodeProduct] = useState<Product | null>(null);
+  const [selectedIds, setSelectedIds] = useState<number[]>([]);
   const [formData, setFormData] = useState({
     name: "",
     sku: "",
@@ -372,6 +376,44 @@ export default function Products() {
     }
   }
 
+  const toggleProductSelection = (id: number) => {
+    setSelectedIds(prev => 
+      prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]
+    );
+  };
+
+  const toggleSelectAll = () => {
+    if (!productData?.items) return;
+    if (selectedIds.length === productData.items.length) {
+      setSelectedIds([]);
+    } else {
+      setSelectedIds(productData.items.map(p => p.id));
+    }
+  };
+
+  const handleBulkPrint = async () => {
+    if (selectedIds.length === 0) return;
+    
+    const toastId = toast.loading('Generando etiquetas masivas...');
+    try {
+      const response = await api.get(`/api/v1/products/labels/bulk?ids=${selectedIds.join(',')}`, {
+        responseType: 'blob'
+      });
+
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `Etiquetas_Lote_${new Date().toISOString().split('T')[0]}.pdf`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      toast.success('Etiquetas generadas', { id: toastId });
+      setSelectedIds([]);
+    } catch (error) {
+      toast.error('Error al generar etiquetas masivas', { id: toastId });
+    }
+  };
+
   if (!hasPermission('products:view')) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[400px] text-center p-8 bg-white rounded-3xl border border-gray-100 shadow-sm">
@@ -424,6 +466,15 @@ export default function Products() {
                 <span className="hidden sm:inline">Importar</span>
             </button>
           )}
+          {selectedIds.length > 0 && (
+            <button
+                onClick={handleBulkPrint}
+                className="btn bg-indigo-600 hover:bg-indigo-700 text-white flex items-center gap-2 h-10 rounded-xl px-4 text-xs font-bold uppercase tracking-widest shadow-lg shadow-indigo-200 animate-in fade-in zoom-in duration-300"
+            >
+                <Printer className="h-5 w-5" />
+                <span>Imprimir ({selectedIds.length})</span>
+            </button>
+          )}
           {hasPermission('products:create') && (
             <button
                 onClick={() => openModal()}
@@ -462,6 +513,14 @@ export default function Products() {
               <table className="min-w-full divide-y divide-gray-200">
                 <thead className="bg-white/50">
                   <tr>
+                    <th className="px-6 py-4 text-left">
+                      <input 
+                        type="checkbox" 
+                        className="rounded border-gray-300 text-primary-600 focus:ring-primary-500 h-4 w-4 cursor-pointer"
+                        checked={productData?.items && productData.items.length > 0 && selectedIds.length === productData.items.length}
+                        onChange={toggleSelectAll}
+                      />
+                    </th>
                     <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">
                       Producto
                     </th>
@@ -486,8 +545,19 @@ export default function Products() {
                   {productData?.items.map((product) => (
                     <tr
                       key={product.id}
-                      className="hover:bg-primary-50/10 transition-colors group"
+                      className={clsx(
+                        "hover:bg-primary-50/10 transition-colors group",
+                        selectedIds.includes(product.id) && "bg-primary-50/30"
+                      )}
                     >
+                      <td className="px-6 py-5">
+                        <input 
+                          type="checkbox" 
+                          className="rounded border-gray-300 text-primary-600 focus:ring-primary-500 h-4 w-4 cursor-pointer"
+                          checked={selectedIds.includes(product.id)}
+                          onChange={() => toggleProductSelection(product.id)}
+                        />
+                      </td>
                       <td className="px-6 py-5 whitespace-nowrap">
                         <div className="flex items-center">
                           <div className="h-11 w-11 flex-shrink-0 rounded-xl bg-white flex items-center justify-center text-gray-400 group-hover:bg-white transition-all border border-transparent group-hover:border-gray-100 shadow-sm group-hover:shadow-md">
@@ -586,6 +656,19 @@ export default function Products() {
                             <Printer className="h-5 w-5" />
                           </button>
 
+                          {hasPermission('barcodes:generate') && (
+                            <button
+                                onClick={() => {
+                                    setSelectedBarcodeProduct(product);
+                                    setIsBarcodeModalOpen(true);
+                                }}
+                                className="p-2 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-xl transition-all"
+                                title="Visualizar Barcode/QR"
+                            >
+                                <Barcode className="h-5 w-5" />
+                            </button>
+                          )}
+
                           {hasPermission('batches:view') && (
                             <button
                               onClick={() => {
@@ -638,6 +721,12 @@ export default function Products() {
                 >
                   <div className="flex items-start justify-between mb-4">
                     <div className="flex items-center gap-3">
+                      <input 
+                        type="checkbox" 
+                        className="rounded border-gray-300 text-primary-600 focus:ring-primary-500 h-5 w-5 cursor-pointer"
+                        checked={selectedIds.includes(product.id)}
+                        onChange={() => toggleProductSelection(product.id)}
+                      />
                       <div className="h-10 w-10 shrink-0 rounded-xl bg-white flex items-center justify-center text-gray-400 border border-gray-100">
                         <Package className="h-5 w-5" />
                       </div>
@@ -771,6 +860,32 @@ export default function Products() {
         message={`¿Estás seguro de que deseas eliminar el producto "${productToDelete?.name}"? Esta acción será permanente.`}
         type="danger"
       />
+
+      {/* MODAL DE CÓDIGO DE BARRAS / QR */}
+      {isBarcodeModalOpen && selectedBarcodeProduct && (
+        <DetailModal
+          isOpen={isBarcodeModalOpen}
+          onClose={() => {
+            setIsBarcodeModalOpen(false);
+            setSelectedBarcodeProduct(null);
+          }}
+          title="Identificadores Visuales"
+          subtitle={selectedBarcodeProduct.name}
+          icon={Barcode}
+          iconColorClass="bg-emerald-50 text-emerald-600"
+          sections={[
+            {
+              fields: [
+                {
+                  label: "Representación Visual",
+                  value: <BarcodeDisplay data={selectedBarcodeProduct.barcode || selectedBarcodeProduct.sku} name={selectedBarcodeProduct.name} />,
+                  fullWidth: true
+                }
+              ]
+            }
+          ]}
+        />
+      )}
 
       {/* MODAL DE GESTIÓN DE LOTES */}
       {isBatchManagerModalOpen && productForBatchManagement && (
