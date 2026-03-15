@@ -222,6 +222,7 @@ export default function Inventory() {
                                         <tr className="text-left text-[10px] font-black text-gray-400 uppercase tracking-widest">
                                             <th className="px-4 py-3 pb-4">Cod. / SKU</th>
                                             <th className="px-4 py-3 pb-4">Producto</th>
+                                            <th className="px-4 py-3 pb-4 text-center">Ubicación</th>
                                             <th className="px-4 py-3 pb-4 text-center">Mínimo</th>
                                             <th className="px-4 py-3 pb-4 text-center">Stock Actual</th>
                                             <th className="px-4 py-3 pb-4 text-center">Estado</th>
@@ -241,6 +242,18 @@ export default function Inventory() {
                                                     <td className="px-4 py-4">
                                                         <div className="font-bold text-gray-900">{p.name}</div>
                                                         <div className="text-[10px] text-gray-400 font-medium italic truncate">{p.category?.name || 'S/C'}</div>
+                                                    </td>
+                                                    <td className="px-4 py-4 text-center">
+                                                        {p.branch_stocks && p.branch_stocks.length > 0 ? (
+                                                            <div className="flex flex-col items-center">
+                                                                <span className="text-[10px] font-black text-primary-700 bg-primary-50 px-2 py-0.5 rounded uppercase tracking-tighter border border-primary-100">
+                                                                    {p.branch_stocks[0].aisle || '-'}-{p.branch_stocks[0].shelf || '-'}-{p.branch_stocks[0].bin || '-'}
+                                                                </span>
+                                                                <span className="text-[9px] text-gray-400 font-bold uppercase mt-0.5">P-E-G</span>
+                                                            </div>
+                                                        ) : (
+                                                            <span className="text-gray-300">---</span>
+                                                        )}
                                                     </td>
                                                     <td className="px-4 py-4 text-center">
                                                         <span className="text-xs font-bold text-gray-500">{p.min_stock}</span>

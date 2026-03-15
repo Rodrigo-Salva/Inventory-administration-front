@@ -20,8 +20,26 @@ export default function QuickMoveModal({ isOpen, onClose, product, type, onSucce
         quantity: '',
         reference: '',
         notes: '',
-        branch_id: ''
+        branch_id: '',
+        aisle: '',
+        shelf: '',
+        bin: ''
     })
+
+    // Cargar ubicación actual cuando se selecciona sucursal
+    React.useEffect(() => {
+        if (product && formData.branch_id) {
+            const branchStock = product.branch_stocks?.find((bs: any) => bs.branch_id === parseInt(formData.branch_id))
+            if (branchStock) {
+                setFormData(prev => ({
+                    ...prev,
+                    aisle: branchStock.aisle || '',
+                    shelf: branchStock.shelf || '',
+                    bin: branchStock.bin || ''
+                }))
+            }
+        }
+    }, [formData.branch_id, product])
 
     const { data: branches } = useQuery<Branch[]>({
         queryKey: ["branches-active"],
@@ -45,7 +63,7 @@ export default function QuickMoveModal({ isOpen, onClose, product, type, onSucce
             toast.success(type === 'entry' ? "Entrada registrada" : "Salida registrada")
             onSuccess?.()
             onClose()
-            setFormData({ quantity: '', reference: '', notes: '', branch_id: '' })
+            setFormData({ quantity: '', reference: '', notes: '', branch_id: '', aisle: '', shelf: '', bin: '' })
         },
         onError: (err: any) => toast.error(err.response?.data?.detail || "Error en movimiento"),
     })
@@ -116,6 +134,44 @@ export default function QuickMoveModal({ isOpen, onClose, product, type, onSucce
                                     placeholder="0"
                                     autoFocus
                                 />
+                            </div>
+                            <div className="grid grid-cols-3 gap-3">
+                                <div>
+                                    <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">
+                                        Pasillo
+                                    </label>
+                                    <input
+                                        type="text"
+                                        className="input h-10 text-sm"
+                                        value={formData.aisle}
+                                        onChange={(e) => setFormData({ ...formData, aisle: e.target.value })}
+                                        placeholder="P-01"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">
+                                        Estante
+                                    </label>
+                                    <input
+                                        type="text"
+                                        className="input h-10 text-sm"
+                                        value={formData.shelf}
+                                        onChange={(e) => setFormData({ ...formData, shelf: e.target.value })}
+                                        placeholder="E-02"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">
+                                        Gaveta
+                                    </label>
+                                    <input
+                                        type="text"
+                                        className="input h-10 text-sm"
+                                        value={formData.bin}
+                                        onChange={(e) => setFormData({ ...formData, bin: e.target.value })}
+                                        placeholder="G-03"
+                                    />
+                                </div>
                             </div>
                             <div>
                                 <label className="block text-xs font-bold text-gray-500 uppercase mb-1">
