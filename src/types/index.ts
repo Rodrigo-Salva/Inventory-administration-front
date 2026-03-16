@@ -118,6 +118,7 @@ export interface Tenant {
   state?: string;
   country?: string;
   logo_url?: string;
+  monthly_sales_goal: number;
   plan: string;
   created_at: string;
 }
@@ -373,4 +374,15 @@ export interface InventoryAudit {
   completed_at?: string;
   created_at: string;
   items?: InventoryAuditItem[];
+}
+
+export interface Webhook {
+  id: number;
+  tenant_id: number;
+  url: string;
+  events: string[];
+  is_active: boolean;
+  description?: string;
+  secret_key?: string;
+  created_at: string;
 }

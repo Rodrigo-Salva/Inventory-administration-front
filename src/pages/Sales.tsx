@@ -5,15 +5,20 @@ import toast from "react-hot-toast";
 import { 
     Search, ShoppingCart, Trash2, Plus, Minus, Package, 
     CreditCard, Banknote, Receipt, X, CheckCircle2, 
-    ArrowRight, Loader2, ScanLine, Users, Shield
+    ArrowRight, Loader2, ScanLine, Users, Shield,
+    Wifi, WifiOff, RefreshCcw
 } from 'lucide-react'
 import clsx from "clsx";
 import type { Product, Customer, PaginatedResponse, LoyaltyConfig } from "@/types";
 import { usePermissions } from "@/hooks/usePermissions";
 import { usePOSStore } from "@/store/posStore";
+import { useOfflinePOS } from "@/hooks/useOfflinePOS";
+import { useLiveQuery } from "dexie-react-hooks";
+import { db } from "@/db/posDb";
 import CashSessionModal from "@/components/pos/CashSessionModal";
 import ExpenseModal from "@/components/pos/ExpenseModal";
 import BarcodeScanner from "../components/pos/BarcodeScanner";
+
 
 interface CartItem extends Product {
     cartQuantity: number;
@@ -43,10 +48,16 @@ export default function Sales() {
     const queryClient = useQueryClient();
     const { hasPermission } = usePermissions();
     const { activeSession, checkActiveSession, isLoading: isSessionLoading } = usePOSStore();
+    const { isOnline, saveSale } = useOfflinePOS();
 
-    useEffect(() => {
-        checkActiveSession();
-    }, []);
+    // Query local para modo offline
+    const offlineProducts = useLiveQuery(() => 
+        db.products.filter(p => 
+            p.name.toLowerCase().includes(search.toLowerCase()) || 
+            p.sku.toLowerCase().includes(search.toLowerCase()) ||
+            (p.barcode?.toLowerCase().includes(search.toLowerCase()) ?? false)
+        ).limit(20).toArray(),
+    [search]);
 
     // 2.1 Cargar Configuración de Lealtad
     const { data: loyaltyConfig } = useQuery<LoyaltyConfig>({
@@ -63,18 +74,22 @@ export default function Sales() {
     }, [loyaltyConfig, redeemedPoints]);
 
     // 1. Cargar Productos
-    const { data: productData, isLoading } = useQuery<PaginatedResponse<Product>>({
+    const { data: productData, isLoading: isQueryLoading } = useQuery<PaginatedResponse<Product>>({
         queryKey: ["products-pos", search],
         queryFn: async () => {
             const params = new URLSearchParams({
                 search,
-                size: "20", // Mostrar suficientes productos para selección
+                size: "20",
                 is_active: "true"
             });
             const response = await api.get(`/api/v1/products/?${params}`);
             return response.data;
         },
+        enabled: isOnline // Solo cargar de red si estamos online
     });
+
+    const isLoading = isQueryLoading && isOnline;
+    const itemsToShow = isOnline ? productData?.items : (offlineProducts || []);
 
     // Auto-agregar si hay coincidencia exacta de SKU o Barcode (para lectores físicos)
     useEffect(() => {
@@ -247,7 +262,7 @@ export default function Sales() {
         setIsPaymentModalOpen(true);
     };
 
-    const confirmSale = () => {
+    const confirmSale = async () => {
         const saleData = {
             payment_method: paymentMethod,
             items: cart.map(item => ({
@@ -261,7 +276,32 @@ export default function Sales() {
             redeemed_points: redeemedPoints,
             notes: ""
         };
-        createSaleMutation.mutate(saleData);
+        
+        try {
+            const result = await saveSale(saleData);
+            if (result.success) {
+                if (result.offline) {
+                    toast.success("Venta guardada localmente (Modo Offline)");
+                    setCart([]);
+                    setSelectedCustomer(null);
+                    setRedeemedPoints(0);
+                    setIsPaymentModalOpen(false);
+                    // No abrimos el éxito porque no hay PDF offline por ahora
+                } else {
+                    setLastSaleId(result.data.id);
+                    setCart([]);
+                    setSelectedCustomer(null);
+                    setRedeemedPoints(0);
+                    setIsPaymentModalOpen(false);
+                    setIsSuccessModalOpen(true);
+                    downloadTicket(result.data.id);
+                    queryClient.invalidateQueries({ queryKey: ["products"] });
+                    queryClient.invalidateQueries({ queryKey: ["products-pos"] });
+                }
+            }
+        } catch (error: any) {
+            toast.error(error.response?.data?.detail || "Error al procesar la venta");
+        }
     };
 
     useEffect(() => {
@@ -408,19 +448,35 @@ export default function Sales() {
 
                 {/* Grid de Productos */}
                 <div className="flex-1 overflow-y-auto pr-2 custom-scrollbar">
+                    {/* Barra de Estado Offline */}
+                    {!isOnline && (
+                        <div className="mb-4 p-4 bg-orange-50 border border-orange-200 rounded-3xl flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                                <div className="p-2 bg-orange-100 text-orange-600 rounded-xl">
+                                    <WifiOff className="h-5 w-5" />
+                                </div>
+                                <div>
+                                    <p className="text-sm font-black text-orange-800 uppercase tracking-tight">Modo Offline Activo</p>
+                                    <p className="text-[10px] text-orange-600 font-bold uppercase">Buscando en base de datos local</p>
+                                </div>
+                            </div>
+                            <RefreshCcw className="h-5 w-5 text-orange-300 animate-spin-slow" />
+                        </div>
+                    )}
+
                     {isLoading ? (
                         <div className="h-full flex flex-col items-center justify-center gap-4 text-gray-400">
                             <Loader2 className="h-10 w-10 animate-spin text-primary-500" />
                             <p className="font-bold uppercase tracking-[0.2em] text-xs">Cargando catálogo...</p>
                         </div>
-                    ) : productData?.items.length === 0 ? (
+                    ) : itemsToShow.length === 0 ? (
                         <div className="h-full flex flex-col items-center justify-center gap-4 text-gray-400 italic">
                             <Package className="h-16 w-16 opacity-20" />
                             <p>No se encontraron productos</p>
                         </div>
                     ) : (
                         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 pb-6">
-                            {productData?.items.map((product) => (
+                            {itemsToShow.map((product: Product) => (
                                 <button
                                     key={product.id}
                                     onClick={() => addToCart(product)}

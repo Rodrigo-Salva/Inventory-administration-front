@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import api from '@/api/client'
 import toast from 'react-hot-toast'
-import { Shield, Lock, Plus, X, Trash2, CheckSquare, Square, Edit, LayoutDashboard, Package, Layers, Truck, ClipboardList, ShoppingCart, History, Users as UsersIcon, Settings as SettingsIcon, BarChart3, Contact, ShoppingBag, Receipt, BrainCircuit, Store, FileText, ShieldCheck, DollarSign } from 'lucide-react'
+import { Shield, Lock, Plus, X, Trash2, CheckSquare, Square, Edit, LayoutDashboard, Package, Layers, Truck, ClipboardList, ShoppingCart, History, Users as UsersIcon, Settings as SettingsIcon, BarChart3, Contact, ShoppingBag, Receipt, BrainCircuit, Store, FileText, ShieldCheck, DollarSign, Webhook } from 'lucide-react'
 import type { Role, Permission } from '@/types'
 import clsx from 'clsx'
 import { usePermissions } from '@/hooks/usePermissions'
@@ -162,6 +162,7 @@ export default function Roles() {
             case 'branches': return { icon: <Store className="h-5 w-5" />, name: 'Sucursales', color: 'text-indigo-600', bg: 'bg-indigo-50', border: 'border-indigo-100', shadow: 'shadow-indigo-50' };
             case 'admin': return { icon: <ShieldCheck className="h-5 w-5" />, name: 'Administración', color: 'text-violet-600', bg: 'bg-violet-50', border: 'border-violet-100', shadow: 'shadow-violet-50' };
             case 'finance': return { icon: <DollarSign className="h-5 w-5" />, name: 'Finanzas', color: 'text-emerald-600', bg: 'bg-emerald-50', border: 'border-emerald-100', shadow: 'shadow-emerald-50' };
+            case 'webhooks': return { icon: <Webhook className="h-5 w-5" />, name: 'Webhooks Web API', color: 'text-indigo-600', bg: 'bg-indigo-50', border: 'border-indigo-100', shadow: 'shadow-indigo-50' };
             default: return { icon: <Shield className="h-5 w-5" />, name: module, color: 'text-gray-600', bg: 'bg-white', border: 'border-gray-100', shadow: 'shadow-gray-50' };
         }
     }
@@ -188,6 +189,7 @@ export default function Roles() {
         'roles_permissions',
         'admin',
         'finance',
+        'webhooks',
         'settings'
     ]
 
