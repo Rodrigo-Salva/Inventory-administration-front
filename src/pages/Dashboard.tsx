@@ -178,6 +178,43 @@ export default function Dashboard() {
           return null;
         })()}
 
+        {/* Row 1: Sales Goal Progress (Premium Widget) */}
+        {dashboard?.stats?.monthly_sales_goal > 0 && (
+          <div className="bg-white p-8 rounded-[2.5rem] border border-gray-100 shadow-sm transition-all hover:shadow-md">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+              <div>
+                <h3 className="text-lg font-black text-gray-900 uppercase tracking-tight flex items-center gap-2">
+                  <TrendingUp className="h-5 w-5 text-indigo-500" />
+                  Progreso Meta del Mes
+                </h3>
+                <p className="text-xs text-gray-400 font-bold uppercase tracking-widest mt-1">
+                  Meta establecida: ${dashboard.stats.monthly_sales_goal.toLocaleString()}
+                </p>
+              </div>
+              <div className="text-right">
+                <span className="text-2xl font-black text-indigo-600">
+                  {Math.round((dashboard.stats.total_revenue / dashboard.stats.monthly_sales_goal) * 100)}%
+                </span>
+                <p className="text-[10px] text-gray-400 font-bold uppercase">Completado</p>
+              </div>
+            </div>
+            <div className="h-4 w-full bg-gray-50 rounded-full overflow-hidden border border-gray-100 p-0.5">
+              <div 
+                className="h-full bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 rounded-full shadow-inner transition-all duration-1000 ease-out"
+                style={{ width: `${Math.min((dashboard.stats.total_revenue / dashboard.stats.monthly_sales_goal) * 100, 100)}%` }}
+              ></div>
+            </div>
+            <div className="flex justify-between mt-3">
+              <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">
+                ${dashboard.stats.total_revenue.toLocaleString()} alcanzado
+              </span>
+              <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">
+                Faltan ${(Math.max(dashboard.stats.monthly_sales_goal - dashboard.stats.total_revenue, 0)).toLocaleString()}
+              </span>
+            </div>
+          </div>
+        )}
+
         {/* Row 1: Metrics 4-column grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 min-w-0">
           <div className="card bg-white border border-gray-100/50 rounded-[2.5rem] shadow-sm flex flex-col p-6 sm:p-8 group hover:shadow-xl hover:-translate-y-1 transition-all duration-300 overflow-hidden">
