@@ -2,7 +2,8 @@ import { useState, useEffect } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import api from '@/api/client'
 import toast from 'react-hot-toast'
-import { Building, Save, Mail, Phone, Globe, MapPin, Hash, ShieldCheck, Shield } from 'lucide-react'
+import { Link } from 'react-router-dom'
+import { Building, Save, Mail, Phone, Globe, MapPin, Hash, ShieldCheck, Shield, ArrowRight, TrendingUp } from 'lucide-react'
 import { usePermissions } from '@/hooks/usePermissions'
 import type { Tenant } from '@/types'
 
@@ -20,6 +21,7 @@ export default function Settings() {
         state: '',
         country: '',
         logo_url: '',
+        monthly_sales_goal: 0,
     })
 
     const { data: tenant, isLoading } = useQuery<Tenant>({
@@ -43,6 +45,7 @@ export default function Settings() {
                 state: tenant.state || '',
                 country: tenant.country || '',
                 logo_url: tenant.logo_url || '',
+                monthly_sales_goal: tenant.monthly_sales_goal || 0,
             })
         }
     }, [tenant])
@@ -83,6 +86,7 @@ export default function Settings() {
         state: tenant?.state || '',
         country: tenant?.country || '',
         logo_url: tenant?.logo_url || '',
+        monthly_sales_goal: tenant?.monthly_sales_goal || 0,
     })
 
     if (!hasPermission('settings:manage')) {
@@ -146,10 +150,18 @@ export default function Settings() {
                             </div>
                         </div>
                         <div>
-                            <label className="block text-sm font-medium text-gray-500 mb-1.5">Plan de Suscripción</label>
-                            <div className="flex items-center gap-2 h-[42px] px-4 bg-primary-50 text-primary-700 rounded-lg border border-primary-100 font-bold capitalize">
-                                <ShieldCheck className="h-5 w-5" />
-                                {tenant?.plan}
+                            <label className="block text-sm font-medium text-gray-500 mb-1.5 flex items-center gap-1.5">
+                                <TrendingUp className="h-3.5 w-3.5" /> Meta de Ventas Mensual
+                            </label>
+                            <div className="relative">
+                                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 font-bold">$</span>
+                                <input
+                                    type="number"
+                                    className="input pl-8"
+                                    placeholder="Ej: 50000"
+                                    value={formData.monthly_sales_goal}
+                                    onChange={(e) => setFormData({ ...formData, monthly_sales_goal: parseFloat(e.target.value) || 0 })}
+                                />
                             </div>
                         </div>
                     </div>
@@ -306,6 +318,7 @@ export default function Settings() {
                             state: tenant.state || '',
                             country: tenant.country || '',
                             logo_url: tenant.logo_url || '',
+                            monthly_sales_goal: tenant.monthly_sales_goal || 0,
                         })}
                         className="btn btn-secondary px-6 font-bold"
                         disabled={!isDirty}
