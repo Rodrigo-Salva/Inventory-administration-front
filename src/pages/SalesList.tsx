@@ -20,6 +20,7 @@ import {
 } from 'recharts';
 import { User as UserIcon, Shield } from 'lucide-react';
 import { usePermissions } from "@/hooks/usePermissions";
+import ConfirmationModal from "@/components/common/ConfirmationModal";
 
 export default function SalesList() {
     const [page, setPage] = useState(1);
@@ -35,6 +36,10 @@ export default function SalesList() {
     const [selectedSale, setSelectedSale] = useState<Sale | null>(null);
     const [isPickingModalOpen, setIsPickingModalOpen] = useState(false);
     const [selectedPickingSaleId, setSelectedPickingSaleId] = useState<number | null>(null);
+
+    // Modal de confirmación de anulación
+    const [isAnnulModalOpen, setIsAnnulModalOpen] = useState(false);
+    const [saleToAnnul, setSaleToAnnul] = useState<Sale | null>(null);
     const queryClient = useQueryClient();
     const { hasPermission } = usePermissions();
 
@@ -834,6 +839,18 @@ export default function SalesList() {
                                             >
                                                 <MapPin className="h-4 w-4" />
                                             </button>
+                                            {hasPermission('sales:annul') && sale.status !== 'annulled' && (
+                                                <button
+                                                    onClick={() => {
+                                                        setSaleToAnnul(sale);
+                                                        setIsAnnulModalOpen(true);
+                                                    }}
+                                                    className="p-2 text-rose-600 hover:bg-rose-50 rounded-xl transition-all"
+                                                    title="Anular Venta"
+                                                >
+                                                    <XCircle className="h-4 w-4" />
+                                                </button>
+                                            )}
                                         </div>
                                         <button className="md:hidden p-2 text-gray-400">
                                             <MoreHorizontal className="h-5 w-5" />
@@ -844,10 +861,10 @@ export default function SalesList() {
                         </tbody>
                     </table>
                 </div>
-                
+
                 {salesData && salesData.pages > 1 && (
                     <div className="p-6 border-t border-gray-50 bg-white/30">
-                        <Pagination 
+                        <Pagination
                             currentPage={page}
                             totalPages={salesData?.pages || 0}
                             onPageChange={setPage}
@@ -925,7 +942,7 @@ export default function SalesList() {
                                             </div>
                                         </div>
                                     </div>
-                                    
+
                                     <div className="p-6 bg-white rounded-[2rem] border border-gray-100">
                                         <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-4">Notas de la Venta</p>
                                         <p className="text-sm font-medium text-gray-600 italic">
@@ -937,7 +954,7 @@ export default function SalesList() {
 
                             {/* Footer con Acciones Críticas */}
                             <div className="p-8 bg-white border-t border-gray-100 flex gap-3">
-                                <button 
+                                <button
                                     onClick={() => downloadTicket(selectedSale.id)}
                                     className="flex-1 h-16 bg-white border border-gray-200 text-gray-600 rounded-2xl flex items-center justify-center gap-3 font-black uppercase tracking-widest text-xs hover:bg-white transition-all shadow-sm"
                                 >
@@ -948,9 +965,8 @@ export default function SalesList() {
                                 {selectedSale.status === 'completed' && hasPermission('sales:annul') && (
                                     <button 
                                         onClick={() => {
-                                            if (confirm("¿Estás seguro de que deseas anular esta venta? El stock será devuelto al inventario automáticamente.")) {
-                                                annulMutation.mutate(selectedSale.id);
-                                            }
+                                            setSaleToAnnul(selectedSale);
+                                            setIsAnnulModalOpen(true);
                                         }}
                                         disabled={annulMutation.isPending}
                                         className="h-16 px-8 bg-red-50 text-red-600 rounded-2xl flex items-center justify-center gap-3 font-black uppercase tracking-widest text-xs hover:bg-red-100 transition-all active:scale-95 disabled:opacity-50"
@@ -964,6 +980,25 @@ export default function SalesList() {
                     </div>
                 </div>
             )}
+            
+            {/* Modal de Confirmación de Anulación */}
+            <ConfirmationModal
+                isOpen={isAnnulModalOpen}
+                onClose={() => {
+                    setIsAnnulModalOpen(false);
+                    setSaleToAnnul(null);
+                }}
+                onConfirm={() => {
+                    if (saleToAnnul) {
+                        annulMutation.mutate(saleToAnnul.id);
+                    }
+                }}
+                title="¿Anular Venta?"
+                message={`¿Estás seguro de que deseas anular la venta #${saleToAnnul?.id}? Esta acción devolverá el stock al inventario automáticamente y no se puede deshacer.`}
+                confirmText="Anular Venta"
+                type="danger"
+            />
+
             {/* MODAL DE PICKING */}
             {isPickingModalOpen && selectedPickingSaleId && (
                 <PickingListModal 
@@ -973,4 +1008,4 @@ export default function SalesList() {
             )}
         </div>
     );
-}
+}
