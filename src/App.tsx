@@ -24,9 +24,11 @@ import Adjustments from './pages/Adjustments'
 import Expenses from './pages/Expenses'
 import AIInsights from './pages/AIInsights'
 import AuditLogs from './pages/AuditLogs'
+import Webhooks from './pages/Webhooks'
 import { Branches } from './pages/Branches'
 import StockTransfers from './pages/StockTransfers'
 import InventoryAudits from './pages/InventoryAudits'
+import Subscription from './pages/Subscription'
 import Layout from './components/layout/Layout'
 
 function PrivateRoute({ children }: { children: React.ReactNode }) {
@@ -70,6 +72,8 @@ function App() {
                 <Route path="roles" element={<Roles />} />
                 <Route path="audit-logs" element={<AuditLogs />} />
                 <Route path="settings" element={<Settings />} />
+                <Route path="subscription" element={<Subscription />} />
+                <Route path="webhooks" element={<Webhooks />} />
                 <Route path="branches" element={<Branches />} />
                 <Route path="profile" element={<Profile />} />
             </Route>

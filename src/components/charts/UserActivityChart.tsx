@@ -16,8 +16,8 @@ export default function UserActivityChart({ data }: UserActivityProps) {
     }
 
     return (
-        <div className="w-full h-full flex flex-col">
-            <ResponsiveContainer width="100%" height="100%">
+        <div className="w-full h-full min-h-[300px] relative">
+            <ResponsiveContainer width="100%" height="100%" minWidth={0}>
                 <BarChart data={data} layout="vertical" margin={{ left: 40, right: 20 }}>
                     <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#F3F4F6" />
                     <XAxis type="number" hide />

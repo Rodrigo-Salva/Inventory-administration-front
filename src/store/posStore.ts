@@ -38,8 +38,16 @@ export const usePOSStore = create<POSState>((set) => ({
                 notes
             })
             set({ activeSession: response.data })
-        } catch (error) {
+        } catch (error: any) {
             console.error('Error opening session:', error)
+            // Si el error dice que ya hay una abierta, sincronizar
+            if (error.response?.data?.detail?.includes('ya tienes') || error.response?.status === 400) {
+                const response = await api.get('/api/v1/pos/current-session')
+                if (response.data) {
+                    set({ activeSession: response.data })
+                    return // No relanzar si logramos recuperar la sesión
+                }
+            }
             throw error
         } finally {
             set({ isLoading: false })
