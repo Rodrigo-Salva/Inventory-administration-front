@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { Outlet, useLocation } from 'react-router-dom'
 import Sidebar from './Sidebar'
 import Header from './Header'
+import CommandPalette from '../common/CommandPalette'
 import clsx from 'clsx'
 import { useAuthStore } from '@/store/authStore'
 import api from '@/api/client'
@@ -40,6 +41,7 @@ export default function Layout() {
 
     return (
         <div className="min-h-screen bg-white flex">
+            <CommandPalette />
             {/* Backdrop para móvil */}
             {isMobileMenuOpen && (
                 <div 

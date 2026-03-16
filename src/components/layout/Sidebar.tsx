@@ -1,6 +1,7 @@
 import { NavLink, useLocation } from 'react-router-dom'
 import { LayoutDashboard, Package, FolderTree, Building2, TrendingUp, ShoppingCart, 
-    History, Users, Settings, LogOut, Truck, Shield, Receipt, FileText, ArrowRightLeft, ClipboardList
+    History, Users, Settings, LogOut, Truck, Shield, Receipt, FileText, ArrowRightLeft, ClipboardList,
+    Webhook, Zap
 } from 'lucide-react'
 import { useAuthStore } from '@/store/authStore'
 import { usePermissions } from '@/hooks/usePermissions'
@@ -66,6 +67,8 @@ const navigation = [
             { name: 'Usuarios', href: '/users', icon: Users, permission: 'users:view' },
             { name: 'Roles y Permisos', href: '/roles', icon: Shield, permission: 'roles:manage' },
             { name: 'Logs Auditoría', href: '/audit-logs', icon: History, permission: 'settings:manage' },
+            { name: 'Suscripción', href: '/subscription', icon: Zap, permission: 'subscriptions:manage' },
+            { name: 'Webhooks', href: '/webhooks', icon: Webhook, permission: 'webhooks:view' },
             { name: 'Configuración', href: '/settings', icon: Settings, permission: 'settings:manage' },
         ]
     }

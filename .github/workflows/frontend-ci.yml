@@ -1,0 +1,42 @@
+name: Frontend CI/CD
+
+on:
+  push:
+    branches: [ "main", "master", "develop" ]
+    paths:
+      - 'front-inventory-saas/**'
+  pull_request:
+    branches: [ "main", "master" ]
+    paths:
+      - 'front-inventory-saas/**'
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./front-inventory-saas
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: 20
+        cache: 'npm'
+        cache-dependency-path: './front-inventory-saas/package-lock.json'
+
+    - name: Install dependencies
+      run: npm ci
+
+    - name: Lint
+      run: npm run lint
+
+    - name: Type Check
+      run: npm run build
+
+    # Placeholder for Deployment
+    # - name: Deploy to Vercel/Netlify/S3
+    #   if: github.ref == 'refs/heads/main'
+    #   run: echo "Deploying frontend..."

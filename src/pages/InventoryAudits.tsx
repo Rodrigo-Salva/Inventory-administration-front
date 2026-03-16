@@ -7,6 +7,7 @@ import toast from 'react-hot-toast'
 import type { InventoryAudit, Branch, Product, InventoryAuditItem } from '@/types'
 import clsx from 'clsx'
 import BarcodeScanner from '@/components/pos/BarcodeScanner'
+import ConfirmationModal from '@/components/common/ConfirmationModal'
 
 export default function InventoryAudits() {
     const queryClient = useQueryClient()
@@ -330,14 +331,17 @@ function AuditCountingView({ auditId, onBack }: { auditId: number, onBack: () =>
     }
 
     const handleAddProduct = (productId: number) => {
-        const qty = prompt("Ingrese cantidad contada:", "1")
-        if (qty !== null) {
-            const numQty = parseFloat(qty)
-            if (!isNaN(numQty)) {
-                addItemMutation.mutate({ product_id: productId, counted_stock: numQty })
-            }
-        }
+        setPendingProductId(productId)
+        setQtyValue('1')
+        setIsQtyModalOpen(true)
     }
+
+    const [isCompleteModalOpen, setIsCompleteModalOpen] = useState(false)
+    const [isDeleteItemModalOpen, setIsDeleteItemModalOpen] = useState(false)
+    const [itemToDelete, setItemToDelete] = useState<InventoryAuditItem | null>(null)
+    const [isQtyModalOpen, setIsQtyModalOpen] = useState(false)
+    const [pendingProductId, setPendingProductId] = useState<number | null>(null)
+    const [qtyValue, setQtyValue] = useState('1')
 
     if (isLoadingAudit || !audit) {
         return (
@@ -361,11 +365,7 @@ function AuditCountingView({ auditId, onBack }: { auditId: number, onBack: () =>
                     </div>
                     {audit.status === 'IN_PROGRESS' && (
                         <button 
-                            onClick={() => {
-                                if (confirm("¿Deseas finalizar el conteo? Se aplicarán los ajustes de stock.")) {
-                                    completeAuditMutation.mutate()
-                                }
-                            }}
+                            onClick={() => setIsCompleteModalOpen(true)}
                             disabled={completeAuditMutation.isPending}
                             className="p-3 bg-emerald-50 text-emerald-600 rounded-2xl hover:bg-emerald-100 transition-all active:scale-95"
                         >
@@ -450,9 +450,8 @@ function AuditCountingView({ auditId, onBack }: { auditId: number, onBack: () =>
                                     {audit.status === 'IN_PROGRESS' && (
                                         <button 
                                             onClick={() => {
-                                                if (confirm("¿Eliminar este registro de conteo?")) {
-                                                    removeAuditItemMutation.mutate(item.id)
-                                                }
+                                                setItemToDelete(item)
+                                                setIsDeleteItemModalOpen(true)
                                             }}
                                             className="p-2 text-gray-200 hover:text-red-500 transition-all opacity-0 group-hover:opacity-100"
                                         >
@@ -505,14 +504,86 @@ function AuditCountingView({ auditId, onBack }: { auditId: number, onBack: () =>
             {audit.status === 'IN_PROGRESS' && (
                 <div className="md:hidden fixed bottom-6 left-6 right-6 z-20">
                     <button 
-                        onClick={() => {
-                            if (confirm("¿Finalizar toma física?")) completeAuditMutation.mutate()
-                        }}
+                        onClick={() => setIsCompleteModalOpen(true)}
                         className="w-full h-16 bg-emerald-600 text-white rounded-[1.5rem] font-black uppercase tracking-[0.2em] shadow-2xl shadow-emerald-200 active:scale-95 transition-all flex items-center justify-center gap-3"
                     >
                         <CheckCircle2 className="h-6 w-6" />
                         Finalizar Auditoría
                     </button>
+                </div>
+            )}
+
+            {/* Modal de Finalización */}
+            <ConfirmationModal
+                isOpen={isCompleteModalOpen}
+                onClose={() => setIsCompleteModalOpen(false)}
+                onConfirm={() => completeAuditMutation.mutate()}
+                title="¿Finalizar Auditoría?"
+                message="¿Estás seguro de que deseas finalizar esta toma física? El stock del sistema se actualizará para coincidir con el conteo realizado. Esta acción es irreversible."
+                confirmText="Finalizar y Ajustar"
+                type="info"
+            />
+
+            {/* Modal de Eliminación de Item */}
+            <ConfirmationModal
+                isOpen={isDeleteItemModalOpen}
+                onClose={() => {
+                    setIsDeleteItemModalOpen(false)
+                    setItemToDelete(null)
+                }}
+                onConfirm={() => {
+                    if (itemToDelete) {
+                        removeAuditItemMutation.mutate(itemToDelete.id)
+                    }
+                }}
+                title="¿Eliminar Conteo?"
+                message={`¿Estás seguro de que deseas eliminar el registro de conteo para "${itemToDelete?.product?.name}"?`}
+                confirmText="Eliminar"
+                type="danger"
+            />
+
+            {/* Modal de Cantidad (Custom Qty Modal) */}
+            {isQtyModalOpen && (
+                <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
+                    <div className="bg-white rounded-3xl shadow-2xl w-full max-w-sm overflow-hidden animate-in fade-in zoom-in duration-200">
+                        <div className="p-6 border-b border-gray-100">
+                            <h2 className="text-xl font-black text-gray-900 uppercase">Cantidad Contada</h2>
+                        </div>
+                        <div className="p-6 space-y-4">
+                            <input 
+                                type="number" 
+                                step="any"
+                                autoFocus
+                                className="w-full h-20 text-4xl font-black text-center bg-gray-50 border-2 border-indigo-100 rounded-2xl focus:border-indigo-500 focus:bg-white transition-all outline-none"
+                                value={qtyValue}
+                                onChange={(e) => setQtyValue(e.target.value)}
+                                onKeyDown={(e) => {
+                                    if (e.key === 'Enter') {
+                                        const num = parseFloat(qtyValue)
+                                        if (!isNaN(num) && pendingProductId) {
+                                            addItemMutation.mutate({ product_id: pendingProductId, counted_stock: num })
+                                            setIsQtyModalOpen(false)
+                                        }
+                                    }
+                                }}
+                            />
+                            <div className="flex gap-3">
+                                <button onClick={() => setIsQtyModalOpen(false)} className="btn btn-secondary flex-1 font-bold">Cancelar</button>
+                                <button 
+                                    onClick={() => {
+                                        const num = parseFloat(qtyValue)
+                                        if (!isNaN(num) && pendingProductId) {
+                                            addItemMutation.mutate({ product_id: pendingProductId, counted_stock: num })
+                                            setIsQtyModalOpen(false)
+                                        }
+                                    }}
+                                    className="btn btn-primary flex-1 font-bold"
+                                >
+                                    Confirmar
+                                </button>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             )}
         </div>
