@@ -1,7 +1,7 @@
 import { useNavigate } from 'react-router-dom'
 import { useAuthStore } from '@/store/authStore'
 import api from '@/api/client'
-import { User, Menu, Search, Bell, HelpCircle } from 'lucide-react'
+import { User, Menu, Search, Bell, HelpCircle, Command } from 'lucide-react'
 
 export interface HeaderProps {
     onToggleSidebar: () => void
@@ -25,9 +25,23 @@ export default function Header({ onToggleSidebar }: HeaderProps) {
                     <Search className="absolute left-3 h-4 w-4 text-gray-400" />
                     <input 
                         type="text" 
-                        placeholder="Buscar en el inventario..."
-                        className="pl-10 pr-4 py-2 bg-white border-none rounded-lg text-sm w-64 focus:ring-2 focus:ring-primary-500/20 transition-all"
+                        readOnly
+                        placeholder="Buscar... (Ctrl+K)"
+                        className="pl-10 pr-12 py-2 bg-slate-50 border border-slate-100 rounded-lg text-sm w-64 focus:ring-0 cursor-pointer hover:bg-slate-100 transition-all"
+                        onClick={() => {
+                            // Trigger Ctrl+K programmatically if possible or just show hint
+                            const event = new KeyboardEvent('keydown', {
+                                key: 'k',
+                                ctrlKey: true,
+                                bubbles: true,
+                                metaKey: true
+                            });
+                            document.dispatchEvent(event);
+                        }}
                     />
+                    <div className="absolute right-3 flex items-center gap-1 px-1.5 py-0.5 rounded border border-slate-200 bg-white text-[10px] font-black text-slate-400 uppercase">
+                        <Command className="h-2 w-2" /> K
+                    </div>
                 </div>
             </div>
 
